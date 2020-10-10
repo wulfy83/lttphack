@@ -1,4 +1,7 @@
 ; Magic words
+SA1HUD = $003400
+SA1SRAM = $400000
+
 !SRAM_VERSION = $0025
 
 !menu_end = #$0000
@@ -27,8 +30,8 @@
 
 !EXTRAS_SIZE #= 12+(!NUMBER_OF_COUNTERS*16)
 
-!POS_MEM_INPUT_DISPLAY_TOP = $7EC728
-!POS_MEM_INPUT_DISPLAY_BOT = $7EC768
+!POS_MEM_INPUT_DISPLAY_TOP = SA1HUD+$028
+!POS_MEM_INPUT_DISPLAY_BOT = SA1HUD+$068
 
 !offsetWA = $7F7680
 !offsetincWA = 0
@@ -49,23 +52,6 @@ endmacro
 ; $7F7667[0x6719] (7FDD80)
 ; $7EC900[0x1F00] (7EE800)
 ;  * 7ED000 - 7ED780 = VRAM buffer backup in custom_menu.asm
-
-; timers BCD
-!room_time_F = $0230 ; [0x2]
-!room_time_S = $0232 ; [0x2]
-!lag_frames = $0234 ; [0x2]
-!idle_frames = $0236 ; [0x2]
-!seg_time_F = $0238 ; [0x2]
-!seg_time_S = $023A ; [0x2]
-!seg_time_M = $023C ; [0x2]
-
-!room_time_F_disp = $0240 ; [0x2]
-!room_time_S_disp = $0242 ; [0x2]
-!lag_frames_disp = $0244 ; [0x2]
-!idle_frames_disp = $0246 ; [0x2]
-!seg_time_F_disp = $0248 ; [0x2]
-!seg_time_S_disp = $024A ; [0x2]
-!seg_time_M_disp = $024C ; [0x2]
 
 !lag_cache = $04CC
 !do_heart_lag = $04CE
@@ -97,13 +83,6 @@ endmacro
 !ram_gamemode_copy = $6F
 !ram_submode_copy = $70
 !ram_received_item_copy = $71
-!ram_can_reset_timer = $8E
-!timer_allowed = !ram_can_reset_timer
-
-%def_wramA("hex2dec_tmp", 2)
-%def_wramA("hex2dec_first_digit", 2)
-%def_wramA("hex2dec_second_digit", 2)
-%def_wramA("hex2dec_third_digit", 2)
 
 %def_wramA("qw_last_scroll", 2)
 %def_wramA("lanmola_cycles", 2) ; 3 bytes
@@ -128,11 +107,11 @@ endmacro
 ; Account for different SRAM layouts
 
 if !FEATURE_SD2SNES
-	!offset = $770100
+	!offset = $410000
 	!statename = "State"
 	!statename2 = "State"
 else
-	!offset = $701E00
+	!offset = $410000
 	!statename = "Preset"
 	!statename2 = "saved preset"
 endif

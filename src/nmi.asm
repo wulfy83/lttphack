@@ -4,8 +4,12 @@ pushpc
 ; Has no effect on anything
 ; But it gives us consistent improvements to account for practice hack lag
 ;======================================================================================
-org $00841E ; ClearOamBuffer
-	PHP : REP #$10
+org $00841E
+	; 246,16 : 250,18
+	; Vanilla OAM cycles: 4 scanlines + 2 H
+	; improved to: 2 scanlines + 28H
+
+	REP #$10
 
 	; first half
 	LDX #$8001 : STX $4300
@@ -23,7 +27,10 @@ org $00841E ; ClearOamBuffer
 
 	STA $420B
 
-	PLP : RTS
+	;JSL CacheSA1Stuff
+
+	SEP #$30
+	RTS
 warnpc $008489
 
 ; NMI
@@ -110,72 +117,10 @@ nmi_expand:
 	REP #$20
 	LDA $AB : STA $212C
 
-	SEP #$28 ; a=8, BCD=on
-	LDA !lowram_last_frame_did_saveload : BEQ .update_counters
-	JMP .dont_update_counters
-
-.update_counters
-	; if $12 = 1, then we weren't done with game code
-	; that means we're in a lag frame
-	LDA $12 : STA !lag_cache : LSR
-
-	REP #$20
-	LDA !lag_frames : ADC #$0000 ; carry set from $12 being 1
-	STA !lag_frames
-
-	; cycle controlled room time
-	SEP #$21 ; include carry
-	LDA !room_time_F : ADC #$00
-	CMP #$60
-	BCS .rtF60
-
-.rtFOK
-	BCC ++ ; 3 cycles
-
-.rtF60 ; 1 cycle for branch
-	LDA #$00 ; 2 cycles
-
-++	STA !room_time_F
-
-	REP #$20 ; seconds have 3 digits
-	LDA !room_time_S : ADC #$0000 ; increments by 1 if F>=60
-	STA !room_time_S
-
-	; cycle controlled segment time
-	SEP #$21 ; include carry
-	LDA !seg_time_F : ADC #$00
-	CMP #$60
-	BCS .stF60
-
-.stFOK
-	BCC ++ ; 3 cycles
-
-.stF60 ; 1 cycle for branch
-	LDA #$00 ; 2 cycles
-
-++	STA !seg_time_F
-
-	LDA !seg_time_S : ADC #$00 ; increments by 1 if F>=60
-	CMP #$60
-	BCS .stS60
-
-.stSOK
-	BCC ++ ; 3 cycles
-
-.stS60 ; 1 cycle for branch
-	LDA #$00 ; 2 cycles
-
-++	STA !seg_time_S
-
-	REP #$20
-	LDA !seg_time_M : ADC #$0000 ; increments by 1 if S>=60
-	STA !seg_time_M
-
-.dont_update_counters
-	CLD
-	JSR dotimers
 	SEP #$30
-	STZ !lowram_last_frame_did_saveload
+	LDA #$42
+	STA.w $2200
+	STZ.w !lowram_last_frame_did_saveload
 	RTL
 
 nmi_hud_update:

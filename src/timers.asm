@@ -52,15 +52,15 @@ org $0DFA90 : PHB : JSL StupidMVN : NOP
 pullpc
 
 macro update_timer()
-	LDA #$02 : STA !timer_allowed
+	LDA #$02 : STA.w SA1IRAM.TIMER_FLAG
 endmacro
 
 macro reset_timer()
-	LDA #$41 : STA !timer_allowed
+	LDA #$41 : STA.w SA1IRAM.TIMER_FLAG
 endmacro
 
 StupidMVN:
-	LDA #$80 : TSB !timer_allowed
+	LDA #$80 : TSB.w SA1IRAM.TIMER_FLAG
 	REP #$30
 	LDA #$0149
 	RTL
@@ -149,16 +149,16 @@ UpdateOnMovingWallEndPodMire:
 	LDA.l !ram_fast_moving_walls : BEQ .slowwalls
 	SED
 	CLC
-	LDA !room_time_F : ADC.w #$47
+	LDA.w SA1IRAM.ROOM_TIME_F : ADC.w #$47
 	CMP.w #$60 : BCC ++
 	SBC.w #$60
-++	STA !room_time_F
-	LDA !room_time_S : ADC.w #$16
-	STA !room_time_S
+++	STA.w SA1IRAM.ROOM_TIME_F
+	LDA.w SA1IRAM.ROOM_TIME_S : ADC.w #$16
+	STA.w SA1IRAM.ROOM_TIME_S
 	CLD
 
 .slowwalls
-	LDY #$02 : STY !timer_allowed
+	LDY #$02 : STY.w SA1IRAM.TIMER_FLAG
 	LDY #$00 : STY $AE, X
 	RTL
 
@@ -167,16 +167,16 @@ UpdateOnMovingWallEndDesert:
 	LDA.l !ram_fast_moving_walls : BEQ .slowwalls
 	SED
 	CLC
-	LDA !room_time_F : ADC.w #$08
+	LDA.w SA1IRAM.ROOM_TIME_F : ADC.w #$08
 	CMP.w #$60 : BCC ++
 	SBC.w #$60
-++	STA !room_time_F
-	LDA !room_time_S : ADC.w #$09
-	STA !room_time_S
+++	STA.w SA1IRAM.ROOM_TIME_F
+	LDA.w SA1IRAM.ROOM_TIME_S : ADC.w #$09
+	STA.w SA1IRAM.ROOM_TIME_S
 	CLD
 
 .slowwalls
-	LDY #$02 : STY !timer_allowed
+	LDY #$02 : STY.w SA1IRAM.TIMER_FLAG
 	LDY #$00 : STY $AE, X
 	RTL
 
@@ -254,42 +254,3 @@ UpdateOnReceiveItem:
 	%update_timer()
 	LDA $4D
 	RTL
-
-; !timer_allowed bitfield:
-; 7 - timers have been set and are awaiing a hud update
-; 6 - reset timer
-; 5
-; 4
-; 3
-; 2 - Update without blocking further updates
-; 1 - One update then no more
-; 0 - 
-
-dotimers:
-	SEP #$20
-	LDA !timer_allowed 
-	BMI .donothing
-	BEQ .donothing
-
-	BIT !timer_allowed
-	REP #$30
-
-	LDA #$000F ; transferring 16 bytes
-	LDX.w #!room_time_F+$0F
-	LDY.w #!room_time_F_disp+$0F
-
-	MVP $00,$00
-
-	BVC .dontreset
-
-	STZ !room_time_F+0
-	STZ !room_time_F+2
-	STZ !room_time_F+4
-	STZ !room_time_F+6
-
-.dontreset
-	SEP #$30
-	LDA #$80 : STA !timer_allowed
-
-.donothing
-	RTS

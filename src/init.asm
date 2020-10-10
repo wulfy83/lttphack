@@ -12,7 +12,7 @@ org $0CC1FF
 JSL ClearWatchBuffer_pre
 
 org $008829
-JSL ClearBank7F
+;JSL ClearBank7F
 
 pullpc
 ClearBank7F:
@@ -78,6 +78,9 @@ ClearWatchBuffer:
 
 init_hook:
 	JSL init_expand
+	JSL InitSA1
+
+
 	%ai8()
 	LDA #$81 : STA $4200
 	RTL

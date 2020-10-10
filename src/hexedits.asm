@@ -1,8 +1,8 @@
-; Fast ROM
-org $00FFD5 : db $30
+; SA-1
+org $00FFD5 : db $23, $35
 
 ; ROM Size
-org $00FFD7 : db #11 ; 2mb
+org $00FFD7 : db 11 ; 2mb
 
 ; SRAM Size
 org $00FFD8 : db select(!FEATURE_SD2SNES, $08, $05)
@@ -12,23 +12,23 @@ org $00FFD8 : db select(!FEATURE_SD2SNES, $08, $05)
 ; Enable controller 2 CLR
 ; Overrides the following:
 ; $0083F8: 60  RTS
-org $0083F8
-	NOP
+;org $0083F8
+;	NOP
 
 
 ; == FRAME ADVANCE ==
 
 ; Overrides the following
 ;$008039: 80 16  BRA $008051
-org $008039
-	NOP #2
+;org $008039
+;	NOP #2
 
 
 ; Overrides the following
 ; $00803B: A5 F6  LDA $F6
 ; $00803D: 29 20  AND #$20
-org $00803B
-	LDA $F5 : AND.b #$00
+;org $00803B
+;	LDA $F5 : AND.b #$00
 
 ; Overrides the following
 ; $008044: A5 F6  LDA $F6

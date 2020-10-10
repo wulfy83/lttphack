@@ -109,7 +109,7 @@ CM_DrawMenu:
 
 
 CM_MenuDown:
-	LDA #$80 : STA !timer_allowed
+	LDA #$80 : STA SA1IRAM.TIMER_FLAG
 	INC $11
 	RTS
 
@@ -280,7 +280,7 @@ cm_init_item_variables:
 
 cm_get_pressed_button:
 	%ai16()
-	LDA !ram_ctrl1 : CMP !ram_cm_last_frame_input : BEQ .same_as_last_frame
+	LDA.w SA1IRAM.CONTROLLER_1 : CMP !ram_cm_last_frame_input : BEQ .same_as_last_frame
 
 	STA !ram_cm_last_frame_input
 	PHA
@@ -289,7 +289,7 @@ cm_get_pressed_button:
 
 	; If we're pressing a new button (e.g. holding down v then pressing A), make sure
 	; to not do anything that frame (since dpad has priority over face buttons).
-	LDA !ram_ctrl1 : CMP !ram_ctrl1_filtered : BEQ .do_it
+	LDA.w SA1IRAM.CONTROLLER_1 : CMP.w SA1IRAM.CONTROLLER_1_FILTERED : BEQ .do_it
 	LDA.w #$0000
 	BRA .end
 
@@ -301,7 +301,7 @@ cm_get_pressed_button:
 	LDA.w #4 : STA !ram_cm_input_timer
 
 .do_it
-	LDA !ram_ctrl1
+	LDA.w SA1IRAM.CONTROLLER_1
 	BRA .end
 
 .no_input
@@ -1200,17 +1200,17 @@ cm_draw_numfield:
 	%a16()
 
 	; Draw numbers
-	LDA !ram_hex2dec_first_digit : BEQ .second_digit
+	LDA.b SA1IRAM.SCRATCH+0 : BEQ .second_digit
 	CLC : ADC $0E : STA.l !menu_dma_buffer+0, X
 	INX #2
 
 .second_digit
-	LDA !ram_hex2dec_second_digit : BEQ .third_digit
+	LDA.b SA1IRAM.SCRATCH+2 : BEQ .third_digit
 	CLC : ADC $0E : STA.l !menu_dma_buffer+0, X
 	INX #2
 
 .third_digit
-	LDA !ram_hex2dec_third_digit : CLC : ADC $0E
+	LDA.b SA1IRAM.SCRATCH+4 : CLC : ADC $0E
 	STA.l !menu_dma_buffer+0, X
 
 	RTS
@@ -1434,13 +1434,13 @@ cm_do_ctrl_config:
 	; Leaves AI=8
 	%a16()
 	LDA #$2080 : STA $0E
-	LDA !ram_ctrl1 : BEQ .clear_and_draw
+	LDA.w SA1IRAM.CONTROLLER_1 : BEQ .clear_and_draw
 	CMP !ram_ctrl_last_input : BNE .clear_and_draw
 
 	; Holding an input for more than 1f
 	LDA $0200 : INC : STA $0200 : CMP.w #0060 : BNE .next_frame
 
-	LDA !ram_ctrl1 : STA [$35]
+	LDA.w SA1IRAM.CONTROLLER_1 : STA [$35]
 	BRA .exit
 
 .clear_and_draw
@@ -1458,7 +1458,7 @@ cm_do_ctrl_config:
 	CLC : ADC #$022A : TAX
 
 	; Input display
-	LDA !ram_ctrl1
+	LDA.w SA1IRAM.CONTROLLER_1
 	JSR cm_ctrl_input_display
 
 	%ai8()

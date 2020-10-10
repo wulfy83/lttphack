@@ -3,182 +3,37 @@ org $008056 ; Game Mode Hijack
 	JSL gamemode_hook
 pullpc
 
-macro test_shortcut(shortcut, func, leavecarry)
-+	LDA.w !ram_ctrl1 : AND <shortcut> : CMP <shortcut> : BNE +
-	AND.l !ram_ctrl1_filtered : BEQ +
-	JSR.w <func>
-	if equal(<leavecarry>, 0)
-		CLC
-	endif
-	RTS
-endmacro
+
 
 gamemode_hook:
-	PHB : PHK : PLB
-	JSR check_mode_safety
-	BEQ .safeForNone
-	BVS .safeForAll
-	BMI .safeForSome
-;	BNE .pracMenu
+	LDA.l SA1IRAM.SHORTCUT_USED
+	BEQ .askforshortcut
 
-.pracMenu
-	JSR gamemode_shortcuts_practiceMenu
-	BRA ++
-
-.safeForSome
-.safeForAll
-	JSR gamemode_shortcuts_everything ; overflow flag checks the presets in here
-	BCS .skip
-
-.safeForNone ; we will exit in 16 bit A if it's not safe for anything
-++	%a16()
-	INC !lowram_room_gametime
-
-	%ai8()
+	REP #$20
+	PHB
+	PHK
 	PLB
-	JSL $0080B5 ; GameMode
+	PEA.w .ret-1
 
-	JSL draw_counters
+	JMP.w (SA1IRAM.SHORTCUT_USED)
+
+.ret
+	PLB
+	RTL
+
+.askforshortcut
+	LDA #$41 : STA.l $002200 ; SA-1 NMI, bit 1 for preparing shortcut checks
+	JML $0080B5 ; GameMode
+
+
 	LDA !ram_lagometer_toggle : BEQ .done
 	JSR gamemode_lagometer
 .done
 	RTL
 
-.skip
-	%ai8()
-	PLB : RTL
 
-!notVerySafe = select(!FEATURE_SD2SNES, .SD2SNESBranch, .OtherBranch)
-gamemode_shortcuts:
-.practiceMenu
-	LDA $B0
-	%a16() ; this code is copyright Lui 2020
-	BEQ !notVerySafe
--	CLC : RTS
 
-.everything
-	TAY
-	LDA !ram_ctrl1_filtered : ORA !ram_ctrl1_filtered+1 : BEQ -
-	TYA
-	%a16()
-	BMI !notVerySafe
 
-	%test_shortcut(!pracmenu_shortcut, gamemode_custom_menu, 1)
-
-.SD2SNESBranch
-	;------------------------------
-	%test_shortcut(!ram_ctrl_load_last_preset, gamemode_load_previous_preset, 1)
-	%test_shortcut(!ram_ctrl_save_state, gamemode_savestate_save, 1)
-	%test_shortcut(!ram_ctrl_load_state, gamemode_savestate_load, 1)
-
-.OtherBranch
-	;------------------------------
-	%test_shortcut(!ram_ctrl_reset_segment_timer, gamemode_reset_segment_timer, 0)
-	%test_shortcut(!ram_ctrl_somaria_pits, gamemode_somaria_pits_wrapper, 0)
-	%test_shortcut(!ram_ctrl_fix_vram, gamemode_fix_vram, 0)
-	%test_shortcut(!ram_ctrl_fill_everything, gamemode_fill_everything, 0)
-	%test_shortcut(!ram_ctrl_toggle_oob, gamemode_oob, 0)
-	%test_shortcut(!ram_ctrl_skip_text, gamemode_skip_text, 0)
-	%test_shortcut(!ram_ctrl_disable_sprites, gamemode_disable_sprites, 0)
-;	%test_shortcut(!ram_ctrl_replay_last_movie, gamemode_replay_last_movie, 1)
-
-+	CLC
---	RTS
-
-; return values in P
-!SOME_SAFE = $8080 ; some presets are not always safe = negative flag
-
-!ALL_SAFE = $4040 ; everything is safe = overflow flag
-!NONE_SAFE = $0000 ; all modes unsafe = zero flag
-; zero flag off = practice menu special
-
-check_mode_safety:
-	LDA $10 : CMP #$0C : BNE .notCustomMenu
-	CLV ; clear overflow
-	LDA #$01 ; make sure N/Z flags are not set
-.neverSafe
-	RTS
-
-.notCustomMenu
-	ASL : TAX ; get index
-	REP #%11100010 ; clear NVMZ for checks and for 16 bit accum
-	LDA Module_safety, X
-	BEQ .neverSafe ; staying in 16 bit A is fine here
-
-	STA $00
-	LDY $11 ; get submodule
-
-	%a8()
-	LDA ($00), Y ; get safety level of submodule
-	STA $00 ; put it in $00
-	LDA $7EC011 : BEQ .safe ; check mosaics
-
-	LDA.b #!SOME_SAFE ; not safe
-	RTS
-
-.safe
-	LDA $00 : BIT $00 ; bit test to set NVZ
-	RTS
-
-Module_safety:
-	dw !SOME_SAFE ; Intro_safety
-	dw !SOME_SAFE ; SelectFile_safety
-	dw !SOME_SAFE ; CopyFile_safety
-	dw !SOME_SAFE ; EraseFile_safety
-	dw !SOME_SAFE ; NamePlayer_safety
-	dw !SOME_SAFE ; LoadFile_safety
-	dw !SOME_SAFE ; PreDungeon_safety
-	dw Dungeon_safety
-	dw !SOME_SAFE ; PreOverworld_safety
-	dw Overworld_safety
-	dw !SOME_SAFE ; PreOverworld_safety
-	dw Overworld_safety
-	dw !SOME_SAFE ; CustomMenu_safety ; unsafe, but custom behavior
-	dw !SOME_SAFE ; Unknown1_safety
-	dw Messaging_safety
-	dw !SOME_SAFE ; CloseSpotlight_safety
-	dw !SOME_SAFE ; OpenSpotlight_safety
-	dw !SOME_SAFE ; HoleToDungeon_safety
-	dw !SOME_SAFE ; Death_safety
-	dw !ALL_SAFE ; BossVictory_safety
-	dw !SOME_SAFE ; Attract_safety
-	dw !ALL_SAFE ; Mirror_safety
-	dw !ALL_SAFE ; Victory_safety
-	dw !SOME_SAFE ; Quit_safety
-	dw !ALL_SAFE ; GanonEmerges_safety
-	dw !SOME_SAFE ; TriforceRoom_safety
-	dw !SOME_SAFE ;  EndSequence_safety
-	dw !SOME_SAFE ; LocationMenu_safety
-
-; How to behave on modules, pre shifted for address jumps
-
-	Dungeon_safety: ; $07
-		db !ALL_SAFE, !ALL_SAFE, !ALL_SAFE, !ALL_SAFE ; 0x00, 0x01, 0x02, 0x03
-		db !ALL_SAFE, !ALL_SAFE, !SOME_SAFE, !SOME_SAFE ; 0x04, 0x05, 0x06, 0x07
-		db !ALL_SAFE, !ALL_SAFE, !ALL_SAFE, !ALL_SAFE ; 0x08, 0x09, 0x0A, 0x0B
-		db !ALL_SAFE, !ALL_SAFE, !SOME_SAFE, !SOME_SAFE ; 0x0C, 0x0D, 0x0E, 0x0F
-		db !ALL_SAFE, !ALL_SAFE, !SOME_SAFE, !SOME_SAFE ; 0x10, 0x11, 0x12, 0x13
-		db !ALL_SAFE, !ALL_SAFE, !ALL_SAFE, !ALL_SAFE ; 0x14, 0x15, 0x16, 0x17
-		db !ALL_SAFE, !ALL_SAFE, !ALL_SAFE ; 0x18, 0x19, 0x1A
-
-	Overworld_safety: ; $09/$0B
-		db !ALL_SAFE, !ALL_SAFE, !ALL_SAFE, !ALL_SAFE ; 0x00, 0x01, 0x02, 0x03
-		db !ALL_SAFE, !ALL_SAFE, !ALL_SAFE, !ALL_SAFE ; 0x04, 0x05, 0x06, 0x07
-		db !ALL_SAFE, !ALL_SAFE, !ALL_SAFE, !ALL_SAFE ; 0x08, 0x09, 0x0A, 0x0B
-		db !ALL_SAFE, !ALL_SAFE, !ALL_SAFE, !ALL_SAFE ; 0x0C, 0x0D, 0x0E, 0x0F
-		db !ALL_SAFE, !ALL_SAFE, !ALL_SAFE, !ALL_SAFE ; 0x10, 0x11, 0x12, 0x13
-		db !ALL_SAFE, !ALL_SAFE, !ALL_SAFE, !ALL_SAFE ; 0x14, 0x15, 0x16, 0x17
-		db !ALL_SAFE, !ALL_SAFE, !ALL_SAFE, !ALL_SAFE ; 0x18, 0x19, 0x1A, 0x1B
-		db !ALL_SAFE, !ALL_SAFE, !ALL_SAFE, !ALL_SAFE ; 0x1C, 0x1D, 0x1E, 0x1F
-		db !ALL_SAFE, !ALL_SAFE, !ALL_SAFE, !SOME_SAFE; 0x20, 0x21, 0x22, 0x23
-		db !ALL_SAFE, !ALL_SAFE, !ALL_SAFE, !ALL_SAFE ; 0x24, 0x25, 0x26, 0x27
-		db !ALL_SAFE, !ALL_SAFE, !ALL_SAFE, !ALL_SAFE ; 0x28, 0x29, 0x2A, 0x2B
-		db !ALL_SAFE, !ALL_SAFE, !ALL_SAFE, !ALL_SAFE ; 0x2C, 0x2D, 0x2E, 0x2F
-
-	Messaging_safety: ; $0E
-		db !ALL_SAFE, !ALL_SAFE, !ALL_SAFE, !NONE_SAFE ; 0x00, 0x01, 0x02, 0x03
-		db !ALL_SAFE, !ALL_SAFE, !ALL_SAFE, !NONE_SAFE ; 0x04, 0x05, 0x06, 0x07
-		db !ALL_SAFE, !NONE_SAFE, !ALL_SAFE, !ALL_SAFE ; 0x08, 0x09, 0x0A, 0x0B
 
 ; Custom Menu
 gamemode_custom_menu:
@@ -529,11 +384,9 @@ gamemode_fill_everything:
 
 gamemode_reset_segment_timer:
 	%a16()
-	STZ !seg_time_F
-	STZ !seg_time_S
-	STZ !seg_time_M
-
-.done
+	STZ.w SA1IRAM.SEG_TIME_F
+	STZ.w SA1IRAM.SEG_TIME_S
+	STZ.w SA1IRAM.SEG_TIME_M
 	%a8()
 	RTS
 

@@ -8,8 +8,8 @@ pushpc
 
 ; Hooking NMI_ReadJoypads
 org $0083D1
-	JSL movie_readjoypads
-	RTS
+	;JSL movie_readjoypads
+	;RTS
 
 
 ;org !RandomNumGen
@@ -26,16 +26,16 @@ movie_readjoypads:
 	STZ $4016
 
 	LDA $4218 : STA $00 : STA $F2 : TAY
-	STA !ram_ctrl1+1
+	STA.w SA1IRAM.CONTROLLER_1+1
 	EOR $FA : AND $F2
 	STA $F6 : STY $FA
-	STA !ram_ctrl1_filtered+1
+	STA.w SA1IRAM.CONTROLLER_1_FILTERED+1
 
 	LDA $4219 : STA $01 : STA $F0 : TAY
-	STA !ram_ctrl1+0
+	STA.w SA1IRAM.CONTROLLER_1+0
 	EOR $F8 : AND $F0
 	STA $F4 : STY $F8
-	STA !ram_ctrl1_filtered+0
+	STA.w SA1IRAM.CONTROLLER_1_FILTERED+0
 
 RTL
 
@@ -74,10 +74,10 @@ RTL
 	LDA $01 : STA $F0 : TAY
 	EOR $F8 : AND $F0 : STA $F4 : STY $F8
 
-	LDA $F0 : STA !ram_ctrl1
-	LDA $F2 : STA !ram_ctrl1+1
-	LDA $F4 : STA !ram_ctrl1_filtered
-	LDA $F6 : STA !ram_ctrl1_filtered+1
+	LDA $F0 : STA.w SA1IRAM.CONTROLLER_1
+	LDA $F2 : STA.w SA1IRAM.CONTROLLER_1+1
+	LDA $F4 : STA.w SA1IRAM.CONTROLLER_1_FILTERED
+	LDA $F6 : STA.w SA1IRAM.CONTROLLER_1_FILTERED+1
 
 	RTS
 
@@ -89,7 +89,7 @@ movie_record:
 
 	LDX !ram_movie_index : CPX !ram_movie_rng_index : BCS .too_big
 
-	LDA !ram_ctrl1 : CMP !ram_prev_ctrl : BNE .save_input
+	LDA.w SA1IRAM.CONTROLLER_1 : CMP !ram_prev_ctrl : BNE .save_input
 
 	INC !ram_movie_timer
 	%ai8()
@@ -106,7 +106,7 @@ movie_record:
 	LDA !ram_prev_ctrl : STA !ram_movie+2, X
 
 	INX #4 : STX !ram_movie_index : STX !ram_movie_length
-	LDA !ram_ctrl1 : STA !ram_prev_ctrl
+	LDA.w SA1IRAM.CONTROLLER_1 : STA !ram_prev_ctrl
 	STZ !ram_movie_timer
 
 	%ai8()

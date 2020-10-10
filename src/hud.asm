@@ -1,41 +1,4 @@
 pushpc
-; HUD
-;
-; Takes care of drawing the following:
-; - Link's hearts and container
-; - Enemy's hearts
-
-; ----------------
-; FLOOR INDICATOR
-; ----------------
-
-; FloorIndicator quick RTL
-;
-; This can mess with the HUD, removing parts of it
-; just replacing the STA with LDA so we can keep vanilla lag
-org $0AFD48
-	LDA $7EC7F2 : INC
-	LDA $7EC834 : INC
-	LDA $7EC832
-	LDA #$250F : LDA $7EC7F4
-
-org $0AFD9F
-	LDA $7EC7F2, X
-
-org $0AFDA6
-	LDA $7EC832, X
-
-; probably leave the INC $16 in
-org $0AFDB5 ; change clear location of the timer
-	STA $7EC7AA
-	STA $7EC7AC
-	STA $7EC7EA
-	STA $7EC7EC
-
-; Super Bomb/Dig Timers
-org $0AFE25 : STA $7EC7AA, X
-org $0AFE2C : STA $7EC7EA, X
-
 ; -------------
 ; HUD TEMPLATE
 ; -------------
@@ -48,113 +11,20 @@ org $0AFE2C : STA $7EC7EA, X
 org $0DFAAE
 	JSL hud_template_hook
 
-
-; -----------------------
-; UPDATE HEARTS TEMPLATE
-; -----------------------
-
-; UpdateHearts removal
-;
-; Since the game calls this function twice, once for containers, once for actual hearts,
-; and since we do them both at the same time, we only need one call with a hook.
-;
-; Overriding the following:
-; $0DFC26:  20 CB FD  JSR HandleHearts
-
-org $0DF195 ; remove heart refill animation
-	; vanilla op: STA [$00], Y
-	; we have to replace 2 bytes and use 6 cycles
-	; contents of accumulator don't matter here
-	; while a useless set of ops like XBA : XBA
-	; would work, they don't take the super minute
-	; difference in memory access speeds into account
-	; changing the STA to an LDA does, and it will do it
-	; perfectly
-	LDA [$00], Y 
-
-org $0DF19C ; ditto above
-	LDA [$00], Y
-
-org $0DFC26
-	JSR UpdateHearts_NoHook
-
-!HEART_LAG_EARLY_STOP = $19
-; UpdateHearts Hijack
-org $0DFDCB
-	JSL update_hearts_hook
-
-; Mostly vanilla, but modified to not mess with hud
-; in such a way to perform the same number of cycles
-; with a little compensation for prac hack lag
-UpdateHearts_NoHook:
-	LDX #$0000
-.next
-	LDA $00
-	CMP.w #!HEART_LAG_EARLY_STOP+8 : BCC .lessthan1
-
-	SBC #$0008 : STA $00
-	LDY #$0004 : JSR .draw
-	INX #2
-	BRA .next
-
-.lessthan1
-	CMP.w #!HEART_LAG_EARLY_STOP+5 : BCC .half
-	LDY #$0004
-	BRA .draw
-
-.half
-	CMP.w #!HEART_LAG_EARLY_STOP+1 : BCC .empty
-	LDY #$0002
-	BRA .draw
-
-.empty
+org $0DFD0A
+	JSL HUDCanUpdate
 	RTS
-
-.draw
-	CPX #$0014 : BCC .sameLine
-
-	LDX #$0000
-	; we need to save at least 4 bytes here (for the hook) without losing cycles
-	; vanilla      bytes  cycles
-	; LDA $07          2       4
-	; CLC              1       2
-	; ADC #$0040       3       3
-	; STA $07          2       4
-	;---------------------------
-	;                  8      13
-
-	PHD ;             1       4
-	PLD ;             1       5
-	NOP ;             1       2
-	NOP ;             1       2
-	;---------------------------
-	;                 4      13
-	; hey! we did it!
-
-.sameLine
-	; we need the same number of cycles but junk code that does nothing
-	; vanilla       bytes  cycles
-	; LDA [$0A], Y      2       7
-	; TXY               1       2
-	; STA [$07], Y      2       7
-	;----------------------------
-	;                   5      16
-
-	; vanilla       bytes  cycles
-	; JSL $BBAAAA       4       8
-	; NOP               -       2
-	; RTL               -       6
-	;----------------------------
-	;                   4      16
-	; hey! we did it!
-	JSL WasteTimeWithHearts
-	RTS
-
-; remove -LIFE- from HUD
-org $0DFEC3
-	dw !EMPTY, !EMPTY, !EMPTY, !EMPTY, !EMPTY, !EMPTY
-
 pullpc
+
+HUDCanUpdate:
+	STA.l SA1HUD+$064
+	CMP.w #$247F
+	BNE ++
+	STA.l SA1HUD+$024
+++	SEP #$30
+
+	
+	RTL
 
 ; Hud Template Hook
 hud_template_hook:
@@ -236,7 +106,8 @@ hud_draw_hearts:
 
 	; Check if we have full hp
 	SEP #$21
-	LDA !ram_equipment_maxhp : SBC !ram_equipment_curhp : CMP.b #$04
+	REP #$10
+	LDA.w SA1IRAM.CopyOf_7EF36C : SBC.w SA1IRAM.CopyOf_7EF36D : CMP.b #$04
 
 	%a16()
 	LDA #$24A0 ; keep cycles similar
@@ -246,15 +117,15 @@ hud_draw_hearts:
 	STA !POS_MEM_HEART_GFX
 
 	; Full hearts
-	LDA !ram_equipment_curhp : AND #$00FF : LSR #3 : JSL hex_to_dec
-	LDA !ram_hex2dec_second_digit : ORA #$3C90 : STA $7EC700+!POS_HEARTS
-	LDA !ram_hex2dec_third_digit : ORA #$3C90 : STA $7EC702+!POS_HEARTS
+	LDA.w SA1IRAM.CopyOf_7EF36D : AND #$00FF : LSR #3 : JSL hex_to_dec
+	LDA.b SA1IRAM.SCRATCH+2 : ORA #$3C90 : STA.w SA1HUD+$000+!POS_HEARTS
+	LDA.b SA1IRAM.SCRATCH+4 : ORA #$3C90 : STA.w SA1HUD+$002+!POS_HEARTS
 
 	; Quarters
-	LDA !ram_equipment_curhp : AND #$0007 : ORA #$3490 : STA $7EC704+!POS_HEARTS
+	LDA.w SA1IRAM.CopyOf_7EF36D : AND #$0007 : ORA #$3490 : STA.w SA1HUD+$004+!POS_HEARTS
 
 	; Heart lag spinner
-	LDA $1A : AND #$000C
+	LDA.w SA1IRAM.CopyOf_1A : AND #$000C
 	XBA : ASL #4
 	ORA #$253F
 	TAY
@@ -274,20 +145,20 @@ hud_draw_hearts:
 	LDA #$0101 : STA !do_heart_lag
 
 	; Container
-	LDA !ram_equipment_maxhp : AND #$00FF : LSR #3 : JSL hex_to_dec
+	LDA.w SA1IRAM.CopyOf_7EF36C : AND #$00FF : LSR #3 : JSL hex_to_dec
 
-	LDA !ram_hex2dec_second_digit : ORA #$3C90 : STA $7EC700+!POS_CONTAINERS
-	LDA !ram_hex2dec_third_digit : ORA #$3C90 : STA $7EC702+!POS_CONTAINERS
+	LDA.b SA1IRAM.SCRATCH+2 : ORA #$3C90 : STA.w SA1HUD+$000+!POS_CONTAINERS
+	LDA.b SA1IRAM.SCRATCH+4 : ORA #$3C90 : STA.w SA1HUD+$002+!POS_CONTAINERS
 
 	RTS
 
 hud_draw_enemy_hp:
 	; Assumes: I=16
 	; Draw over Enemy Heart stuff in case theres no enemies
-	LDA #!EMPTY : STA !POS_MEM_ENEMY_HEART_GFX
-	STA $7EC700+!POS_ENEMY_HEARTS
-	STA $7EC702+!POS_ENEMY_HEARTS
-	STA $7EC704+!POS_ENEMY_HEARTS
+	LDA #!EMPTY : STA.w !POS_MEM_ENEMY_HEART_GFX
+	STA.w SA1HUD+$000+!POS_ENEMY_HEARTS
+	STA.w SA1HUD+$002+!POS_ENEMY_HEARTS
+	STA.w SA1HUD+$004+!POS_ENEMY_HEARTS
 
 	SEP #$30
 	LDX #$FF
@@ -308,46 +179,3 @@ hud_draw_enemy_hp:
 
 .end
 --	RTS
-
-hud_draw_misslots:
-
-	; Search index / EG (03A4)
-	REP #$30
-	LDX.w #$00C8
-	LDA $03C4 : LSR #4 : AND #$000F : ORA #$3010 : STA $7EC708, X
-	LDA $03C4 : AND #$000F : ORA #$3010 : STA $7EC70A, X
-
-	LDX.w #$00CC
-	LDA $03A4 : LSR #4 : AND #$000F : ORA #$3810 : STA $7EC708, X
-	LDA $03A4 : AND #$000F : ORA #$3810 : STA $7EC70A, X
-
-
-	; Slots
-	LDX.w #$0102
-	LDY.w #$0000
-	LDA #$3C10 : STA !lowram_draw_tmp
-
-.loop
-	LDA $0C4A, Y : LSR #4 : AND #$000F : ORA !lowram_draw_tmp : STA $7EC708, X
-	LDA $0C4A, Y : AND #$000F : ORA !lowram_draw_tmp : STA $7EC70A, X
-	INX #4
-
-	INY
-	CPY.w #$0005 : BNE .dont_update_colors
-	LDA #$2010 : STA !lowram_draw_tmp
-	; LDX.w #$182
-
-.dont_update_colors
-	CPY.w #$000A : BNE .loop
-
-	; Hook timer
-	LDX.w #$00D0
-	LDY.w #$0000
-
-.loop_2
-	LDA $0C5E, Y : LSR #4 : AND #$000F : ORA #$3410 : STA $7EC708, X
-	LDA $0C5E, Y : AND #$000F : ORA #$3410 : STA $7EC70A, X
-	INX #4
-	INY : CPY.w #$0004 : BNE .loop_2
-
-	RTS

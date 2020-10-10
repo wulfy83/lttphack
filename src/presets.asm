@@ -587,7 +587,7 @@ preset_reset_counters:
 	STA !ram_lanmola_cycles
 	%a8()
 	STA !ram_lanmola_cycles+2
-	LDA #$41 : STA !timer_allowed
+	LDA #$41 : STA SA1IRAM.TIMER_FLAG
 	RTS
 
 

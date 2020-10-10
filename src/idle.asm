@@ -34,7 +34,7 @@ pullpc
 macro inc_idle()
 	REP #$21
 	SED
-	LDA !idle_frames : ADC #$0001 : STA !idle_frames
+	LDA SA1IRAM.ROOM_TIME_IDLE : ADC #$0001 : STA SA1IRAM.ROOM_TIME_IDLE
 	CLD
 	SEP #$20
 endmacro

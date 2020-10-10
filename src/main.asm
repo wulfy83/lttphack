@@ -1,4 +1,7 @@
-lorom
+math pri on
+
+sa1rom
+
 
 !FEATURE_HUD ?= 1
 !FEATURE_SD2SNES ?= 1
@@ -6,8 +9,10 @@ lorom
 
 incsrc defines.asm
 incsrc hexedits.asm
+incsrc registers.asm
 
-org $A08000
+org $208000
+incsrc sa1hooks.asm
 incsrc gamemode.asm
 incsrc nmi.asm
 incsrc timers.asm
@@ -17,10 +22,10 @@ if !FEATURE_HUD
 	incsrc hud.asm
 endif
 
-org $A28000
+org $228000
 incsrc tiles.asm
 
-org $A38000
+org $238000
 incsrc init.asm
 incsrc rng.asm
 incsrc misc.asm
@@ -28,51 +33,42 @@ incsrc idle.asm
 incsrc glitchedwindow.asm
 incsrc ancillawindow.asm
 
-org $A48000
+org $248000
 incsrc custom_menu.asm
 print "Custom menu size: ", pc
 
-org $A68000
+org $268000
 incsrc presets.asm
 
-org $A78000
+org $278000
 incsrc poverty_states.asm
 
-org $A88000
+org $288000
 incsrc music.asm
 
-org $A98000
+org $298000
 incsrc movie.asm
 
 ; ---- data ----
 
-org $B08000
+org $308000
 incsrc preset_data_nmg.asm
 
-org $B18000
+org $318000
 incsrc preset_data_hundo.asm
 
-org $B28000
+org $328000
 incsrc preset_data_lowleg.asm
 
-org $B38000
+org $338000
 incsrc preset_data_ad.asm
 
-org $B48000
+org $348000
 incsrc preset_data_anyrmg.asm
 incsrc preset_data_ad2020.asm
 
-org $B58000
+org $358000
 incsrc preset_data_lownmg.asm
-
-org !SPC_DATA_OVERWORLD
-incbin ../resources/spc_overworld.bin
-
-org !SPC_DATA_UNDERWORLD
-incbin ../resources/spc_underworld.bin
-
-org !SPC_DATA_CREDITS
-incbin ../resources/spc_credits.bin
 
 ;========================================================================
 ; LEAVE THIS HERE
