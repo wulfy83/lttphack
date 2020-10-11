@@ -115,7 +115,7 @@ incsrc cm_presets_lowleg.asm
 incsrc cm_presets_ad.asm
 incsrc cm_presets_anyrmg.asm
 
-org $A58000
+org $258000
 
 incsrc cm_presets_lownmg.asm
 incsrc cm_presets_ad2020.asm

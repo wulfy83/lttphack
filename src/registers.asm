@@ -1177,3 +1177,83 @@ HDMA6LINECOUNT = $00436A
 HDMA7LINECOUNT = $00437A
 
 ;==============================================================================
+;==============================================================================
+; SA-1 REGISTERS
+;==============================================================================
+;==============================================================================
+; $2200 w1 S-CPU
+; iwrndcba
+; i - fire IRQ to SA-1 from S-CPU (0: nothing | 1: IRQ)
+; w - SA-1 status (0: ready | 1: wait)
+; r - fire RESET to SA-1 (0: nothing | 1: RESET)
+; n - fire NMI to SA-1 from S-CPU (0: nothing | 1: NMI)
+; a - message 0 from S-CPU
+; b - message 1 from S-CPU
+; c - message 2 from S-CPU
+; d - message 3 from S-CPU
+SA1_CCNT = $002200
+SA1_CONTROL = $002200
+
+; $2201 w1 S-CPU
+; i.c.....
+; i - IRQ enable from SA-1 (0: disabled | 1: enabled)
+; c - IRQ enable from character conversion DMA  (0: disabled | 1: enabled)
+SA1_SIE = $002201
+SA1_IRQENABLES = $002201
+
+; $2202 w1 S-CPU
+; i.c.....
+; i - clear IRQ from SA-1 (0: do nothing | 1: clear)
+; c - clear IRQ from character conversion DMA (0: do nothing | 1: clear)
+SA1_SIC = $002202
+SA1_SNES_INT_CLEAR = $002202
+
+; $2203 w1 S-CPU
+; $2204 w1 S-CPU
+;   CRVH     CRVL
+; aaaaaaaa aaaaaaaa
+; a - SA-1 RESET vector address in bank00
+SA1_CRV = $2203
+SA1_CRVL = $2203
+SA1_CRVH = $2204
+SA1_RESET_VECTOR = $2203
+SA1_RESET_VECTOR_L = $2203
+SA1_RESET_VECTOR_H = $2204
+
+; $2205 w1 S-CPU
+; $2206 w1 S-CPU
+;   CNVH     CNVL
+; aaaaaaaa aaaaaaaa
+; a - SA-1 NMI vector address in bank00
+SA1_CNV = $2205
+SA1_CNVL = $2205
+SA1_CNVH = $2206
+SA1_NMI_VECTOR = $2205
+SA1_NMI_VECTOR_L = $2205
+SA1_NMI_VECTOR_H = $2206
+
+; $2207 w1 S-CPU
+; $2208 w1 S-CPU
+;   CIVH     CIVL
+; aaaaaaaa aaaaaaaa
+; a - SA-1 IRQ vector address in bank00
+SA1_CIV = $2207
+SA1_CIVL = $2207
+SA1_CIVH = $2208
+SA1_IRQ_VECTOR = $2207
+SA1_IRQ_VECTOR_L = $2207
+SA1_IRQ_VECTOR_H = $2208
+
+; $2209 w1 SA-1
+; is.mdcba
+; i - fire IRQ to S-CPU from SA-1 (0: nothing | 1: IRQ)
+; s - IRQ vector source for S-CPU (0: game ROM | 1: register SIV)
+; n - NMI vector source for S-CPU (0: game ROM | 1: register SNV)
+; a - message 0 from SA-1
+; b - message 1 from SA-1
+; c - message 2 from SA-1
+; d - message 3 from SA-1
+SA1_SCNT = $002209
+SA1_SCPU_INTERRUPTS = $002209
+
+; 

@@ -27,7 +27,7 @@ org $00841E
 
 	STA $420B
 
-	;JSL CacheSA1Stuff
+	JSL CacheSA1Stuff
 
 	SEP #$30
 	RTS

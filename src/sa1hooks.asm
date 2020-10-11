@@ -103,6 +103,7 @@ struct SA1IRAM $003000
 	.CopyOf_0B08: skip 1
 	.CopyOf_0B09: skip 1
 
+	.CopyOf_7EC011: skip 1
 	.CopyOf_7EF36C: skip 1
 	.CopyOf_7EF36D: skip 1
 
@@ -175,7 +176,18 @@ InitSA1:
 	LDA.w #SA1IRQ00
 	STA.w $2207
 
+	LDA.w #$8180
+	STA $2220
+	STA $2222
+
 	SEP #$20
+	LDA #$80
+	STA $2226
+
+	STZ $2228
+	LDA #$FF
+	STA $2229
+
 	STZ $2200
 
 	SEP #$30
@@ -219,33 +231,55 @@ CacheSA1Stuff:
 	LDA.w $040C : STA.w SA1IRAM.CopyOf_040C
 	LDX.w $0B08 : STX.w SA1IRAM.CopyOf_0B08
 
+	LDA.w $7EC011 : STA.w SA1IRAM.CopyOf_7EC011
 	LDA.w $7EF36C : STA.w SA1IRAM.CopyOf_7EF36C
 	LDA.w $7EF36D : STA.w SA1IRAM.CopyOf_7EF36D
+
+	LDA.b #$41
+	STA.w $2200
 	RTL
 
 SA1Reset:
 	SEI
 	CLC
 	XCE
+
 	REP #$38
+
 	LDA #$0000
-	PLD
+	TCD
 	LDA #$37FF
 	TCS
 
 	PHK
 	PLB
 
-	LDA.w #$8180
-	STA $2220
-	STA $2222
+	SEP #$30
+	STZ $2230
+
+	LDA #$80
+	STZ $2225
+	STA $2227
+
+	LDA #$FF
+	STA $222A
+
+	LDA #$B0
+	STA $220A
+	STA $220B
+
+	REP #$20
 
 	CLI
+	SEP #$30
+	LDA.b #$10
+	STA.w $220A
 
---	WAI
+--	
 	BRA --
 
 SA1NMI:
+print pc
 	SEI
 
 	REP #$30
@@ -479,7 +513,7 @@ gamemode_shortcuts:
 
 
 check_mode_safety:
-	LDA $10 : CMP #$0C : BNE .notCustomMenu
+	LDA.w SA1IRAM.CopyOf_10 : CMP #$0C : BNE .notCustomMenu
 	CLV ; clear overflow
 	LDA #$01 ; make sure N/Z flags are not set
 .neverSafe
@@ -491,19 +525,19 @@ check_mode_safety:
 	LDA Module_safety, X
 	BEQ .neverSafe ; staying in 16 bit A is fine here
 
-	STA $00
-	LDY $11 ; get submodule
+	STA.b SA1IRAM.SCRATCH
+	LDY.w SA1IRAM.CopyOf_11 ; get submodule
 
 	%a8()
-	LDA ($00), Y ; get safety level of submodule
-	STA $00 ; put it in $00
-	LDA $7EC011 : BEQ .safe ; check mosaics
+	LDA.b (SA1IRAM.SCRATCH), Y ; get safety level of submodule
+	STA.b SA1IRAM.SCRATCH ; put it in $00
+	LDA.w SA1IRAM.CopyOf_7EC011 : BEQ .safe ; check mosaics
 
 	LDA.b #!SOME_SAFE ; not safe
 	RTS
 
 .safe
-	LDA $00 : BIT $00 ; bit test to set NVZ
+	LDA.b SA1IRAM.SCRATCH : BIT.b SA1IRAM.SCRATCH ; bit test to set NVZ
 	RTS
 
 Module_safety:
@@ -572,7 +606,7 @@ Module_safety:
 
 
 SA1IRQ:
-
+	RTI
 
 
 
