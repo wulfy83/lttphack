@@ -118,7 +118,7 @@ nmi_expand:
 	LDA $AB : STA $212C
 
 	SEP #$30
-	LDA #$42
+	LDA #$10
 	STA.w $2200
 	STZ.w !lowram_last_frame_did_saveload
 	RTL

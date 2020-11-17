@@ -1,3 +1,5 @@
+; TODO check write protect properties for SA1 iram
+
 math pri on
 
 sa1rom
@@ -231,11 +233,11 @@ CacheSA1Stuff:
 	LDA.w $040C : STA.w SA1IRAM.CopyOf_040C
 	LDX.w $0B08 : STX.w SA1IRAM.CopyOf_0B08
 
-	LDA.w $7EC011 : STA.w SA1IRAM.CopyOf_7EC011
-	LDA.w $7EF36C : STA.w SA1IRAM.CopyOf_7EF36C
-	LDA.w $7EF36D : STA.w SA1IRAM.CopyOf_7EF36D
+	LDA.l $7EC011 : STA.w SA1IRAM.CopyOf_7EC011
+	LDA.l $7EF36C : STA.w SA1IRAM.CopyOf_7EF36C
+	LDA.l $7EF36D : STA.w SA1IRAM.CopyOf_7EF36D
 
-	LDA.b #$41
+	LDA.b #$81
 	STA.w $2200
 	RTL
 
@@ -272,16 +274,13 @@ SA1Reset:
 
 	CLI
 	SEP #$30
-	LDA.b #$10
+	LDA.b #$90
 	STA.w $220A
 
---	
-	BRA --
+--	BRA --
 
+; For timers
 SA1NMI:
-print pc
-	SEI
-
 	REP #$30
 	PHA
 	PHX
@@ -289,77 +288,10 @@ print pc
 	PHD
 	PHB
 
-	LDA.w #$3000
-	TCD
-
-	SEP #$30
-	PHK
-	PLB
-
-
-	LDA.w $2301 ; get NMI type
-	AND.b #$03
-	ASL
-	TAX
-
-	JSR (.nmi_type, X)
-
-	REP #$30
-	PLB
-	PLD
-	PLY
-	PLX
-	PLA
-	RTI
-
-.nmi_nothing
-	RTS
-
-.nmi_type
-	dw .nmi_nothing
-	dw .nmi_shortcuts
-	dw .nmi_timers
-	dw .nmi_hud
-
-.nmi_hud
-	JSL draw_counters
-	JSR hud_draw_hearts
-	RTS
-
-.nmi_shortcuts
-	STZ.w SA1IRAM.SHORTCUT_USED+0
-	STZ.w SA1IRAM.SHORTCUT_USED+1
-	JSR check_mode_safety
-
-	BEQ .safeForNone
-	BVS .safeForAll
-	BMI .safeForSome
-
-.pracMenu
-	JSR gamemode_shortcuts_practiceMenu
-	BRA ++
-
-.safeForSome
-.safeForAll
-	JSR gamemode_shortcuts_everything ; overflow flag checks the presets in here
-	BCS .skip
-
-.safeForNone
-
-; SA1IRAM.TIMER_FLAG bitfield:
-; 7 - timers have been set and are awaiing a hud update
-; 6 - reset timer
-; 5
-; 4
-; 3
-; 2 - Update without blocking further updates
-; 1 - One update then no more
-; 0 - 
-.skip
-++	RTS
-
-.nmi_timers
 	SEP #$28 ; a=8, BCD=on
+	LDA.b #$10
+	STA.w $220B
+
 	;LDA !lowram_last_frame_did_saveload : BEQ .update_counters
 	;JMP .dont_update_counters
 
@@ -449,7 +381,96 @@ print pc
 	LDA #$80 : STA.w SA1IRAM.TIMER_FLAG
 
 .donothing
+++	REP #$30
+	PLB
+	PLD
+	PLY
+	PLX
+	PLA
+	RTI
+
+; For everything not a timer
+SA1IRQ:
+	SEI
+
+	REP #$30
+	PHA
+	PHX
+	PHY
+	PHD
+	PHB
+
+	SEP #$30
+
+
+	LDA.b #SA1NMI>>16
+	PHA
+	PLB
+
+	LDA.b #$80
+	STA.w $220B
+
+	LDA.w $2301 ; get IRQ type
+	AND.b #$03
+	ASL
+	TAX
+
+	JSR (.irq_type, X)
+
+	REP #$30
+	PLB
+	PLD
+	PLY
+	PLX
+	PLA
+	RTI
+
+.irq_nothing
+	RTS
+
+.irq_type
+	dw .irq_nothing
+	dw .irq_shortcuts
+	dw .irq_nothing
+	dw .irq_hud
+
+.irq_hud
+	JSL draw_counters
+	JSR hud_draw_hearts
+	RTS
+
+.irq_shortcuts
+	STZ.w SA1IRAM.SHORTCUT_USED+0
+	STZ.w SA1IRAM.SHORTCUT_USED+1
+	JSR check_mode_safety
+
+	BEQ .safeForNone
+	BVS .safeForAll
+	BMI .safeForSome
+
+.pracMenu
+	JSR gamemode_shortcuts_practiceMenu
+	BRA ++
+
+.safeForSome
+.safeForAll
+	JSR gamemode_shortcuts_everything ; overflow flag checks the presets in here
+	BCS .skip
+
+.safeForNone
+
+; SA1IRAM.TIMER_FLAG bitfield:
+; 7 - timers have been set and are awaiing a hud update
+; 6 - reset timer
+; 5
+; 4
+; 3
+; 2 - Update without blocking further updates
+; 1 - One update then no more
+; 0 - 
+.skip
 ++	RTS
+
 
 macro test_shortcut(shortcut, func, leavecarry, dofunc)
 +	LDA.w !ram_ctrl1 : AND <shortcut> : CMP <shortcut> : BNE +
@@ -599,14 +620,7 @@ Module_safety:
 		db !ALL_SAFE, !ALL_SAFE, !ALL_SAFE, !NONE_SAFE ; 0x00, 0x01, 0x02, 0x03
 		db !ALL_SAFE, !ALL_SAFE, !ALL_SAFE, !NONE_SAFE ; 0x04, 0x05, 0x06, 0x07
 		db !ALL_SAFE, !NONE_SAFE, !ALL_SAFE, !ALL_SAFE ; 0x08, 0x09, 0x0A, 0x0B
-	
 
-
-
-
-
-SA1IRQ:
-	RTI
 
 
 

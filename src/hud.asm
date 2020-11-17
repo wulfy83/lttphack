@@ -9,7 +9,10 @@ pushpc
 ; $0DFA8E: E2 30  SEP #$30
 ; $0DFA90: E6 16  INC $16
 org $0DFAAE
-	JSL hud_template_hook
+	JSL fire_hud_irq
+
+org $0DDD24
+	JSL fire_hud_irq
 
 org $0DFD0A
 	JSL HUDCanUpdate
@@ -23,13 +26,15 @@ HUDCanUpdate:
 	STA.l SA1HUD+$024
 ++	SEP #$30
 
-	
+	LDA.b #$83
+	STA.w $2200
 	RTL
 
 ; Hud Template Hook
-hud_template_hook:
-	; Makes sure to redraw hearts.
-	%a8()
+fire_hud_irq:
+	SEP #$30
+	LDA.b #$83
+	STA.w $2200
 	INC $16
 	RTL
 

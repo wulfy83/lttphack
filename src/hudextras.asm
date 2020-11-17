@@ -422,6 +422,7 @@ hud_draw_input_display:
 	AND #$0003
 	ASL : TAX
 	LDA.w SA1IRAM.CONTROLLER_1
+	XBA
 
 	JSR (.options, X)
 

@@ -22,7 +22,7 @@ gamemode_hook:
 	RTL
 
 .askforshortcut
-	LDA #$41 : STA.l $002200 ; SA-1 NMI, bit 1 for preparing shortcut checks
+	LDA #$81 : STA.l $002200 ; SA-1 NMI, bit 1 for preparing shortcut checks
 	JML $0080B5 ; GameMode
 
 

@@ -2,7 +2,7 @@
 SA1HUD = $003400
 SA1SRAM = $400000
 
-!SRAM_VERSION = $0025
+!SRAM_VERSION = $0027
 
 !menu_end = #$0000
 !list_end = #$FF
@@ -107,11 +107,11 @@ endmacro
 ; Account for different SRAM layouts
 
 if !FEATURE_SD2SNES
-	!offset = $410000
+	!offset = $402000
 	!statename = "State"
 	!statename2 = "State"
 else
-	!offset = $410000
+	!offset = $402000
 	!statename = "Preset"
 	!statename2 = "saved preset"
 endif
