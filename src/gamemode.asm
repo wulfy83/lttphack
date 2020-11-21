@@ -83,7 +83,7 @@ gamemode_replay_last_movie:
 ; Save state
 gamemode_savestate:
 .save
-if !FEATURE_SD2SNES
+;if !FEATURE_SD2SNES
 	%a8()
 	%i16()
 	; Remember which song bank was loaded before load stating
@@ -109,22 +109,6 @@ if !FEATURE_SD2SNES
 	LDA #$39 : STA $4311
 	JMP end
 
-else
-
-	; make sure we're not on a screen transition or falling down
-	LDA $0126 : AND #$00FF : ORA $0410 : BNE .skip
-	LDA $5B : AND #$00FF : CMP #$0002 : BCS .skip
-	%a8()
-	JSL save_preset_data
-	%ai8()
-	SEC : RTS
-
-.skip
-	%ai8()
-	CLC : RTS
-
-endif
-
 .load
 	%a8()
 	%i16()
@@ -138,7 +122,7 @@ endif
 	LDA $0FA1 : STA !ram_rerandomize_accumulator
 
 .dont_rerandomize_1
-if !FEATURE_SD2SNES
+;if !FEATURE_SD2SNES
 
 	%a8()
 	; Mute music
@@ -190,30 +174,6 @@ if !FEATURE_SD2SNES
 .nofixedframerule
 + %a8()
 	JMP end
-
-else
-	%a8()
-	; Loading during text mode makes the text stay or the item menu to bug
-	LDA $10 : CMP #$0E : BEQ .no_load
-
-	LDA !ram_can_load_pss : BEQ .no_load
-
-	%a16()
-	LDA #!sram_pss_offset+1 : STA !ram_preset_destination
-	%a8()
-	LDA !sram_pss_offset : STA !ram_preset_type
-	LDA #12 : STA $10
-	LDA #05 : STA $11
-	LDA #$01 : STA !lowram_is_poverty_load
-
-	%ai8()
-	SEC : RTS
-
-.no_load:
-	%ai8()
-	CLC : RTS
-
-endif
 
 ppuoff:
 	LDA #$80 : STA $2100

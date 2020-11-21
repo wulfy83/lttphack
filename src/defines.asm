@@ -106,16 +106,7 @@ endmacro
 
 ; Account for different SRAM layouts
 
-if !FEATURE_SD2SNES
-	!offset = $402000
-	!statename = "State"
-	!statename2 = "State"
-else
-	!offset = $402000
-	!statename = "Preset"
-	!statename2 = "saved preset"
-endif
-
+!offset = $402000
 !offsetinc = 0
 !OFF = 0
 !ON = 1
@@ -366,15 +357,15 @@ endmacro
 !ram_movie = $7F8020
 %def_wramA("movie_hud", $40) ; [0x40]
 
-if !FEATURE_SD2SNES
-	!sram_movies = $771000
-	!sram_movie_data = $771100
-	!sram_movie_data_size = $6F00
-else
-	!sram_movies = $703000
-	!sram_movie_data = $703200
-	!sram_movie_data_size = $4E00
-endif
+;if !FEATURE_SD2SNES
+;	!sram_movies = $771000
+;	!sram_movie_data = $771100
+;	!sram_movie_data_size = $6F00
+;else
+;	!sram_movies = $703000
+;	!sram_movie_data = $703200
+;	!sram_movie_data_size = $4E00
+;endif
 
 !sram_movies_length = !sram_movies+0
 !sram_movies_input_length = !sram_movies+2

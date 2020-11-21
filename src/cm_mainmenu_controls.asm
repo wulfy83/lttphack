@@ -29,10 +29,10 @@ cm_ctrl_load_last_preset:
 ;    %cm_ctrl_shortcut("Replay last movie", !ram_ctrl_replay_last_movie)
 
 cm_ctrl_save_state:
-	%cm_ctrl_shortcut("Save !statename", !ram_ctrl_save_state)
+	%cm_ctrl_shortcut("Save state", !ram_ctrl_save_state)
 
 cm_ctrl_load_state:
-	%cm_ctrl_shortcut("Load !statename2", !ram_ctrl_load_state)
+	%cm_ctrl_shortcut("Load state", !ram_ctrl_load_state)
 
 cm_ctrl_reset_segment_timer:
 	%cm_ctrl_shortcut("Reset seg timer", !ram_ctrl_reset_segment_timer)

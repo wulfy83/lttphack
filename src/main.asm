@@ -2,9 +2,6 @@ math pri on
 
 sa1rom
 
-
-!FEATURE_HUD ?= 1
-!FEATURE_SD2SNES ?= 1
 !VERSION ?= "ALEPH 1"
 
 incsrc defines.asm

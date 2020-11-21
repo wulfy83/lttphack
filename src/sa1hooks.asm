@@ -472,7 +472,6 @@ macro test_shortcut(shortcut, func, leavecarry, dofunc)
 	RTS
 endmacro
 
-!notVerySafe = select(!FEATURE_SD2SNES, .SD2SNESBranch, .OtherBranch)
 gamemode_shortcuts:
 .practiceMenu
 	LDA.w SA1IRAM.CopyOf_B0
@@ -485,7 +484,7 @@ gamemode_shortcuts:
 	LDA.w SA1IRAM.CONTROLLER_1_FILTERED : ORA.w SA1IRAM.CONTROLLER_1_FILTERED+1 : BEQ -
 	TYA
 	%a16()
-	BMI !notVerySafe
+	BMI .SD2SNESBranch
 
 	%test_shortcut(!pracmenu_shortcut, gamemode_custom_menu, 1, 0)
 
