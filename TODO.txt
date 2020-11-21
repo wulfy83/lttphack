@@ -1,11 +1,19 @@
 Big stuff
 ----------
 
+- $0219 might help reduce lag for some options?
+
+- full 4 nibble coordinates option
+
+- Z coordinate option?
+
+- Add options for what to show with ancilla watch?
+
+- Remove duck from preset things
+
 - Clear BG3 thing for last resort fix
 
 - Music always mutes
-
-- adjustable search index
 
 - fill everything in menu
 
@@ -22,8 +30,6 @@ Big stuff
 - Mashing & Pumping mini-game
 
 - Rewrite presets
-
-- Lua script in bizhawk for lag
 
 - IRQ causes lag when preset loaded from crystal cutscene (should be an easy fix)
 
@@ -77,8 +83,6 @@ Low priority
 - Make the menu redraw less often, just for practicality's sake and less disruptive fblank
 
 - TT palette transparency problems: JSL.l $02FD68 sets to not transparent, find similar routine; it's in bank0E in US though
-
-- first swamp door in hundo preset
 
 ======== MINIGAMES TODO ========
 

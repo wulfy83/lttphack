@@ -13,12 +13,15 @@ org $00841E
 
 	; first half
 	LDX #$8001 : STX $4300
+
+	LDA.b #OAM_Cleaner>>16 : STA $4304
+	TXA ; give A 0x01
+
 	LDX #$0801 : STX $2181 : STZ $2183
 
 	LDX.w #OAM_Cleaner : STX $4302
-	LDA.b #OAM_Cleaner>>16 : STA $4304
 	LDX #$0080 : STX $4305
-	LDA #$01 : STA $420B
+	STA $420B
 
 	; second half
 	LDX.w #OAM_Cleaner : STX $4302
@@ -29,13 +32,11 @@ org $00841E
 
 	JSL CacheSA1Stuff
 
+	LDX.w #$1801
+	STX.w $4300
 	SEP #$30
 	RTS
 warnpc $008489
-
-; NMI
-;
-; Expands the NMI (code run at the end of each frame)
 
 ; NMI hook
 org $0080D5

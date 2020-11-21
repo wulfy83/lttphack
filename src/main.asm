@@ -18,9 +18,7 @@ incsrc nmi.asm
 incsrc timers.asm
 incsrc hudextras.asm
 
-if !FEATURE_HUD
-	incsrc hud.asm
-endif
+incsrc hud.asm
 
 org $228000
 incsrc tiles.asm

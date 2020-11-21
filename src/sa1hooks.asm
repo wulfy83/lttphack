@@ -1,5 +1,3 @@
-; TODO check write protect properties for SA1 iram
-
 math pri on
 
 sa1rom
@@ -38,6 +36,7 @@ struct SA1IRAM $003000
 	.CopyOf_A8: skip 1
 	.CopyOf_A9: skip 1
 	.CopyOf_AA: skip 1
+	.CopyOf_B0: skip 1
 	.CopyOf_E2: skip 1
 	.CopyOf_E3: skip 1
 	.CopyOf_E8: skip 1
@@ -137,17 +136,7 @@ struct SA1IRAM $003000
 	.SHORTCUT_USED: skip 2
 endstruct
 
-
-
-
-
-
-
-
-
-
-
-
+;==============================================================================
 
 org $00F7E1
 SA1Reset00:
@@ -179,18 +168,18 @@ InitSA1:
 	STA.w $2207
 
 	LDA.w #$8180
-	STA $2220
-	STA $2222
+	STA.w $2220
+	STA.w $2222
 
 	SEP #$20
 	LDA #$80
-	STA $2226
+	STA.w $2226
 
-	STZ $2228
 	LDA #$FF
-	STA $2229
+	STA.w $2229
+	STZ.w $2228
 
-	STZ $2200
+	STZ.w $2200
 
 	SEP #$30
 	LDA.b #$81
@@ -215,6 +204,7 @@ CacheSA1Stuff:
 	LDX.w $A6 : STX.w SA1IRAM.CopyOf_A6
 	LDX.w $A8 : STX.w SA1IRAM.CopyOf_A8
 	LDA.w $AA : STA.w SA1IRAM.CopyOf_AA
+	LDA.w $B0 : STA.w SA1IRAM.CopyOf_B0
 	LDX.w $E2 : STX.w SA1IRAM.CopyOf_E2
 	LDX.w $E8 : STX.w SA1IRAM.CopyOf_E8
 	LDA.w $EE : STA.w SA1IRAM.CopyOf_EE
@@ -257,25 +247,22 @@ SA1Reset:
 	PLB
 
 	SEP #$30
-	STZ $2230
+	STZ.w $2230
 
 	LDA #$80
-	STZ $2225
-	STA $2227
+	STZ.w $2225
+	STA.w $2227
 
 	LDA #$FF
-	STA $222A
+	STA.w $222A
 
-	LDA #$B0
-	STA $220A
-	STA $220B
+	LDA #$F0
+	STA.w $220B
 
-	REP #$20
-
-	CLI
-	SEP #$30
 	LDA.b #$90
 	STA.w $220A
+
+	CLI
 
 --	BRA --
 
@@ -288,7 +275,7 @@ SA1NMI:
 	PHD
 	PHB
 
-	SEP #$28 ; a=8, BCD=on
+	SEP #$2C ; a=8, BCD=on, SEI
 	LDA.b #$10
 	STA.w $220B
 
@@ -402,13 +389,12 @@ SA1IRQ:
 
 	SEP #$30
 
-
-	LDA.b #SA1NMI>>16
-	PHA
-	PLB
-
 	LDA.b #$80
 	STA.w $220B
+
+	LDA.b #SA1IRQ>>16
+	PHA
+	PLB
 
 	LDA.w $2301 ; get IRQ type
 	AND.b #$03
@@ -440,8 +426,6 @@ SA1IRQ:
 	RTS
 
 .irq_shortcuts
-	STZ.w SA1IRAM.SHORTCUT_USED+0
-	STZ.w SA1IRAM.SHORTCUT_USED+1
 	JSR check_mode_safety
 
 	BEQ .safeForNone
@@ -473,8 +457,8 @@ SA1IRQ:
 
 
 macro test_shortcut(shortcut, func, leavecarry, dofunc)
-+	LDA.w !ram_ctrl1 : AND <shortcut> : CMP <shortcut> : BNE +
-	AND.l !ram_ctrl1_filtered : BEQ +
++	LDA.w SA1IRAM.CONTROLLER_1 : AND.l <shortcut> : CMP.l <shortcut> : BNE +
+	AND.w SA1IRAM.CONTROLLER_1_FILTERED : BEQ +
 	if equal(<leavecarry>, 0)
 		CLC
 	endif
@@ -491,7 +475,7 @@ endmacro
 !notVerySafe = select(!FEATURE_SD2SNES, .SD2SNESBranch, .OtherBranch)
 gamemode_shortcuts:
 .practiceMenu
-	LDA $B0
+	LDA.w SA1IRAM.CopyOf_B0
 	%a16() ; this code is copyright Lui 2020
 	BEQ !notVerySafe
 -	CLC : RTS

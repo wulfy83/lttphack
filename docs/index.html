@@ -57,11 +57,11 @@
 						</div>
 					</div>
 					<p>
-						<strong>SD2SNES</strong> is the only SNES system that supports 256kb SRAM. This makes it possible to have in-game save states. These will not work on emulators, Everdrive etc.
+						<strong>SA-1</strong> should be used by any system that can properly emulate SA-1 
 					</p>
 
 					<p>
-						<strong>VanillaHUD</strong> variants use the HUD from the original game. Counters are turned off by default, but can be turned on if you wish. They will be drawn over some of the hearts, though.
+						<strong>v13.5</strong> is a snapshot of the pre-SA-1 practice hack. It will no longer be updated, as it only serves as a compatibility fallback for Everdrive users.
 					</p>
 
 					<!--<p>
@@ -88,15 +88,10 @@
 						<li>Check out <a href="https://strats.alttp.run">ALttP Room Time Leaderboards</a> for optimal room times.</li>
 					</ul>
 
-					<h4>Cycle Control</h4>
-					<p>Cycle Control is a protocol used for various options that are considered to be core features. This means that they are carefully coded to be extremely efficient and to always take up the same amount of CPU time, regardless of what they are doing each frame, or whether they are enabled or not. Features not under Cycle Control are not accounted for when lag adjustments are made to be in line with vanilla.</p>
+					<h4>SA-1</h4>
+					<p>The SA-1 is a coprocessor that can be used alongside the main SNES CPU. It can run code faster, but, more importantly, it can run at the same time as the SNES CPU without slowing it down. This allows the practice hack to handle certain features with minimal lag change from vanilla. Due to the limitations on memory access, not every feature can be handled lag-free on the SA-1.</p>
 
-					<p>Features part of Cycle Control will be marked with this badge: <sup class="cc-badge">CC</sup>.</p>
-					<h4 id="lagNotes">Notes about lag <a href="#lagNotes" class="headerLink">(link)</a></h4>
-					<ul>
-						<li>Lag is not exactly the same as original cart, but it tries to compensate for that.</li>
-						<li>Timers are not real time. Especially during transitions between the underworld&harr;overworld, it is possible, though rare, for frames, including lag frames, to go completely unaccounted for. Keep this in mind when comparing to emulator frame/lag counts and/or vanilla runs.</li>
-					</ul>
+					<p>Features that run on the SA-1 will be marked with this badge: <sup class="cc-badge">CC</sup>.</p>
 
 					<h4 id="IKnowAboutItAlready">Known issues <a href="#IKnowAboutItAlready" class="headerLink">(link)</a></h4>
 					<ul>
@@ -682,14 +677,12 @@
 						<dd><span class="snesButton snesR">R</span>+<span class="snesButton snesStart">Start</span> - Opens the practice hack menu. <strong class="lag"><b>NOTE:</b> this shortcut cannot be changed.</strong></dd>
 						<dt>Load last preset</dt>
 						<dd>Loads the last preset used from the preset menu.</dd>
-						<dt>Save preset</dt>
-						<dt>Save state <em class="SD2SNES">(SD2SNES only)</em></dt>
-						<dd>Saves current state of the game, similar to emulator savestates. Both custom presets and states operate the same, but the SD2SNES version is implemented differently and is more powerful.</dd>
-						<dt>Load saved preset</dt>
-						<dt>Load state <em class="SD2SNES">(SD2SNES only)</em></dt>
-						<dd>Loads custom savestate/preset, similar to emulator savestates. Both custom presets and states operate the same, but the SD2SNES version is implemented differently and is more powerful.</dd>
+						<dt>Save state</dt>
+						<dd>Saves current state of the game, similar to emulator savestates.</dd>
+						<dt>Load state</dt>
+						<dd>Loads custom savestate/preset, similar to emulator savestates.</dd>
 						<dt>Reset seg timer</dt>
-						<dd>Resets the segment timer, which is not automatic like room timer.</dd>
+						<dd>Resets the segment timer, which is not automatically reset like room timer.</dd>
 						<dt>Toggle OoB</dt>
 						<dd>Turns on <a href="#descOOB">out-of-bounds</a> mode.</dd>
 						<dt>Skip text</dt>
@@ -714,7 +707,7 @@
 								<dt>Graphical</dt>
 								<dd>Rectangle buttons arranged like a controller.</dd>
 								<dt>Classic</dt>
-								<dd>Original character display. About 50% laggier than graphical.</dd>
+								<dd>Original character display.</dd>
 							</dl>
 						</dd>
 						<dt>Room time<sup class="cc-badge">CC</sup></dt>
@@ -725,13 +718,13 @@
 						<dd>Animated spinning square that indicates there is heart lag present.</dd>
 						<dt>Idle frames<sup class="cc-badge">CC</sup></dt>
 						<dd>Count of frames with no relevant input, starting from the beginning of the last transition.</dd>
-						<dt>Segment time</dt>
+						<dt>Segment time<sup class="cc-badge">CC</sup></dt>
 						<dd>Time spent since the beginning of the last segment timer reset.</dd>
 						<dt>Coordinates<sup class="cc-badge">CC</sup></dt>
 						<dd>Absolute position of Link (X,Y)	</dd>
 						<dt>QW indicator<sup class="cc-badge">CC</sup></dt>
 						<dd>Displays an icon on the HUD when the current camera will produce a quickwarp.</dd>
-						<dt>RAM watch</dt>
+						<dt>RAM watch<sup class="cc-badge">CC</sup></dt>
 						<dd>
 							<dl class="subDefinition">
 								<dt>Subpixels</dt>
@@ -759,6 +752,8 @@
 						<dd>Shows a rough calculation of the amount of lag a frame has. The more the bar is filled, the closer a frame was to producing a lag frame. Lag from one frame does not affect the next, but trends in the lagometer can be used to gauge how laggy an area is.</dd>
 						<dt>Enemy HP</dt>
 						<dd>Shows the exact health of a single enemy. Attempts to find the most relevant enemy as you play. <strong class="lag"><b>WARNING:</b> this feature can be laggy.</strong></dd>
+						<dt>Vanilla HUD<sup class="cc-badge">CC</sup></dt>
+						<dd>Draws the vanilla heart pieces to screen before drawing counters.</dd>
 					</dl>
 
 					<h3 id="menuConfiguration">Configuration</h3>
@@ -806,6 +801,19 @@
 			<div class="row">
 				<div class="col-lg-8 mx-auto">
 					<h2>Changelog</h2>
+					<h3><a href="https://github.com/spannerisms/lttphack/releases/tag/14.0.0">v14.0.0</a> <span class="releaseDate"></span></h3>
+					<h4>FULL SA-1 SUPPORT</h4>
+					<p>This is the biggest and most defining of change of v14. From here on, the accessibility of the practice hack has been tightened a bit, now requiring decent SA-1 emulation. Fortunately, support is fairly widespread. Pretty much the only people left behind are Everdrive users, who will still be able to download v13.5.0 from this page; however, support for non-SA-1 versions will be discontinued.</p>
+					<p>The SA-1's on-board RAM allows every system to include large save files, so fully fledged savestates are now available to everyone, eliminating the need for a separate SDSNES version. And while we're at it, the vanilla HUD variants are being removed too.</p>
+
+					<ul>
+						<li>HUD extras:
+							<ul>
+								<li>Vanilla hearts for those who want it for whatever reason. I don't understand you guys, honestly. But, if you want it, this is where it is now.</li>
+							</ul>
+						</li>
+					</ul>
+
 					<h3><a href="https://github.com/spannerisms/lttphack/releases/tag/13.5.0">v13.5.0</a> <span class="releaseDate">5 October 2020</span></h3>
 					<ul>
 						<li>Lui cannot be stopped</li>

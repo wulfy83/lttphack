@@ -116,7 +116,7 @@ CM_MenuDown:
 CM_Active:
 	PHB
 	LDX !lowram_cm_stack_index
-	LDA !ram_cm_menu_bank_stack,x
+	LDA !ram_cm_menu_bank_stack, X
 	PHA
 	PLB
 
@@ -308,9 +308,9 @@ cm_get_pressed_button:
 	LDA #$0000
 
 .end
-	TAX
-	XBA
 	TAY
+	XBA
+	TAX
 	%ai8()
 	RTS
 

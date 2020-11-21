@@ -2,8 +2,6 @@
 ; Using macros instead of routines is stupid, yes
 ; but we really need to save as many cycles as we can
 
-!CURRENT_ROW = $0A
-
 !white = $3C10
 !blue = $2C10
 !yellow = $3410
@@ -186,12 +184,13 @@ macro update_counter_line()
 endmacro
 
 counter_line:
+print pc
 	dw $0200 ; to write to nowhere useful
-	dw 0<<6+$2E
-	dw 1<<6+$2E
-	dw 2<<6+$2E
-	dw 3<<6+$2E
-	dw 4<<6+$2E
+	dw (0<<6)+$2E
+	dw (1<<6)+$2E
+	dw (2<<6)+$2E
+	dw (3<<6)+$2E
+	dw (4<<6)+$2E
 
 hex_to_hex_lol: ; this exists purely to keep coords even
 

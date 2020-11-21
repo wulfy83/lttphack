@@ -18,6 +18,8 @@ gamemode_hook:
 	JMP.w (SA1IRAM.SHORTCUT_USED)
 
 .ret
+	REP #$20
+	STZ.w SA1IRAM.SHORTCUT_USED+0
 	PLB
 	RTL
 
@@ -517,10 +519,10 @@ gamemode_lagometer:
 
 	AND #$00FF : LSR : CLC : ADC #$0007 : AND #$FFF8 : TAX
 
-	LDA.l .mp_tilemap+0, X : ORA !lowram_draw_tmp : STA $7EC742
-	LDA.l .mp_tilemap+2, X : ORA !lowram_draw_tmp : STA $7EC782
-	LDA.l .mp_tilemap+4, X : ORA !lowram_draw_tmp : STA $7EC7C2
-	LDA.l .mp_tilemap+6, X : ORA !lowram_draw_tmp : STA $7EC802
+	LDA.l .mp_tilemap+0, X : ORA !lowram_draw_tmp : STA.w SA1HUD+$42
+	LDA.l .mp_tilemap+2, X : ORA !lowram_draw_tmp : STA.w SA1HUD+$82
+	LDA.l .mp_tilemap+4, X : ORA !lowram_draw_tmp : STA.w SA1HUD+$C2
+	LDA.l .mp_tilemap+6, X : ORA !lowram_draw_tmp : STA.w SA1HUD+$102
 
 	%ai8()
 	RTS

@@ -24,9 +24,9 @@ SA1SRAM = $400000
 !dg_buffer_r4 #= !dg_dma_buffer+(64*4)
 
 !NUMBER_OF_COUNTERS = 6
-!HUD_EXTRAS_BUFFER = $7ED000
-!POS_MEM_INPUT_DISPLAY_TOP #= !HUD_EXTRAS_BUFFER+((!NUMBER_OF_COUNTERS+1)*16)
-!POS_MEM_INPUT_DISPLAY_BOT #= !POS_MEM_INPUT_DISPLAY_TOP+12
+!HUD_EXTRAS_BUFFER = SA1HUD
+!POS_MEM_INPUT_DISPLAY_TOP = !HUD_EXTRAS_BUFFER+((!NUMBER_OF_COUNTERS+1)*16)
+!POS_MEM_INPUT_DISPLAY_BOT = !POS_MEM_INPUT_DISPLAY_TOP+12
 
 !EXTRAS_SIZE #= 12+(!NUMBER_OF_COUNTERS*16)
 
@@ -119,7 +119,6 @@ endif
 !offsetinc = 0
 !OFF = 0
 !ON = 1
-!HUDONLY = select(!FEATURE_HUD, !ON, !OFF)
 
 macro def_sram(name, default)
 	!ram_<name> #= !offset+!offsetinc
@@ -166,7 +165,7 @@ endmacro
 %def_perm_sram("preset_category", $0000)
 %def_perm_sram("hud_font", 0)
 %def_perm_sram("feature_music", !ON)
-%def_perm_sram("input_display", !HUDONLY)
+%def_perm_sram("input_display", !ON)
 
 ; Placeholders for future SRAM
 ; this way, future updates will end up in one of these
@@ -219,12 +218,12 @@ endmacro
 
 %def_sram("lagometer_toggle", !OFF)
 %def_sram("secondary_counter_type", !OFF)
-%def_sram("toggle_lanmola_cycles", !HUDONLY)
+%def_sram("toggle_lanmola_cycles", !ON)
 
-%def_sram("xy_toggle", !HUDONLY)
-%def_sram("counters_real", !HUDONLY)
-%def_sram("counters_lag", !HUDONLY)
-%def_sram("counters_idle", !HUDONLY)
+%def_sram("xy_toggle", !ON)
+%def_sram("counters_real", !ON)
+%def_sram("counters_lag", !ON)
+%def_sram("counters_idle", !ON)
 %def_sram("counters_segment", !OFF)
 %def_sram("heartlag_spinner", !OFF)
 %def_sram("extra_ram_watch", !OFF)
@@ -295,15 +294,15 @@ endmacro
 !POS_COUNTERS = $34
 
 !POS_HEARTS = $92
-!POS_MEM_HEART_GFX = $7EC790
+!POS_MEM_HEART_GFX = SA1HUD+$90
 
-!POS_MEM_HEARTLAG = $7EC798
+!POS_MEM_HEARTLAG = SA1HUD+$98
 
 !POS_CONTAINERS = $9C
-!POS_MEM_CONTAINER_GFX = $7EC79A
+!POS_MEM_CONTAINER_GFX = SA1HUD+$9A
 
 !POS_ENEMY_HEARTS = $A4
-!POS_MEM_ENEMY_HEART_GFX = $7EC7A2
+!POS_MEM_ENEMY_HEART_GFX = SA1HUD+$A2
 
 ;-------------------------
 ; Custom menu

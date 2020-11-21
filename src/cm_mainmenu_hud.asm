@@ -66,7 +66,7 @@ cm_hud_lagometer:
 
 .toggle
 	%a16()
-	LDA #$207F : STA $7EC742 : STA $7EC782 : STA $7EC7C2 : STA $7EC802
+	LDA #$207F : STA.w SA1HUD+$42 : STA.w SA1HUD+$82 : STA.w SA1HUD+$C2 : STA $7EC802
 	RTS
 
 cm_hud_input_display:
@@ -96,7 +96,7 @@ cm_hud_enemy_hp:
 .toggle
 	%ai16()
 	LDA #$207F : STA !POS_MEM_ENEMY_HEART_GFX
-	LDX.w #!POS_ENEMY_HEARTS : STA $7EC700, X : STA $7EC702, X
+	LDX.w #!POS_ENEMY_HEARTS : STA.w SA1HUD+$00, X : STA.w SA1HUD+$02, X
 	RTS
 
 cm_hud_qw:
@@ -207,11 +207,11 @@ cm_hud_ramwatch_toggle:
 	%ai16()
 	LDA #$207F
 	LDX.w #12
---	STA $7EC732+(0*64), X
-	STA $7EC732+(1*64), X
-	STA $7EC732+(2*64), X
-	STA $7EC732+(3*64), X
-	STA $7EC732+(4*64), X
+--	STA.w SA1HUD+$32+(0*64), X
+	STA.w SA1HUD+$32+(1*64), X
+	STA.w SA1HUD+$32+(2*64), X
+	STA.w SA1HUD+$32+(3*64), X
+	STA.w SA1HUD+$32+(4*64), X
 	DEX #2 : BPL --
 
 	PLP

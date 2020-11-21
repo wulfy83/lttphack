@@ -181,8 +181,8 @@ pss_data:
 	dl $7EF000 : dw $04FF ; save data
 	dl $7FDF80 : dw $027F ; underworld sprite state
 	dl $7EC172 : dw $0001 ; crystal switch state
-	dl $7EC74A : dw $0003 ; selected menu item
-	dl $7EC78A : dw $0003
+	dl SA1HUD+$4A : dw $0003 ; selected menu item
+	dl SA1HUD+$8A : dw $0003
 	dl $7E0202 : dw $0000
 	dl $7E0302 : dw $0001
 	dl $7E002F : dw $0000 ; link's direction
