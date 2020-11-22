@@ -184,7 +184,6 @@ macro update_counter_line()
 endmacro
 
 counter_line:
-print pc
 	dw $0200 ; to write to nowhere useful
 	dw (0<<6)+$2E
 	dw (1<<6)+$2E
@@ -202,6 +201,17 @@ hex_to_dec:
 	TAY : AND #$0F : STA.b SA1IRAM.SCRATCH+4
 	TYA : AND #$F0 : LSR #4 : STA.b SA1IRAM.SCRATCH+2
 	XBA : AND #$0F : STA.b SA1IRAM.SCRATCH+0
+	REP #$20 : TYA
+	RTL
+
+hex_to_dec_snes:
+	REP #$10
+	ASL : TAX
+	LDA.l hex_to_dec_fast_table, X
+	SEP #$20 ; slightly faster overall to use this
+	TAY : AND #$0F : STA.w !ram_hex2dec_third_digit
+	TYA : AND #$F0 : LSR #4 : STA.w !ram_hex2dec_second_digit
+	XBA : AND #$0F : STA.w !ram_hex2dec_first_digit
 	REP #$20 : TYA
 	RTL
 

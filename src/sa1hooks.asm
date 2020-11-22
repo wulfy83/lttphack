@@ -476,7 +476,7 @@ gamemode_shortcuts:
 .practiceMenu
 	LDA.w SA1IRAM.CopyOf_B0
 	%a16() ; this code is copyright Lui 2020
-	BEQ !notVerySafe
+	BEQ .SD2SNESBranch
 -	CLC : RTS
 
 .everything
@@ -518,14 +518,13 @@ gamemode_shortcuts:
 
 check_mode_safety:
 	LDA.w SA1IRAM.CopyOf_10 : CMP #$0C : BNE .notCustomMenu
-	CLV ; clear overflow
-	LDA #$01 ; make sure N/Z flags are not set
+	REP #%11000010 ; clear NVZ
 .neverSafe
 	RTS
 
 .notCustomMenu
 	ASL : TAX ; get index
-	REP #%11100010 ; clear NVMZ for checks and for 16 bit accum
+	REP #%01100000 ; clear V for checks and M for 16 bit accum
 	LDA Module_safety, X
 	BEQ .neverSafe ; staying in 16 bit A is fine here
 

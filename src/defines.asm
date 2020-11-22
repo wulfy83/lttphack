@@ -2,7 +2,7 @@
 SA1HUD = $003400
 SA1SRAM = $400000
 
-!SRAM_VERSION = $0027
+!SRAM_VERSION = $0028
 
 !menu_end = #$0000
 !list_end = #$FF
@@ -83,6 +83,11 @@ endmacro
 !ram_gamemode_copy = $6F
 !ram_submode_copy = $70
 !ram_received_item_copy = $71
+
+%def_wramA("hex2dec_tmp", 2)
+%def_wramA("hex2dec_first_digit", 2)
+%def_wramA("hex2dec_second_digit", 2)
+%def_wramA("hex2dec_third_digit", 2)
 
 %def_wramA("qw_last_scroll", 2)
 %def_wramA("lanmola_cycles", 2) ; 3 bytes
@@ -357,15 +362,10 @@ endmacro
 !ram_movie = $7F8020
 %def_wramA("movie_hud", $40) ; [0x40]
 
-;if !FEATURE_SD2SNES
-;	!sram_movies = $771000
-;	!sram_movie_data = $771100
-;	!sram_movie_data_size = $6F00
-;else
-;	!sram_movies = $703000
-;	!sram_movie_data = $703200
-;	!sram_movie_data_size = $4E00
-;endif
+!sram_movies = $771000
+!sram_movie_data = $771100
+!sram_movie_data_size = $6F00
+
 
 !sram_movies_length = !sram_movies+0
 !sram_movies_input_length = !sram_movies+2

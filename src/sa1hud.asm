@@ -1,6 +1,8 @@
 org $0DFEC3
 	dw $207F, $207F, $207F, $207F, $207F, $207F
 
+; SA-1 menu DMA is 1 dot slower
+; I'll let it slide
 org $008B71 : LDX.w #SA1HUD>>0
 org $008B77 : LDA.b #SA1HUD>>16
 

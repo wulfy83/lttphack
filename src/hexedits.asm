@@ -5,7 +5,7 @@ org $00FFD5 : db $23, $35
 org $00FFD7 : db 11 ; 2mb
 
 ; SRAM Size
-org $00FFD8 : db select(!FEATURE_SD2SNES, $08, $05)
+org $00FFD8 : db $05
 
 ; == CTRL 2 ==
 ;

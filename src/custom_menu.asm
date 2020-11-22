@@ -190,6 +190,7 @@ CM_Active:
 	BRA .redraw
 
 .redraw
+print pc
 	JSR cm_redraw
 
 .done
@@ -1184,7 +1185,7 @@ cm_draw_numfield:
 	TXA : CLC : ADC.w #!OPTION_OFFSET : TAX
 
 	PHX
-	LDA [$04] : AND #$00FF : JSL hex_to_dec
+	LDA [$04] : AND #$00FF : JSL hex_to_dec_snes
 	PLX
 
 	; Clear out the area (black tile)
@@ -1200,17 +1201,17 @@ cm_draw_numfield:
 	%a16()
 
 	; Draw numbers
-	LDA.b SA1IRAM.SCRATCH+0 : BEQ .second_digit
+	LDA.w !ram_hex2dec_first_digit : BEQ .second_digit
 	CLC : ADC $0E : STA.l !menu_dma_buffer+0, X
 	INX #2
 
 .second_digit
-	LDA.b SA1IRAM.SCRATCH+2 : BEQ .third_digit
+	LDA.w !ram_hex2dec_second_digit : BEQ .third_digit
 	CLC : ADC $0E : STA.l !menu_dma_buffer+0, X
 	INX #2
 
 .third_digit
-	LDA.b SA1IRAM.SCRATCH+4 : CLC : ADC $0E
+	LDA.w !ram_hex2dec_third_digit : CLC : ADC $0E
 	STA.l !menu_dma_buffer+0, X
 
 	RTS
@@ -1573,7 +1574,6 @@ cm_movie_save:
 
 	RTS
 
-
 cm_movie_delete:
 	; Enter: AI=16
 	; X = movie slot to delete
@@ -1628,7 +1628,6 @@ cm_movie_delete:
 
 .done
 	RTS
-
 
 cm_movie_load:
 	; Enter: AI=16
