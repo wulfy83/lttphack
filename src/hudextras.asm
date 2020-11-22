@@ -1,7 +1,3 @@
-; Line 0 never transfers, can be used for dummy writes
-; Using macros instead of routines is stupid, yes
-; but we really need to save as many cycles as we can
-
 !white = $3C10
 !blue = $2C10
 !yellow = $3410
@@ -10,180 +6,28 @@
 
 !HUD_EXTRAS_BUFFER = SA1HUD+$000
 
-; shouldn't actually need to clear every frame
-; only when counters are messed with
-macro draw_all_three(address, color, Xoff)
-;first_digit
-	LDA.w <address>+1 : AND #$000F
-	ORA.w #<color>
-	STA.w !HUD_EXTRAS_BUFFER+10+<Xoff>, X
+;==============================================================================
+; 
+;==============================================================================
+UpdateCounterLine:
+	LSR
+	BCC .nothing
+	LDA.b SA1IRAM.SCRATCH+8
+	ASL
+	SEP #$31
 
-;second_digit
-	LDA.w <address>+0 : AND #$00F0
-	LSR #4
-	ORA.w #<color>
-	STA.w !HUD_EXTRAS_BUFFER+12+<Xoff>, X
+	TAY
+	INC.b SA1IRAM.SCRATCH+8
 
-;third_digit
-	LDA.w <address>+0
-	AND #$000F
-	ORA.w #<color>
-	STA.w !HUD_EXTRAS_BUFFER+14+<Xoff>, X
-endmacro
+	REP #$30
+	LDX.w .line, Y
+	RTS
 
-macro draw_all_two(address, color, Xoff)
-;second_digit
-	LDA.w <address>
-	LSR #4
-	ORA.w #<color>
-	STA.w !HUD_EXTRAS_BUFFER+12+<Xoff>, X
+.nothing
+	REP #$30
+	RTS
 
-;third_digit
-	LDA.w <address>
-	AND #$000F
-	ORA.w #<color>
-	STA.w !HUD_EXTRAS_BUFFER+14+<Xoff>, X
-endmacro
-
-macro draw_three(address, color, Xoff)
-	SEP #$21
-	LDA.w <address>+1
-	ADC.b #$7E ; overflow set if 2 or 3 digits; carry is set for fewer cycles
-
-	LDA.w <address>
-	AND #$F0
-	ORA.w <address>+1
-	CMP.b #1 ; carry set if 2 or 3 digits
-	REP #$20
-?templabel:
-?.first_digit
-	LDA.w <address>+1 : AND #$000F
-	BVC ?..blank
-
-?..draw
-	ORA.w #<color> ; 3 cycles
-	BNE ?..continue ; 3 cycles
-	; 6 cycles total
-
-?..blank ; 1 for branch
-	NOP ; 2 cycles
-	LDA #$207F ; 3 cycles
-	; 6 cycles total
-
-?..continue
-	STA.w !HUD_EXTRAS_BUFFER+10+<Xoff>, X
-
-	; match cycles
-?.second_digit
-	LDA.w <address> : AND #$00F0
-	BCC ?..blank
-
-	; can't LSR first or we lose carry flag
-?..draw
-	LSR #4 ; 8 cycles
-	ORA.w #<color> ; 3 cycles
-	BNE ?..continue ; 3 cycles
-	; 14 cycles total
-
-?..blank ; 1 for branch
-	NOP ; 2 cycles
-	NOP #4 ; 8 cycles
-	LDA #$207F ; 3 cycles
-	; 14 cycles total
-
-?..continue
-	STA.w !HUD_EXTRAS_BUFFER+12+<Xoff>, X
-
-?.third_digit
-	LDA.w <address>
-	AND #$000F
-	ORA.w #<color> : STA.w !HUD_EXTRAS_BUFFER+14+<Xoff>, X
-endmacro
-
-macro draw_two(address, color, Xoff)
-	LDA.w <address> : AND #$00F0
-	CMP.w #1
-?templabel:
-	; match cycles
-?.second_digit
-	BCC ?..blank
-
-	; can't LSR first or we lose carry flag
-?..draw
-	LSR #4 ; 8 cycles
-	ORA.w #<color> ; 3 cycles
-	BNE ?..continue ; 3 cycles
-	; 14 cycles total
-
-?..blank ; 1 for branch
-	NOP #4 ; 8 cycles
-	NOP ; 2 cycles
-	LDA #$207F ; 3 cycles
-	; 14 cycles total
-
-?..continue
-	STA.w !HUD_EXTRAS_BUFFER+12+<Xoff>, X
-
-?.third_digit
-	LDA.w <address>
-	AND #$000F
-	ORA.w #<color> : STA.w !HUD_EXTRAS_BUFFER+14+<Xoff>, X
-endmacro
-
-draw2_white_lttp:
-	LDA.b SA1IRAM.SCRATCH+2 : ORA #$3C90 : STA.w !HUD_EXTRAS_BUFFER+0, X
-	LDA.b SA1IRAM.SCRATCH+4 : ORA #$3C90 : STA.w !HUD_EXTRAS_BUFFER+2, X
-	RTL
-
-draw3_white_aligned_left_lttp:
-	; Clear "leading" 0's
-	LDA #$207F : STA.w !HUD_EXTRAS_BUFFER+2, X
-	LDA #$207F : STA.w !HUD_EXTRAS_BUFFER+4, X
-
-	LDA.b SA1IRAM.SCRATCH+0 : BEQ .draw_second_digit
-	ORA #$3C90 : STA.w !HUD_EXTRAS_BUFFER+0, X
-	INX #2
-
-.draw_second_digit
-	LDA.b SA1IRAM.SCRATCH+2 : ORA #$3C90 : STA.w !HUD_EXTRAS_BUFFER+0, X
-	INX #2
-
-.draw_third_digit
-	LDA.b SA1IRAM.SCRATCH+4 : ORA #$3C90 : STA.w !HUD_EXTRAS_BUFFER+0, X
-	RTL
-
-macro update_counter_line()
-	SEP #$10
-	LSR ; A will hold whether or not this counter is active
-	BCC ++ ; if clear, load 0 to X for a dummy write
-
-	; need to match cycles here
-;.normalwrite
-	LDX.w SA1IRAM.SCRATCH+8 ; 3
-	TXA ; 2
-	BRA + ; 2
-	; 7 total
-
-++ ; 1 for branch taken
-	LDA.w SA1IRAM.SCRATCH+8 ; 4
-	LDX #$00 ; 2
-	; 7 total
-
-+
-	ADC.w #$0000 : STA.w SA1IRAM.SCRATCH+8 ; if carry was clear, this won't increment
-
-	;TXA : ASL #4 : TAX ; multiply X by 16
-	;TXA : DEC : ASL #6; multiply X by 64
-	;REP #$11
-	;ADC #$0030
-	;TAX
-	TXA : ASL : TAY
-	REP #$10
-	LDX counter_line, Y 
-
-endmacro
-
-counter_line:
+.line
 	dw $0200 ; to write to nowhere useful
 	dw (0<<6)+$2E
 	dw (1<<6)+$2E
@@ -191,8 +35,87 @@ counter_line:
 	dw (3<<6)+$2E
 	dw (4<<6)+$2E
 
-hex_to_hex_lol: ; this exists purely to keep coords even
+;==============================================================================
+; Stack:           with X
+; ret     +1        +1
+; color   +1+2+2    +1
+;==============================================================================
+Draw:
+.all
+..two
+	STA.b SA1IRAM.SCRATCH+10
+	SEP #$41 ; set overflow and carry flags for unconditional draws
+	BRA .digit10
 
+..three
+	STA.b SA1IRAM.SCRATCH+10
+	SEP #$41 ; set overflow and carry flags for unconditional draws
+	BRA .digit100
+
+.short
+..two
+	STA.b SA1IRAM.SCRATCH+10
+	JSR .set_conditional_flags_d2
+	BRA .digit10
+
+..three
+	STA.b SA1IRAM.SCRATCH+10
+	JSR .set_conditional_flags_d3
+	BRA .digit100
+
+.digit100
+	LDA.w #$207F
+	BVC ..draw
+	LDA.b (SA1IRAM.SCRATCH+10)
+	XBA
+	AND.w #$000F
+	ORA 3, S ; color
+..draw
+	STA.w SA1HUD+10, X
+
+.digit10
+	LDA.w #$207F
+	BCC ..draw
+	LDA.b (SA1IRAM.SCRATCH+10)
+	AND.w #$00F0
+	LSR
+	LSR
+	LSR
+	LSR
+	ORA 3, S ; color
+..draw
+	STA.w SA1HUD+12, X
+
+.digit1
+	LDA.b (SA1IRAM.SCRATCH+10)
+	AND.w #$000F
+	ORA 3, S ; color
+	STA.w SA1HUD+14, X
+
+.done
+	PLA ; get return address
+	PLY ; remove color from stack
+	PHA ; put address back
+
+	RTS
+
+.set_conditional_flags
+..d3
+	LDA.b (SA1IRAM.SCRATCH+10)
+	SEP #$21 ; carry set for fewer cycles
+
+	ADC.b #$7E ; overflow set if digit 3 exists
+
+	REP #$20
+
+..d2
+	LDA.b (SA1IRAM.SCRATCH+10)
+	CMP.w #$0010 ; carry set if digit 2 or 3 exists
+	RTS
+
+;==============================================================================
+; 
+;==============================================================================
 hex_to_dec:
 	REP #$10
 	ASL : TAX
@@ -215,18 +138,18 @@ hex_to_dec_snes:
 	REP #$20 : TYA
 	RTL
 
-macro hex_to_dec_fast()
+hex_to_dec_fast:
 	PHP
 	REP #$10
-	ASL : TAY
-	LDA.w hex_to_dec_fast_table, Y
+	ASL : TAX
+	LDA.w hex_to_dec_fast_table, X
 	SEP #$20 ; slightly faster overall to use this
 	TAY : AND #$0F : STA.b SA1IRAM.SCRATCH+4
 	TYA : AND #$F0 : LSR #4 : STA.b SA1IRAM.SCRATCH+2
 	XBA : AND #$0F : STA.b SA1IRAM.SCRATCH+0
 	REP #$20 : TYA
 	PLP
-endmacro
+	RTS
 
 hex_to_dec_fast_table:
 	dw $000, $001, $002, $003, $004, $005, $006, $007, $008, $009
@@ -330,109 +253,125 @@ hex_to_dec_fast_table:
 	dw $980, $981, $982, $983, $984, $985, $986, $987, $988, $989
 	dw $990, $991, $992, $993, $994, $995, $996, $997, $998, $999
 
-empty_char_dma: ; can't use 1 word, since DMA won't increment
-	fillword !EMPTY : fill !EXTRAS_SIZE
-
+;==============================================================================
+; 
+;==============================================================================
 draw_counters:
 	PHP
-	PHB : PHK : PLB
-	%a16()
-	%i8()
-	; counters will never decrease, so I think this is fine
-	;STZ $2182 ; to be bank $7E
-	;LDA.w #!HUD_EXTRAS_BUFFER+16 : STA $2181
-	;LDY.b #empty_char_dma>>16 : STY $4304 ; source bank
-	;LDA.w #empty_char_dma : STA $4302 ; source address
-	;LDA #$8000 : STA $4300
-	;LDA.w #!EXTRAS_SIZE : STA $4305
-	;LDY #$01 : STY $420B
+	PHB
+	PHK
+	PLB
+	REP #$20
+	SEP #$10
 
-	LDA #$0001 : STA.w SA1IRAM.SCRATCH+8 ; start at 1 so that 0 can be a dummy write
+	LDA.w #$0001 ; start at 1 so that 0 can be a dummy write
+	STA.w SA1IRAM.SCRATCH+8
 
-	LDA SA1IRAM.TIMER_FLAG : BIT #$0080 : BNE .roomtime
+	LDA.w SA1IRAM.TIMER_FLAG
+	BIT.w #$0080
+	BNE .roomtime
+
 	JMP .calccoordposition
 
 .roomtime
-	AND #$FF7F : STA SA1IRAM.TIMER_FLAG
-	LDA.l !ram_counters_real : %update_counter_line()
-	%draw_all_two(SA1IRAM.ROOM_TIME_F_DISPLAY, !yellow, 0)
-	%draw_three(SA1IRAM.ROOM_TIME_S_DISPLAY, !white, -4)
+	AND.w #$FF7F
+	STA.w SA1IRAM.TIMER_FLAG
 
+	LDA.l !ram_counters_real
+	JSR UpdateCounterLine
+	BCC ..skip
+
+	PEA.w !yellow ; color
+	LDA.w #SA1IRAM.ROOM_TIME_F_DISPLAY ; address
+	JSR Draw_all_two
+
+	DEX ; down 4
+	DEX
+	DEX
+	DEX
+	PEA.w !white ; color
+	LDA.w #SA1IRAM.ROOM_TIME_S_DISPLAY ; address
+	JSR Draw_short_three
+
+..skip
 .lagtime
-	LDA.l !ram_counters_lag : %update_counter_line()
-	%draw_three(SA1IRAM.ROOM_TIME_LAG_DISPLAY, !red, 0)
+	LDA.l !ram_counters_lag
+	JSR UpdateCounterLine
+	BCC ..skip
 
+	PEA.w !red ; color
+	LDA.w #SA1IRAM.ROOM_TIME_LAG_DISPLAY ; address
+	JSR Draw_short_three
+
+..skip
 .idletime
-	LDA.l !ram_counters_idle : %update_counter_line()
-	%draw_three(SA1IRAM.ROOM_TIME_IDLE_DISPLAY, !white, 0)
+	LDA.l !ram_counters_idle
+	JSR UpdateCounterLine
+	BCC ..skip
 
+	PEA.w !white
+	LDA.w #SA1IRAM.ROOM_TIME_IDLE_DISPLAY
+	JSR Draw_short_three
+
+..skip
 .segmenttime
-	LDA.l !ram_counters_segment : BNE .doseg
-	JMP .coordinates
+	LDA.l !ram_counters_segment
+	JSR UpdateCounterLine
+	BCC ..skip
 
-.doseg
-	%update_counter_line()
-	%draw_all_two(SA1IRAM.SEG_TIME_F_DISPLAY, !gray, 0)
-	%draw_all_two(SA1IRAM.SEG_TIME_S_DISPLAY, !yellow, -4)
-	%draw_three(SA1IRAM.SEG_TIME_M_DISPLAY, !white, -8)
+	PEA.w !gray
+	LDA.w #SA1IRAM.SEG_TIME_F_DISPLAY
+	JSR Draw_all_two
+
+	DEX
+	DEX
+	DEX
+	DEX
+	PEA.w !yellow
+	LDA.w #SA1IRAM.SEG_TIME_S_DISPLAY
+	JSR Draw_all_two
+
+	DEX
+	DEX
+	DEX
+	DEX
+	PEA.w !white
+	LDA.w #SA1IRAM.SEG_TIME_M_DISPLAY
+	JSR Draw_short_three
+
+..skip
 	BRA .coordinates
+
 .calccoordposition
-	CLC : LDA #$0001
+	CLC
+	LDA.w #$0001
 	ADC.l !ram_counters_real
 	ADC.l !ram_counters_lag
 	ADC.l !ram_counters_idle
 	ADC.l !ram_counters_segment
-	STA.w SA1IRAM.SCRATCH+8
+	STA.b SA1IRAM.SCRATCH+8
 
 .coordinates
-	LDA.l !ram_xy_toggle : %update_counter_line()
-	; can't macro this, since 1 byte for each part
+	LDA.l !ram_xy_toggle
+	BEQ ..skip
 
-	; Y coord
-;first_digit
-	LDA.w SA1IRAM.CopyOf_21 : AND #$000F
-	ORA.w #!yellow
-	STA.w !HUD_EXTRAS_BUFFER+10, X
+	INC ; +2 for number of digits
+	INC
+	PHA
 
-;second_digit
-	LDA.w SA1IRAM.CopyOf_20 : AND #$00F0 : LSR #4
-	ORA.w #!yellow
-	STA.w !HUD_EXTRAS_BUFFER+12, X
+	LDA.w #$0001 ; if we're here, we are updating counter
+	JSR UpdateCounterLine
 
-;third_digit
-	LDA.w SA1IRAM.CopyOf_20 : AND #$000F
-	ORA.w #!yellow
-	STA.w !HUD_EXTRAS_BUFFER+14, X
+	PLY
+	JSR DrawCoordinates
 
-	; X coord
-;first_digit
-	LDA.w SA1IRAM.CopyOf_23 : AND #$000F
-	ORA.w #!white
-	STA.w !HUD_EXTRAS_BUFFER+04, X
-
-;second_digit
-	LDA.w SA1IRAM.CopyOf_22 : AND #$00F0 : LSR #4
-	ORA.w #!white
-	STA.w !HUD_EXTRAS_BUFFER+06, X
-
-;third_digit
-	LDA.w SA1IRAM.CopyOf_22 : AND #$000F
-	ORA.w #!white
-	STA.w !HUD_EXTRAS_BUFFER+08, X
-
-;-----------------------------------------------------------------
-; Input display stuff
-;-----------------------------------------------------------------
-; this will always write to its buffer, but
-; NMI will be cycle controlled to not always draw this on bg3
-; the rest of the time it will just draw all blanks
+..skip
 hud_draw_input_display:
 	LDA.l !ram_input_display
 	AND #$0003
 	ASL : TAX
 	LDA.w SA1IRAM.CONTROLLER_1
 	XBA
-
 	JSR (.options, X)
 
 ;-----------------------------------------------------------------
@@ -478,7 +417,8 @@ draw_quickwarp: ; cycle controlled
 
 extra_ram:
 	LDA.l !ram_extra_ram_watch : BEQ .nowatch
-	LDA #$0001 : %update_counter_line()
+	LDA #$0001
+	JSR UpdateCounterLine
 	CPX.w #(5<<6+$2E) : BCS .nowatch ; line 6 is too many
 	LDA.l !ram_extra_ram_watch : ASL : TAY
 	LDA extra_ram_watch_routines, Y
@@ -697,3 +637,60 @@ extra_ram_watch_routines:
 	STA !HUD_EXTRAS_BUFFER+8, X
 
 	RTS
+
+
+
+
+DrawCoordinates:
+	PHY ; x coordinate first
+	LDA.w #!white
+	STA.b SA1IRAM.SCRATCH+10
+	LDA.b SA1IRAM.CopyOf_22
+	JSR .draw_n_digits
+
+	PLY ; x coordinate after
+	LDA.w #!yellow
+	STA.b SA1IRAM.SCRATCH+10
+	LDA.b SA1IRAM.CopyOf_20
+	JMP .draw_n_digits
+
+.next_digit
+	LSR
+	LSR
+	LSR
+	LSR
+
+.draw_n_digits
+	PHA ; remember coordinates
+	AND.w #$000F ; get digit
+	ORA.b SA1IRAM.SCRATCH+10 ; add in color
+	STA.w SA1HUD+14, X
+	PLA ; recover value
+	DEX
+	DEX
+	DEY
+	BNE .next_digit
+	RTS
+
+draw2_white_lttp:
+	LDA.b SA1IRAM.SCRATCH+2 : ORA #$3C90 : STA.w !HUD_EXTRAS_BUFFER+0, X
+	LDA.b SA1IRAM.SCRATCH+4 : ORA #$3C90 : STA.w !HUD_EXTRAS_BUFFER+2, X
+	RTL
+
+draw3_white_aligned_left_lttp:
+	; Clear "leading" 0's
+	LDA #$207F : STA.w !HUD_EXTRAS_BUFFER+2, X
+	LDA #$207F : STA.w !HUD_EXTRAS_BUFFER+4, X
+
+	LDA.b SA1IRAM.SCRATCH+0 : BEQ .draw_second_digit
+	ORA #$3C90 : STA.w !HUD_EXTRAS_BUFFER+0, X
+	INX #2
+
+.draw_second_digit
+	LDA.b SA1IRAM.SCRATCH+2 : ORA #$3C90 : STA.w !HUD_EXTRAS_BUFFER+0, X
+	INX #2
+
+.draw_third_digit
+	LDA.b SA1IRAM.SCRATCH+4 : ORA #$3C90 : STA.w !HUD_EXTRAS_BUFFER+0, X
+	RTL
+

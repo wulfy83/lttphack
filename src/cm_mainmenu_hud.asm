@@ -42,7 +42,14 @@ cm_hud_segment:
 	%cm_toggle_jsr("Segment time", !ram_counters_segment)
 
 cm_hud_xy:
-	%cm_toggle_jsr("Coordinates", !ram_xy_toggle)
+	dw !CM_ACTION_CHOICE_JSR
+	dw #.toggle
+	dl !ram_xy_toggle
+	%cm_item("Coordinates")
+	%cm_item("Off")
+	%cm_item("3 digits")
+	%cm_item("4 digits")
+	db !list_end
 
 ;	dw !CM_ACTION_CHOICE
 ;	dl !ram_xy_toggle

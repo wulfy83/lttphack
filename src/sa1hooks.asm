@@ -5,7 +5,7 @@ sa1rom
 pushpc
 org $008000
 struct SA1IRAM $003000
-	.SCRATCH: skip 12
+	.SCRATCH: skip 16
 	.CopyOf_10: skip 1
 	.CopyOf_11: skip 1
 	.CopyOf_12: skip 1
@@ -188,7 +188,6 @@ InitSA1:
 
 CacheSA1Stuff:
 	LDX.w $10 : STX.w SA1IRAM.CopyOf_10
-	LDA.w $12 : STA.w SA1IRAM.CopyOf_12
 	LDX.w $1A : STX.w SA1IRAM.CopyOf_1A
 	LDX.w $20 : STX.w SA1IRAM.CopyOf_20
 	LDX.w $22 : STX.w SA1IRAM.CopyOf_22
@@ -509,8 +508,7 @@ gamemode_shortcuts:
 --	RTS
 
 ; return values in P
-!SOME_SAFE = $8080 ; some presets are not always safe = negative flag
-
+!SOME_SAFE = $8080 ; some options are not always safe = negative flag
 !ALL_SAFE = $4040 ; everything is safe = overflow flag
 !NONE_SAFE = $0000 ; all modes unsafe = zero flag
 ; zero flag off = practice menu special

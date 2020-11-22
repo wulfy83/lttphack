@@ -190,7 +190,6 @@ CM_Active:
 	BRA .redraw
 
 .redraw
-print pc
 	JSR cm_redraw
 
 .done

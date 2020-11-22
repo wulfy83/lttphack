@@ -69,13 +69,6 @@ org $00821B
 	JSL nmi_hud_update
 	NOP
 
-; NMI HOOK
-org $0089C2
-nmi_hook:
-	TCD : PHK : PLB
-	JSL nmi_expand
-	RTS
-
 warnpc $0089DF
 ; Unused $17 function repurposed
 org $008C8A
@@ -119,6 +112,8 @@ nmi_expand:
 	LDA $AB : STA $212C
 
 	SEP #$30
+	LDA.b $12 : STA.w SA1IRAM.CopyOf_12
+
 	LDA #$10
 	STA.w $2200
 	STZ.w !lowram_last_frame_did_saveload
