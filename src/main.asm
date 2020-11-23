@@ -14,8 +14,8 @@ incsrc gamemode.asm
 incsrc nmi.asm
 incsrc timers.asm
 incsrc hudextras.asm
-
-incsrc hud.asm
+incsrc glitchedwindow.asm
+incsrc ancillawindow.asm
 
 org $228000
 incsrc tiles.asm
@@ -25,8 +25,6 @@ incsrc init.asm
 incsrc rng.asm
 incsrc misc.asm
 incsrc idle.asm
-incsrc glitchedwindow.asm
-incsrc ancillawindow.asm
 
 org $248000
 incsrc custom_menu.asm

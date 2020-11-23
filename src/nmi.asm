@@ -48,8 +48,8 @@ org $0080D5
 	JSL nmi_expand
 
 org $008174
-LDA $1C : STA $AB : NOP
-LDA $1D : STA $AC : NOP
+	LDA.b $1C : STA.w $00AB
+	LDA.b $1D : STA.w $00AC
 
 ;org $0081A0 ; save camera correction for NMI expansion
 ;	BRA + ; save time during NMI
@@ -67,7 +67,7 @@ org $00821B
 	; LDA $9B
 	; STA $420C
 	JSL nmi_hud_update
-	NOP
+	ORA.w $009B
 
 warnpc $0089DF
 ; Unused $17 function repurposed
@@ -150,16 +150,12 @@ nmi_hud_update:
 	LDY #$01 : STY $420B
 
 .nowatch
-	; force heartlag update
-	LDX !do_heart_lag : BEQ .dontbreakthings
-	LDA #$C118>>1 : STA $2116
-	LDA.l !POS_MEM_HEARTLAG : STA $2118
-
 .dontbreakthings
-	STZ !do_heart_lag
 	LDX $13
 	STX $2100
-
+	SEP #$20
+	LDA.w SA1IRAM.HDMA_ASK
+	STZ.w SA1IRAM.HDMA_ASK
 	RTL
 
 .ancillawatch

@@ -1396,6 +1396,7 @@ cm_ctrl_input_display:
 	JSR cm_ctrl_clear_input_display
 
 	LDY #$0000
+	XBA
 .loop
 	PHA
 	AND #$0001 : CMP #$0001 : BNE .no_draw

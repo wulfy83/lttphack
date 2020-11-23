@@ -48,13 +48,11 @@ function char(n) = $2150+n
 ; ................................
 
 UpdateGlitchedWindow:
-	PHB : PHK : PLB : PHP
 	SEP #$30
 	LDA.l !ram_superwatch
 	AND.b #$03
 	ASL : TAX
-	JSR (.routines, X)
-	PLP : PLB : RTL
+	JMP (.routines, X)
 
 .routines
 	dw NoSuperWatch
@@ -66,41 +64,41 @@ NoSuperWatch:
 	LDA #$20
 
 .set
-	TRB $9B
+	TRB.b SA1IRAM.HDMA_ASK
 	RTS
 
 UpdateUWWindow:
 	LDA.l !ram_superwatch
-	LSR : AND $1B : LSR ; set or clear carry
+	LSR : AND.b SA1IRAM.CopyOf_1B : LSR ; set or clear carry
 
 	LDA #$20
 	BCC NoSuperWatch_set
-	LDX $10 : CPX #$0E : BEQ NoSuperWatch_set
+	LDX.b SA1IRAM.CopyOf_10 : CPX #$0E : BEQ NoSuperWatch_set
 	CPX #$0C : BEQ NoSuperWatch_set
-	TSB $9B
+	TSB.b SA1IRAM.HDMA_ASK
 
 clear_buffer:
 	REP #$20
 
 print_coords:
 	LDA.w #char(0)|!RED_PAL : STA !dg_buffer_r0+4 ; XY
-	LDX #6 : LDA $22 : JSR draw_hex_4digits_white
-	LDX #14 : LDA $20 : JSR draw_hex_4digits_yellow
+	LDX #6 : LDA.b SA1IRAM.CopyOf_22 : JSR draw_hex_4digits_white
+	LDX #14 : LDA.b SA1IRAM.CopyOf_20 : JSR draw_hex_4digits_yellow
 
 print_room_id:
 	LDA.w #char(1)|!RED_PAL : STA !dg_buffer_r0+24 ; IDr
 	INC : STA !dg_buffer_r0+26 ; INC for next char cheaply
 	LDA.w #!HAMMER : STA !dg_buffer_r0+34 ; hammer
 
-	LDX #28 : LDA $A0 : JSR draw_hex_3digits_white
+	LDX #28 : LDA.b SA1IRAM.CopyOf_A0 : JSR draw_hex_3digits_white
 
 calc_correct_room_id:
-	LDA $21 : AND #$00FE : ASL #3 : STA $72
-	LDA $23 : AND #$00FE : LSR ; bit 0 is off, so it clears carry
-	ADC $72 : STA $72
+	LDA.b SA1IRAM.CopyOf_21 : AND #$00FE : ASL #3 : STA.b SA1IRAM.SCRATCH+0
+	LDA.b SA1IRAM.CopyOf_23 : AND #$00FE : LSR ; bit 0 is off, so it clears carry
+	ADC.b SA1IRAM.SCRATCH+0 : STA.b SA1IRAM.SCRATCH+0
 
 	LDX #36
-	CMP $A0 : BNE .roomdesync
+	CMP.b SA1IRAM.CopyOf_A0 : BNE .roomdesync
 
 .roomsynced
 	JSR draw_hex_3digits_gray
@@ -116,9 +114,9 @@ calc_correct_room_id:
 
 calc_room_flags:
 	LDX #(2*(16-1))
-	LDA $0401 : ORA $0408 : STA $72 ; not sure if I need $0400 at all?
-	LDA $0403 : STA $73
---	LDA.l .tiles, X : LSR $72 : BCS .flagSet
+	LDA.b SA1IRAM.CopyOf_0401 : ORA.b SA1IRAM.CopyOf_0408 : STA.b SA1IRAM.SCRATCH+0 ; not sure if I need $0400 at all?
+	LDA.b SA1IRAM.CopyOf_0403 : STA.b SA1IRAM.SCRATCH+1
+--	LDA.l .tiles, X : LSR.b SA1IRAM.SCRATCH+0 : BCS .flagSet
 	ORA.w #!GRAY_PAL : BRA +
 
 .flagSet
@@ -131,7 +129,7 @@ calc_room_flags:
 calc_quadrant:
 	LDA.w #char($14)|!BLUE_PAL : STA !dg_buffer_r0+44
 	LDA.w #!HAMMER : STA !dg_buffer_r0+48
-	LDA $A9 : LSR ; $A9 is 0 or 1
+	LDA.b SA1IRAM.CopyOf_A9 : LSR ; $A9 is 0 or 1
 	BCS .east
 
 .west
@@ -162,16 +160,16 @@ calc_quadrant:
 
 
 .doQuadrant
-	STY $72
+	STY.b SA1IRAM.SCRATCH+0
 	STA !dg_buffer_r0+46
 
 calc_correct_quadrant:
 	LDA #$0100 ; checking the same bit on both coordinates
 
-	BIT $22 : BNE .east
+	BIT.b SA1IRAM.CopyOf_22 : BNE .east
 
 .west
-	BIT $20 : BEQ .northwest
+	BIT.b SA1IRAM.CopyOf_20 : BEQ .northwest
 
 	; using the gray pal means we only need to ORA if desynched
 	; and can leave it alone otherwise
@@ -186,7 +184,7 @@ calc_correct_quadrant:
 	BRA .doQuadrant
 
 .east
-	BIT $20 : BEQ .northeast
+	BIT.b SA1IRAM.CopyOf_20 : BEQ .northeast
 
 .southeast
 	LDY #1
@@ -198,7 +196,7 @@ calc_correct_quadrant:
 	LDA.w #char(5+0)|!GRAY_PAL
 
 .doQuadrant
-	CPY $72 : BEQ .quadrantsSynced
+	CPY.b SA1IRAM.SCRATCH+0 : BEQ .quadrantsSynced
 	ORA.w #!TEXT_PAL
 	STA !dg_buffer_r0+50
 	LDA.w #!DESYNC : BRA ++
@@ -212,12 +210,12 @@ draw_camera:
 	LDA.w #char($13)|!GRAY_PAL ; camera icon
 	STA !dg_buffer_r2+4
 	STA !dg_buffer_r3+4
-	LDX.b #(64+64)+6 : LDA $E2 : JSR draw_hex_4digits_white
-	LDX.b #(64+64+64)+6 : LDA $E8 : JSR draw_hex_4digits_yellow
+	LDX.b #(64+64)+6 : LDA.b SA1IRAM.CopyOf_E2 : JSR draw_hex_4digits_white
+	LDX.b #(64+64+64)+6 : LDA.b SA1IRAM.CopyOf_E8 : JSR draw_hex_4digits_yellow
 
-	LDX $A6
-	LDA $0608, X : STA $72 ; cache X camera for desync check
-	LDA $060C, X : STA $74
+	LDX.b SA1IRAM.CopyOf_A6
+	LDA.b SA1IRAM.CopyOf_0608, X : STA.b SA1IRAM.SCRATCH+0 ; cache X camera for desync check
+	LDA.b SA1IRAM.CopyOf_060C, X : STA.b SA1IRAM.SCRATCH+2
 	CPX #$02 : BEQ .XSet2
 
 .XSet1
@@ -229,10 +227,10 @@ draw_camera:
 	STA !dg_buffer_r2+36
 	INC : STA !dg_buffer_r2+46
 
-	LDX.b #(64+64)+18 : LDA $0608 : JSR draw_hex_4digits_white
-	LDX.b #(64+64)+28 : LDA $060C : JSR draw_hex_4digits_white
-	LDX.b #(64+64)+38 : LDA $060A : JSR draw_hex_4digits_gray
-	LDX.b #(64+64)+48 : LDA $060E : JSR draw_hex_4digits_gray
+	LDX.b #(64+64)+18 : LDA.b SA1IRAM.CopyOf_0608 : JSR draw_hex_4digits_white
+	LDX.b #(64+64)+28 : LDA.b SA1IRAM.CopyOf_060C : JSR draw_hex_4digits_white
+	LDX.b #(64+64)+38 : LDA.b SA1IRAM.CopyOf_060A : JSR draw_hex_4digits_gray
+	LDX.b #(64+64)+48 : LDA.b SA1IRAM.CopyOf_060E : JSR draw_hex_4digits_gray
 	BRA .checkXSync
 
 .XSet2
@@ -244,15 +242,15 @@ draw_camera:
 	STA !dg_buffer_r2+36
 	INC : STA !dg_buffer_r2+46
 
-	LDX.b #(64+64)+18 : LDA $0608 : JSR draw_hex_4digits_gray
-	LDX.b #(64+64)+28 : LDA $060C : JSR draw_hex_4digits_gray
-	LDX.b #(64+64)+38 : LDA $060A : JSR draw_hex_4digits_white
-	LDX.b #(64+64)+48 : LDA $060E : JSR draw_hex_4digits_white
+	LDX.b #(64+64)+18 : LDA.b SA1IRAM.CopyOf_0608 : JSR draw_hex_4digits_gray
+	LDX.b #(64+64)+28 : LDA.b SA1IRAM.CopyOf_060C : JSR draw_hex_4digits_gray
+	LDX.b #(64+64)+38 : LDA.b SA1IRAM.CopyOf_060A : JSR draw_hex_4digits_white
+	LDX.b #(64+64)+48 : LDA.b SA1IRAM.CopyOf_060E : JSR draw_hex_4digits_white
 
 .checkXSync
-	LDA $E2 : CMP $72 : BCC .xDesynced
+	LDA.b SA1IRAM.CopyOf_E2 : CMP.b SA1IRAM.SCRATCH+0 : BCC .xDesynced
 	; decrement so that equal values result in a clear carry
-	DEC : CMP $74 : BCS .xDesynced
+	DEC : CMP.b SA1IRAM.SCRATCH+2 : BCS .xDesynced
 
 .xProbablyFine
 	LDA.w #!SYNCED
@@ -265,9 +263,9 @@ draw_camera:
 	STA !dg_buffer_r2+14
 
 
-	LDX $A7
-	LDA $0600, X : STA $72 ; cache Y camera for desync check
-	LDA $0604, X : STA $74
+	LDX.b SA1IRAM.CopyOf_A7
+	LDA.b SA1IRAM.CopyOf_0600, X : STA.b SA1IRAM.SCRATCH+0 ; cache Y camera for desync check
+	LDA.b SA1IRAM.CopyOf_0604, X : STA.b SA1IRAM.SCRATCH+2
 	CPX #$02 : BEQ .YSet2
 
 .YSet1
@@ -279,10 +277,10 @@ draw_camera:
 	STA !dg_buffer_r3+36
 	INC : STA !dg_buffer_r3+46
 
-	LDX.b #(64+64+64)+18 : LDA $0600 : JSR draw_hex_4digits_yellow
-	LDX.b #(64+64+64)+28 : LDA $0604 : JSR draw_hex_4digits_yellow
-	LDX.b #(64+64+64)+38 : LDA $0602 : JSR draw_hex_4digits_gray
-	LDX.b #(64+64+64)+48 : LDA $0606 : JSR draw_hex_4digits_gray
+	LDX.b #(64+64+64)+18 : LDA.b SA1IRAM.CopyOf_0600 : JSR draw_hex_4digits_yellow
+	LDX.b #(64+64+64)+28 : LDA.b SA1IRAM.CopyOf_0604 : JSR draw_hex_4digits_yellow
+	LDX.b #(64+64+64)+38 : LDA.b SA1IRAM.CopyOf_0602 : JSR draw_hex_4digits_gray
+	LDX.b #(64+64+64)+48 : LDA.b SA1IRAM.CopyOf_0606 : JSR draw_hex_4digits_gray
 	BRA .checkYSync
 
 .YSet2
@@ -294,15 +292,15 @@ draw_camera:
 	STA !dg_buffer_r3+36
 	INC : STA !dg_buffer_r3+46
 
-	LDX.b #(64+64+64)+18 : LDA $0600 : JSR draw_hex_4digits_gray
-	LDX.b #(64+64+64)+28 : LDA $0604 : JSR draw_hex_4digits_gray
-	LDX.b #(64+64+64)+38 : LDA $0602 : JSR draw_hex_4digits_yellow
-	LDX.b #(64+64+64)+48 : LDA $0606 : JSR draw_hex_4digits_yellow
+	LDX.b #(64+64+64)+18 : LDA.b SA1IRAM.CopyOf_0600 : JSR draw_hex_4digits_gray
+	LDX.b #(64+64+64)+28 : LDA.b SA1IRAM.CopyOf_0604 : JSR draw_hex_4digits_gray
+	LDX.b #(64+64+64)+38 : LDA.b SA1IRAM.CopyOf_0602 : JSR draw_hex_4digits_yellow
+	LDX.b #(64+64+64)+48 : LDA.b SA1IRAM.CopyOf_0606 : JSR draw_hex_4digits_yellow
 
 .checkYSync
-	LDA $E8 : CMP $72 : BCC .yDesynced
+	LDA.b SA1IRAM.CopyOf_E8 : CMP.b SA1IRAM.SCRATCH+0 : BCC .yDesynced
 	; decrement so that equal values result in a clear carry
-	DEC : CMP $74 : BCS .yDesynced
+	DEC : CMP.b SA1IRAM.SCRATCH+2 : BCS .yDesynced
 
 .yProbablyFine
 	LDA.w #!SYNCED
@@ -314,63 +312,63 @@ draw_camera:
 .drawYSync
 	STA !dg_buffer_r3+14
 
-OverlayPTR = $04E9A0
-!NON_VANILLA = char($16)|!YELLOW_PAL
-!CRITICAL = char($17)|!RED_PAL
-
-draw_overlay:
-	LDA.w #char($18)|!YELLOW_PAL : STA !dg_buffer_r1+40
-
-	LDA $BA : BNE .preloaded
-
-	%i16()
-	LDA $04BA : ASL : CLC : ADC $04BA : TAX
-	LDA.l OverlayPTR+1, X : STA $73
-	LDA.l OverlayPTR+0, X : STA $72
-	%i8()
-	LDA.w #char($1C)|!RED_PAL ; from ROM
-	BRA .draw
-
-.preloaded
-	LDA $B8 : STA $73
-	LDA $B7 : STA $72
-	LDA.w #char($1B)|!RED_PAL ; from RAM
-
-.draw
-	STA !dg_buffer_r1+42
-	;REP #$10
-	LDX #(64+44) : LDA $74 : JSR draw_hex_2digits_white ; this doesn't change X flag
-	LDX #(64+48) : LDA $72 : JSR draw_hex_4digits_white ; this exits i=10 - might not need
-
-	LDA $73 : AND #$FF00
-	CMP #$7000 : BCC .notSRAM ; check <$70 first, to avoid work ram checks
-	CMP #$7E00 : BEQ .workRAM
-	CMP #$7F00 : BEQ .workRAM
-	CMP #$7000 : BCS .notSRAM
-	LDA.w #!CRITICAL
-	BRA .drawWarning
-
-.notSRAM
-	LDA $73 : AND #$00FF ; see what page it's on
-	CMP #$0080 : BCC .workRAM ; if it's less than page $80, we're not in ROM
-
-	LDA $73 : AND #$3FFF ; account for mirroring of ROM
-	CMP #$2080 : BCC .notHacked ; before bank $20 and we're okay
-	CMP.w #(((EndOfPracticeROM>>8)&$FF00)+$0100) : BCS .notHacked ; the last bank we *don't* use
-	LDA.w #!NON_VANILLA : BRA .drawWarning
-
-; this assumes before $8000 is volatile in all banks
-; while some banks don't mirror work ram or registers
-; I think that just means the lower half is open bus
-; in which case it's as volatile as you can get
-.workRAM 
-	LDA.w #!CRITICAL : BRA .drawWarning
-
-.notHacked
-	LDA.w #!EMPTY
-
-.drawWarning
-	STA !dg_buffer_r1+56
+;OverlayPTR = $04E9A0
+;!NON_VANILLA = char($16)|!YELLOW_PAL
+;!CRITICAL = char($17)|!RED_PAL
+;
+;draw_overlay:
+;	LDA.w #char($18)|!YELLOW_PAL : STA !dg_buffer_r1+40
+;
+;	LDA $BA : BNE .preloaded
+;
+;	%i16()
+;	LDA $04BA : ASL : CLC : ADC $04BA : TAX
+;	LDA.l OverlayPTR+1, X : STA.b SA1IRAM.SCRATCH+1
+;	LDA.l OverlayPTR+0, X : STA.b SA1IRAM.SCRATCH+0
+;	%i8()
+;	LDA.w #char($1C)|!RED_PAL ; from ROM
+;	BRA .draw
+;
+;.preloaded
+;	LDA $B8 : STA.b SA1IRAM.SCRATCH+1
+;	LDA $B7 : STA.b SA1IRAM.SCRATCH+0
+;	LDA.w #char($1B)|!RED_PAL ; from RAM
+;
+;.draw
+;	STA !dg_buffer_r1+42
+;	;REP #$10
+;	LDX #(64+44) : LDA.b SA1IRAM.SCRATCH+2 : JSR draw_hex_2digits_white ; this doesn't change X flag
+;	LDX #(64+48) : LDA.b SA1IRAM.SCRATCH+0 : JSR draw_hex_4digits_white ; this exits i=10 - might not need
+;
+;	LDA.b SA1IRAM.SCRATCH+1 : AND #$FF00
+;	CMP #$7000 : BCC .notSRAM ; check <$70 first, to avoid work ram checks
+;	CMP #$7E00 : BEQ .workRAM
+;	CMP #$7F00 : BEQ .workRAM
+;	CMP #$7000 : BCS .notSRAM
+;	LDA.w #!CRITICAL
+;	BRA .drawWarning
+;
+;.notSRAM
+;	LDA.b SA1IRAM.SCRATCH+1 : AND #$00FF ; see what page it's on
+;	CMP #$0080 : BCC .workRAM ; if it's less than page $80, we're not in ROM
+;
+;	LDA.b SA1IRAM.SCRATCH+1 : AND #$3FFF ; account for mirroring of ROM
+;	CMP #$2080 : BCC .notHacked ; before bank20 and we're okay
+;	CMP.w #(((EndOfPracticeROM>>8)&$FF00)+$0100) : BCS .notHacked ; the last bank we *don't* use
+;	LDA.w #!NON_VANILLA : BRA .drawWarning
+;
+;; this assumes before $8000 is volatile in all banks
+;; while some banks don't mirror work ram or registers
+;; I think that just means the lower half is open bus
+;; in which case it's as volatile as you can get
+;.workRAM 
+;	LDA.w #!CRITICAL : BRA .drawWarning
+;
+;.notHacked
+;	LDA.w #!EMPTY
+;
+;.drawWarning
+;	STA !dg_buffer_r1+56
 
 trigger_update:
 	%a8()

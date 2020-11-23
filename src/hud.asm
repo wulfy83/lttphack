@@ -1,46 +1,4 @@
-pushpc
-; -------------
-; HUD TEMPLATE
-; -------------
 
-; HUD Template Hijack
-;
-; Overrides the following
-; $0DFA8E: E2 30  SEP #$30
-; $0DFA90: E6 16  INC $16
-org $0DFAAE
-	JSL fire_hud_irq
-
-org $0DDD24
-	JSL fire_hud_irq
-
-org $0DFD0A
-	JSL HUDCanUpdate
-	RTS
-pullpc
-
-HUDCanUpdate:
-	STA.l SA1HUD+$064
-	CMP.w #$247F
-	BNE ++
-	STA.l SA1HUD+$024
-++	SEP #$30
-
-	LDA.b #$83
-	STA.w $2200
-	RTL
-
-; Hud Template Hook
-fire_hud_irq:
-	SEP #$30
-	LDA.b #$83
-	STA.w $2200
-	INC $16
-	RTL
-
-WasteTimeWithHearts:
-	NOP ; never remove this, it's part of vanilla cycle count
-	RTL
 
 heart_lag_extra:
 

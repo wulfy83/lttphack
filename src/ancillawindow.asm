@@ -45,52 +45,48 @@
 UpdateAncillaWindow:
 	REP #$10
 	LDA #$20
-	TRB $9B
+	TRB.b SA1IRAM.HDMA_ASK
 	LDA #$7F : PHA : PLB
 	LDA #$24 : XBA
 
 	; do search index
-	LDA.l $03C4 : LSR #4
+	LDA.w SA1IRAM.CopyOf_03C4 : LSR #4
 	ORA #$10 : TAX : STX.w !dg_buffer+0
 
-	LDA.l $03C4 : AND #$0F
+	LDA.w SA1IRAM.CopyOf_03C4 : AND #$0F
 	ORA #$10 : TAX : STX.w !dg_buffer+2
 
 	LDA #$38 : XBA
 
 	; do eg thing
-	LDA.l $03A4  : LSR #4
+	LDA.w SA1IRAM.CopyOf_03A4  : LSR #4
 	ORA #$10 : TAX : STX.w !dg_buffer+6
 
-	LDA.l $03A4  : AND #$0F
+	LDA.w SA1IRAM.CopyOf_03A4  : AND #$0F
 	ORA #$10 : TAX : STX.w !dg_buffer+8
 
 	; unfurled loop because I said so
 macro do_ancilla_id(n)
 	LDA #$00 : XBA
-	LDA.l $0C4A+<n>
+	LDA.w SA1IRAM.CopyOf_0C4A+<n>
 	TAX
 	LDA.l .replacable_color, X
 	XBA
 
 	; write ID
-	LDA.l $0C4A+<n> : LSR #4
-	;ORA #$10 : TAX : STX.w !dg_buffer+(32*<n>+16)+0
+	LDA.w SA1IRAM.CopyOf_0C4A+<n> : LSR #4
 	ORA #$10 : TAX : STX.w !dg_buffer+(16*<n>+16)+0
 
-	LDA.l $0C4A+<n> : AND #$0F
-	;ORA #$10 : TAX : STX.w !dg_buffer+(32*<n>+16)+2
+	LDA.w SA1IRAM.CopyOf_0C4A+<n> : AND #$0F
 	ORA #$10 : TAX : STX.w !dg_buffer+(16*<n>+16)+2
 
 	; do timer
 	LDA #$34 : XBA ; yellow pal
 
-	LDA.l $0C5E+<n> : LSR #4
-	;ORA #$10 : TAX : STX.w !dg_buffer+(32*<n>+16)+6
+	LDA.w SA1IRAM.CopyOf_0C5E+<n> : LSR #4
 	ORA #$10 : TAX : STX.w !dg_buffer+(16*<n>+16)+6
 
-	LDA.l $0C5E+<n> : AND #$0F
-	;ORA #$10 : TAX : STX.w !dg_buffer+(32*<n>+16)+8
+	LDA.w SA1IRAM.CopyOf_0C5E+<n> : AND #$0F
 	ORA #$10 : TAX : STX.w !dg_buffer+(16*<n>+16)+8
 
 	; do X and Y coords

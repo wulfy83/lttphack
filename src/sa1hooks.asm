@@ -6,6 +6,7 @@ pushpc
 org $008000
 struct SA1IRAM $003000
 	.SCRATCH: skip 16
+	.HDMA_ASK: skip 1
 	.CopyOf_10: skip 1
 	.CopyOf_11: skip 1
 	.CopyOf_12: skip 1
@@ -56,6 +57,48 @@ struct SA1IRAM $003000
 	.CopyOf_020A: skip 1
 	.CopyOf_02A2: skip 1
 	.CopyOf_02FA: skip 1
+
+	.CopyOf_0B08: skip 1
+	.CopyOf_0B09: skip 1
+
+	.CopyOf_7EC011: skip 1
+	.CopyOf_7EF36C: skip 1
+	.CopyOf_7EF36D: skip 1
+
+	.CopyOf_0BFA: skip 10
+	.CopyOf_0C04: skip 10
+	.CopyOf_0C0E: skip 10
+	.CopyOf_0C18: skip 10
+
+	.ROOM_TIME_F: skip 2
+	.ROOM_TIME_S: skip 2
+	.ROOM_TIME_LAG: skip 2
+	.ROOM_TIME_IDLE: skip 2
+
+	.SEG_TIME_F: skip 2
+	.SEG_TIME_S: skip 2
+	.SEG_TIME_M: skip 2
+
+	.ROOM_TIME_F_DISPLAY: skip 2
+	.ROOM_TIME_S_DISPLAY: skip 2
+	.ROOM_TIME_LAG_DISPLAY: skip 2
+	.ROOM_TIME_IDLE_DISPLAY: skip 2
+
+	.SEG_TIME_F_DISPLAY: skip 2
+	.SEG_TIME_S_DISPLAY: skip 2
+	.SEG_TIME_M_DISPLAY: skip 2
+
+	.TIMER_FLAG: skip 2
+	.SHORTCUT_USED: skip 2
+
+	; extra stuff
+	; ancilla watch
+	.CopyOf_03C4: skip 1
+	.CopyOf_03A4: skip 1
+	.CopyOf_0C4A: skip 10
+	.CopyOf_0C5E: skip 10
+
+	; dg watch
 	.CopyOf_0400: skip 1
 	.CopyOf_0401: skip 1
 	.CopyOf_0402: skip 1
@@ -63,6 +106,8 @@ struct SA1IRAM $003000
 	.CopyOf_0408: skip 1
 	.CopyOf_040A: skip 1
 	.CopyOf_040C: skip 1
+	.CopyOf_04BA: skip 1
+	.CopyOf_04BB: skip 1
 
 	.CopyOf_0600: skip 1
 	.CopyOf_0601: skip 1
@@ -101,39 +146,7 @@ struct SA1IRAM $003000
 	.CopyOf_0690: skip 1
 	.CopyOf_0691: skip 1
 
-	.CopyOf_0B08: skip 1
-	.CopyOf_0B09: skip 1
-
-	.CopyOf_7EC011: skip 1
-	.CopyOf_7EF36C: skip 1
-	.CopyOf_7EF36D: skip 1
-
-	.CopyOf_0BFA: skip 10
-	.CopyOf_0C04: skip 10
-	.CopyOf_0C0E: skip 10
-	.CopyOf_0C18: skip 10
-	.CopyOf_0C4A: skip 10
-
-	.ROOM_TIME_F: skip 2
-	.ROOM_TIME_S: skip 2
-	.ROOM_TIME_LAG: skip 2
-	.ROOM_TIME_IDLE: skip 2
-
-	.SEG_TIME_F: skip 2
-	.SEG_TIME_S: skip 2
-	.SEG_TIME_M: skip 2
-
-	.ROOM_TIME_F_DISPLAY: skip 2
-	.ROOM_TIME_S_DISPLAY: skip 2
-	.ROOM_TIME_LAG_DISPLAY: skip 2
-	.ROOM_TIME_IDLE_DISPLAY: skip 2
-
-	.SEG_TIME_F_DISPLAY: skip 2
-	.SEG_TIME_S_DISPLAY: skip 2
-	.SEG_TIME_M_DISPLAY: skip 2
-
-	.TIMER_FLAG: skip 2
-	.SHORTCUT_USED: skip 2
+	print "SA1 mirroring: ", pc
 endstruct
 
 ;==============================================================================
@@ -226,9 +239,69 @@ CacheSA1Stuff:
 	LDA.l $7EF36C : STA.w SA1IRAM.CopyOf_7EF36C
 	LDA.l $7EF36D : STA.w SA1IRAM.CopyOf_7EF36D
 
+	; don't want to be transferring too much
+	; certain things will get designated as slow
+	LDA.b !ram_extra_sa1_required
+	BEQ .noextra
+
+	PHP
+	JSR Extra_SA1_Transfers
+	PLP
+
+.noextra
 	LDA.b #$81
 	STA.w $2200
 	RTL
+
+Extra_SA1_Transfers:
+	LDA.l !ram_superwatch
+	ASL
+	TAX
+	SEP #$30
+	JSR (.superwatchtransfers, X)
+
+	RTS
+
+
+
+
+
+
+.superwatchtransfers
+	dw ..off
+	dw ..ancillae
+	dw ..uw
+
+..ancillae
+	LDA.w $03C4 : STA.w SA1IRAM.CopyOf_03C4
+	LDA.w $03A4 : STA.w SA1IRAM.CopyOf_03A4
+
+	LDX.b #$09
+--	LDA.w $0C4A, X : STA.w SA1IRAM.CopyOf_0C4A, X
+	LDA.w $0C5E, X : STA.w SA1IRAM.CopyOf_0C5E, X
+	DEX
+	BPL --
+
+..off
+	RTS
+
+..uw
+	LDA.w $0400 : STA.w SA1IRAM.CopyOf_0400
+	LDA.w $0401 : STA.w SA1IRAM.CopyOf_0401
+	LDA.w $0402 : STA.w SA1IRAM.CopyOf_0402
+	LDA.w $0403 : STA.w SA1IRAM.CopyOf_0403
+	LDA.w $0408 : STA.w SA1IRAM.CopyOf_0408
+	LDA.w $040A : STA.w SA1IRAM.CopyOf_040A
+	LDA.w $040C : STA.w SA1IRAM.CopyOf_040C
+	LDA.w $04BA : STA.w SA1IRAM.CopyOf_04BA
+	LDA.w $04BB : STA.w SA1IRAM.CopyOf_04BB
+
+	LDX.b #$1F
+--	LDA.w $0600, X : STA.w SA1IRAM.CopyOf_0600, X
+	DEX
+	BPL --
+
+	RTS
 
 SA1Reset:
 	SEI
@@ -420,8 +493,7 @@ SA1IRQ:
 	dw .irq_hud
 
 .irq_hud
-	JSL draw_counters
-	JSR hud_draw_hearts
+	JSL draw_hud_extras
 	RTS
 
 .irq_shortcuts

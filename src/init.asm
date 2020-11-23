@@ -59,11 +59,11 @@ ClearWatchBuffer:
 	LDA #$207F
 	LDX #$3E
 
---	STA.l !dg_buffer_r0, X
-	STA.l !dg_buffer_r1, X
-	STA.l !dg_buffer_r2, X
-	STA.l !dg_buffer_r3, X
-	STA.l !dg_buffer_r4, X
+--	STA.w !dg_buffer_r0, X
+	STA.w !dg_buffer_r1, X
+	STA.w !dg_buffer_r2, X
+	STA.w !dg_buffer_r3, X
+	STA.w !dg_buffer_r4, X
 	DEX : DEX : BPL --
 
 	PLP

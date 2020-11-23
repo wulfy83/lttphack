@@ -4,7 +4,24 @@
 !red = $3810
 !gray = $2010
 
-!HUD_EXTRAS_BUFFER = SA1HUD+$000
+pushpc
+org $0DFAAE
+	JSL fire_hud_irq
+
+org $0DDD24
+	JSL fire_hud_irq
+
+pullpc
+
+;==============================================================================
+; 
+;==============================================================================
+fire_hud_irq:
+	SEP #$30
+	LDA.b #$83
+	STA.w $2200
+	INC $16
+	RTL
 
 ;==============================================================================
 ; 
@@ -21,10 +38,15 @@ UpdateCounterLine:
 
 	REP #$30
 	LDX.w .line, Y
+
+	CPX.w #(5<<6+$2E) ; line 6 is too much
+	BCS .nothing
+
+	SEC
 	RTS
 
 .nothing
-	REP #$30
+	REP #$31
 	RTS
 
 .line
@@ -42,6 +64,10 @@ UpdateCounterLine:
 ;==============================================================================
 Draw:
 .all
+..one
+	STA.b SA1IRAM.SCRATCH+10
+	BRA .digit1
+
 ..two
 	STA.b SA1IRAM.SCRATCH+10
 	SEP #$41 ; set overflow and carry flags for unconditional draws
@@ -103,7 +129,7 @@ Draw:
 ..d3
 	LDA.b (SA1IRAM.SCRATCH+10)
 	SEP #$21 ; carry set for fewer cycles
-
+	XBA
 	ADC.b #$7E ; overflow set if digit 3 exists
 
 	REP #$20
@@ -256,26 +282,119 @@ hex_to_dec_fast_table:
 ;==============================================================================
 ; 
 ;==============================================================================
-draw_counters:
+draw_hud_extras:
 	PHP
 	PHB
 	PHK
 	PLB
+
+	; Draw hearts
+	SEP #$21
+	LDA.w SA1IRAM.CopyOf_7EF36C
+	SBC.w SA1IRAM.CopyOf_7EF36D
+	CMP.b #$04
+
+	REP #$30
+	LDA.w #$24A0
+	ADC.w #$0000
+	STA.w SA1HUD+$90
+
+	LDA.w SA1IRAM.CopyOf_7EF36D
+	AND.w #$00FF
+	LSR
+	LSR
+	LSR
+	JSR hex_to_dec_fast
+
+	LDA.b SA1IRAM.SCRATCH+2
+	ORA #$3C90
+	STA.w SA1HUD+$92
+
+	LDA.b SA1IRAM.SCRATCH+4
+	ORA #$3C90
+	STA.w SA1HUD+$94
+
+	LDA.w SA1IRAM.CopyOf_7EF36D
+	AND.w #$0007
+	ORA.w #$3490
+	STA.w SA1HUD+$96
+
+	LDA.l !ram_heartlag_spinner
+	BNE .doheartlag
+
+	LDA.w #$207F
+	BRA .drawheartlag
+
+.doheartlag
+	LDA.w SA1IRAM.CopyOf_1A
+	AND.w #$000C
+	LSR
+	LSR
+	; Desired results:
+	; 00  ->  00
+	; 01  ->  01
+	; 10  ->  11
+	; 11  ->  10
+	; b0 = b1 ^ b0
+	; b1 = b1
+
+	LSR ; put b1 in b0
+	STA.b SA1IRAM.SCRATCH+0
+	ROL ; back to normal
+
+	EOR.b SA1IRAM.SCRATCH+0 ; b0 ^ b1
+	ROR ; get to bits 14 and 15
+	ROR
+	ROR
+
+	ORA.w #$253F
+
+.drawheartlag
+	STA.w SA1HUD+$98
+
+	; containers
+	LDA.w #$24A2
+	STA.w SA1HUD+$9A
+
+	LDA.w SA1IRAM.CopyOf_7EF36C
+	AND.w #$00FF
+	LSR
+	LSR
+	LSR
+	JSR hex_to_dec_fast
+
+	LDA.b SA1IRAM.SCRATCH+2
+	ORA #$3C90
+	STA.w SA1HUD+$9C
+
+	LDA.b SA1IRAM.SCRATCH+4
+	ORA #$3C90
+	STA.w SA1HUD+$9E
+
+	; clear up counters
 	REP #$20
 	SEP #$10
+	LDA.w #$207F
+	LDX.b #$14
+--	STA.w SA1HUD+$28+($40*0), X
+	STA.w SA1HUD+$28+($40*1), X
+	STA.w SA1HUD+$28+($40*2), X
+	STA.w SA1HUD+$28+($40*3), X
+	STA.w SA1HUD+$28+($40*4), X
+
+	DEX
+	DEX
+	BPL --
 
 	LDA.w #$0001 ; start at 1 so that 0 can be a dummy write
 	STA.w SA1IRAM.SCRATCH+8
 
+
 	LDA.w SA1IRAM.TIMER_FLAG
-	BIT.w #$0080
-	BNE .roomtime
-
-	JMP .calccoordposition
-
-.roomtime
 	AND.w #$FF7F
 	STA.w SA1IRAM.TIMER_FLAG
+
+.roomtime
 
 	LDA.l !ram_counters_real
 	JSR UpdateCounterLine
@@ -366,6 +485,7 @@ draw_counters:
 	JSR DrawCoordinates
 
 ..skip
+;==============================================================================
 hud_draw_input_display:
 	LDA.l !ram_input_display
 	AND #$0003
@@ -374,10 +494,8 @@ hud_draw_input_display:
 	XBA
 	JSR (.options, X)
 
-;-----------------------------------------------------------------
-; Other
-;-----------------------------------------------------------------
-draw_quickwarp: ; cycle controlled
+;==============================================================================
+draw_quickwarp:
 	SEP #$30 ; M=8 for just this is few cycles faster
 	LDA.l !ram_qw_toggle : LSR ; shift toggle into carry
 	LDA.w SA1IRAM.CopyOf_E2 : AND #$06 ; this tests the bits for camera
@@ -389,88 +507,70 @@ draw_quickwarp: ; cycle controlled
 	; then we'll have $0F, and it will fail
 	CMP #$0D ; 6 shifted left once and with a carry flag in bottom bit
 	REP #$20 ; faster because it removes an AND #$00FF to get rid of leakage
-
 	BEQ .qw
 
 .notqw
-	LDA #!EMPTY ; 3
+	LDA.w #$207F
 	STA.w SA1HUD+$10A ; 6
-	STA.w SA1HUD+$10C ; 6
-	; this will always be non zero, so we get an extra cycle for branch taken
-	BNE ++ ; 3
+	BRA ++ ; 3
 	; 18 cycles total
 
 .qw ; 1 for branch
 	LDA #$340C ; 3
 	STA.w SA1HUD+$10A ; 6
-	INC ; 2
-	STA.w SA1HUD+$10C ; 6
-	; 18 cycles total
+	INC
+++	STA.w SA1HUD+$10C
 
-++	; Naked label. Avert your eyes.
-
-;-----------------------------------------------------------------
-;-----------------------------------------------------------------
-; END OF CYCLE CONTROLLED EXTRAS
-;-----------------------------------------------------------------
-;-----------------------------------------------------------------
-
+;==============================================================================
 extra_ram:
 	LDA.l !ram_extra_ram_watch : BEQ .nowatch
 	LDA #$0001
 	JSR UpdateCounterLine
-	CPX.w #(5<<6+$2E) : BCS .nowatch ; line 6 is too many
+	BCC .nowatch
+
 	LDA.l !ram_extra_ram_watch : ASL : TAY
-	LDA extra_ram_watch_routines, Y
+	LDA.w extra_ram_watch_routines, Y
 	PEA.w .return-1 ; so we can RTS back
 	PHA ; push the location of the routine
 	RTS
 .return
 
-.nowatch ; Oh no! The nudists are everywhere
+.nowatch
 done_extras:
+	JSR UpdateGlitchedWindow
+
 	PLB : PLP
 	RTL
 
 macro add_input_character_a(pos, topbottom)
-++	INY ; next character
+++	INY
 	%add_input_character_afirst(<pos>, <topbottom>)
 endmacro
 
 macro add_input_character_afirst(pos, topbottom)
-	LSR ; shift bit into carry
-	; cycle control here
+	LSR
 	BCS ?inputheld
 
 ?inputnotheld:
-	STX.w (!POS_MEM_INPUT_DISPLAY_<topbottom>)+<pos> ; 5
-	NOP ; 2
-	BRA ++ ; 2
-	; 9 cycles total
+	STX.w (!POS_MEM_INPUT_DISPLAY_<topbottom>)+<pos>
+	BRA ++
 
-?inputheld: ; 1 for branch taken
-	STY.w (!POS_MEM_INPUT_DISPLAY_<topbottom>)+<pos> ; 5
-	REP #$00 ; 3
-	; 9 cycles total
+?inputheld:
+	STY.w (!POS_MEM_INPUT_DISPLAY_<topbottom>)+<pos>
 endmacro
 
 ; this one goes backwards, since the bottom nibble is all 0
 macro add_input_character_b(pos, topbottom)
 ++	INY ; next character
 	ASL ; shift bit into carry
-	; cycle control here
 	BCS ?inputheld
 
 ?inputnotheld:
-	STX.w !POS_MEM_INPUT_DISPLAY_<topbottom>+<pos> ; 5
-	NOP ; 2
-	BRA ++ ; 2
-	; 9 cycles total
+	STX.w !POS_MEM_INPUT_DISPLAY_<topbottom>+<pos>
+	BRA ++
 
-?inputheld: ; 1 for branch taken
-	STY.w !POS_MEM_INPUT_DISPLAY_<topbottom>+<pos> ; 5
-	REP #$00 ; 3
-	; 9 cycles total
+?inputheld:
+	STY.w !POS_MEM_INPUT_DISPLAY_<topbottom>+<pos>
 endmacro
 
 hud_draw_input_display_options:
@@ -480,21 +580,6 @@ hud_draw_input_display_options:
 	dw .off
 
 .off
-	STA.b SA1IRAM.SCRATCH+0
-	AND #$000F : ORA #$2D70 : LDA !POS_MEM_INPUT_DISPLAY_BOT+2
-	SEP #$30
-	LDA.b SA1IRAM.SCRATCH+0 : AND #$C0 : LSR #5 : STA.b SA1IRAM.SCRATCH+2
-	LDA.b SA1IRAM.SCRATCH+1 : AND #$40 : LSR #3 : ORA.b SA1IRAM.SCRATCH+2
-	ASL.b SA1IRAM.SCRATCH+1 : ADC #$70 ; a in place
-	REP #$20
-	LDA !POS_MEM_INPUT_DISPLAY_BOT+6
-	LDA.b SA1IRAM.SCRATCH : AND #$0030 : LSR #4 : ORA #$2C00
-	LDA !POS_MEM_INPUT_DISPLAY_BOT+4
-	ASL.b SA1IRAM.SCRATCH : ASL.b SA1IRAM.SCRATCH
-	LDA #$2C04 : ADC #$0000 : LDA !POS_MEM_INPUT_DISPLAY_TOP+2
-	ASL.b SA1IRAM.SCRATCH
-	LDA #$6C04 : ADC #$0000 : LDA !POS_MEM_INPUT_DISPLAY_TOP+6
-	LDA #$2C06 : LDA !POS_MEM_INPUT_DISPLAY_TOP+4
 	RTS
 
 .cool
@@ -525,8 +610,6 @@ hud_draw_input_display_options:
 	LDA #$6C04 : ADC #$0000 : STA !POS_MEM_INPUT_DISPLAY_TOP+6
 
 	LDA #$2C06 : STA  !POS_MEM_INPUT_DISPLAY_TOP+4
-	; old input display was 206 cycles
-	; new is 133ish?
 	RTS
 
 .lame
@@ -574,29 +657,29 @@ extra_ram_watch_routines:
 ..nodoor
 	LDA.w #!EMPTY
 
-++	STA !HUD_EXTRAS_BUFFER+06, X
+++	STA.w SA1HUD+06, X
 
 .subpixels
 	; can't macro this, since 1 byte addresses
 ; first digit
 	LDA.w SA1IRAM.CopyOf_2A : AND #$000F
 	ORA.w #!yellow
-	STA !HUD_EXTRAS_BUFFER+14, X
+	STA.w SA1HUD+14, X
 
 ; second digit
 	LDA.w SA1IRAM.CopyOf_2A : AND #$00F0 : LSR #4
 	ORA.w #!yellow
-	STA !HUD_EXTRAS_BUFFER+12, X
+	STA.w SA1HUD+12, X
 
 ; first digit
 	LDA.w SA1IRAM.CopyOf_2B : AND #$000F
 	ORA.w #!white
-	STA !HUD_EXTRAS_BUFFER+10, X
+	STA.w SA1HUD+10, X
 
 ; second digit
 	LDA.w SA1IRAM.CopyOf_2B : AND #$00F0 : LSR #4
 	ORA.w #!white
-	STA !HUD_EXTRAS_BUFFER+08, X
+	STA.w SA1HUD+08, X
 
 .nothing
 	RTS
@@ -638,9 +721,7 @@ extra_ram_watch_routines:
 
 	RTS
 
-
-
-
+;==============================================================================
 DrawCoordinates:
 	PHY ; x coordinate first
 	LDA.w #!white

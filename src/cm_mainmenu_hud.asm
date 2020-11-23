@@ -21,29 +21,22 @@ cm_submenu_hud:
 	%cm_header("HUD EXTRAS")
 
 cm_hud_real:
-	%cm_toggle_jsr("Room time", !ram_counters_real)
+	%cm_toggle("Room time", !ram_counters_real)
 
 cm_hud_lag:
-	%cm_toggle_jsr("Lag counter", !ram_counters_lag)
+	%cm_toggle("Lag counter", !ram_counters_lag)
 
 cm_hud_heartlag:
-	%cm_toggle_jsr("Heart lag", !ram_heartlag_spinner)
-
-.toggle
-	%a16()
-	LDA #$207F
-	STA !POS_MEM_HEARTLAG
-	RTS
+	%cm_toggle("Heart lag", !ram_heartlag_spinner)
 
 cm_hud_idle:
-	%cm_toggle_jsr("Idle frames", !ram_counters_idle)
+	%cm_toggle("Idle frames", !ram_counters_idle)
 
 cm_hud_segment:
-	%cm_toggle_jsr("Segment time", !ram_counters_segment)
+	%cm_toggle("Segment time", !ram_counters_segment)
 
 cm_hud_xy:
-	dw !CM_ACTION_CHOICE_JSR
-	dw #.toggle
+	dw !CM_ACTION_CHOICE
 	dl !ram_xy_toggle
 	%cm_item("Coordinates")
 	%cm_item("Off")
@@ -77,8 +70,7 @@ cm_hud_lagometer:
 	RTS
 
 cm_hud_input_display:
-	dw !CM_ACTION_CHOICE_JSR
-	dw .toggle
+	dw !CM_ACTION_CHOICE
 	dl !ram_input_display
 	%cm_item("Input display")
 	%cm_item("Off")
@@ -86,38 +78,14 @@ cm_hud_input_display:
 	%cm_item("Classic")
 	db !list_end
 
-.toggle
-	%a16()
-	LDA #$207F
-	STA !POS_MEM_INPUT_DISPLAY_TOP+0 : STA !POS_MEM_INPUT_DISPLAY_TOP+2
-	STA !POS_MEM_INPUT_DISPLAY_TOP+4 : STA !POS_MEM_INPUT_DISPLAY_TOP+6
-	STA !POS_MEM_INPUT_DISPLAY_TOP+8 : STA !POS_MEM_INPUT_DISPLAY_BOT+0
-	STA !POS_MEM_INPUT_DISPLAY_BOT+2 : STA !POS_MEM_INPUT_DISPLAY_BOT+4
-	STA !POS_MEM_INPUT_DISPLAY_BOT+6 : STA !POS_MEM_INPUT_DISPLAY_BOT+8
-
-	RTS
-
 cm_hud_enemy_hp:
 	%cm_toggle_jsr("Enemy HP", !ram_enemy_hp_toggle)
 
-.toggle
-	%ai16()
-	LDA #$207F : STA !POS_MEM_ENEMY_HEART_GFX
-	LDX.w #!POS_ENEMY_HEARTS : STA.w SA1HUD+$00, X : STA.w SA1HUD+$02, X
-	RTS
-
 cm_hud_qw:
-	%cm_toggle_jsr("QW indicator", !ram_qw_toggle)
-
-.toggle
-	%a16()
-	LDA #$207F : STA $7EC80A
-	LDA #$207F : STA $7EC80C
-	RTS
+	%cm_toggle("QW indicator", !ram_qw_toggle)
 
 cm_hud_ramwatch:
-	dw !CM_ACTION_CHOICE_JSR
-	dw #.toggle
+	dw !CM_ACTION_CHOICE
 	dl !ram_extra_ram_watch
 	%cm_item("RAM watch")
 	%cm_item("Off")
@@ -161,13 +129,11 @@ cm_hud_superwatch:
 	REP #$30
 	LDA.w #$C200>>1 ; tile map location of BG3 
 	STA.w $2116
-	LDX.w #24*32
+	LDX.w #$140
 	LDA.w #$207F
 --	STA.w $2118
 	DEX
 	BNE --
-
-
 
 	%a8()
 	LDA !ram_superwatch : CMP #$02 : BNE ++
@@ -177,14 +143,14 @@ cm_hud_superwatch:
 	PLB ; bank of the hdma table for modifying
 
 	; Set up the HDMA table
-	LDA #63 : STA.w !dg_hdma+0 ; for 64 scanlines
-	LDX #$0000 : STX.w !dg_hdma+1 ; Shift BG3 by 0 pixels
+	LDA.b #63 : STA.w !dg_hdma+0 ; for 64 scanlines
+	LDX.w #$0000 : STX.w !dg_hdma+1 ; Shift BG3 by 0 pixels
 
 	LDA.b #32 : STA.w !dg_hdma+3 ; for 32 scanlines
 	LDX #$0100 : STX.w !dg_hdma+4 ; shift BG3 by 256 pixels
 
-	LDA #$01 : STA.w !dg_hdma+6 ; for 1 scanline
-	LDX #$0000 : STX.w !dg_hdma+7 ; shift BG3 by 0 pixels
+	LDA.b #$01 : STA.w !dg_hdma+6 ; for 1 scanline
+	LDX.w #$0000 : STX.w !dg_hdma+7 ; shift BG3 by 0 pixels
 
 	STZ.w !dg_hdma+9 ; terminate HDMA
 
@@ -200,27 +166,16 @@ cm_hud_superwatch:
 	RTS
 
 ++	PLB : PLP
-	LDA #$20 : TRB $9B ; shut off HDMA
-	RTS
 
-; these all do the same thing: empty the counters
-cm_hud_real_toggle:
-cm_hud_lag_toggle:
-cm_hud_idle_toggle:
-cm_hud_segment_toggle:
-cm_hud_xy_toggle:
-cm_hud_ramwatch_toggle:
+SA1ExtraTransfersField:
+cm_hud_enemy_hp_toggle:
 	PHP
-	%ai16()
-	LDA #$207F
-	LDX.w #12
---	STA.w SA1HUD+$32+(0*64), X
-	STA.w SA1HUD+$32+(1*64), X
-	STA.w SA1HUD+$32+(2*64), X
-	STA.w SA1HUD+$32+(3*64), X
-	STA.w SA1HUD+$32+(4*64), X
-	DEX #2 : BPL --
+	SEP #$20
+	LDA.l !ram_superwatch
+	ORA.l !ram_extra_ram_watch
+	ORA.l !ram_enemy_hp_toggle
 
+	STA.b !ram_extra_sa1_required
 	PLP
 	RTS
 

@@ -14,8 +14,8 @@ SA1SRAM = $400000
 !BLANK_TILE = $24F5
 
 !menu_dma_buffer = $7F8000 ; [0x800] reserved
-!dg_hdma = $7F8800 ; [0x800] reserved
-!dg_dma_buffer = $7F9000 ; [0x800] reserved
+!dg_hdma = $003560 ; [0x800] reserved
+!dg_dma_buffer = $003580 ; [0x800] reserved
 !dg_buffer = !dg_dma_buffer
 !dg_buffer_r0 #= !dg_dma_buffer+(64*0)
 !dg_buffer_r1 #= !dg_dma_buffer+(64*1)
@@ -80,9 +80,7 @@ endmacro
 %def_wramA("submode_copy", 2)
 %def_wramA("received_item_copy", 2)
 
-!ram_gamemode_copy = $6F
-!ram_submode_copy = $70
-!ram_received_item_copy = $71
+!ram_extra_sa1_required = $6F
 
 %def_wramA("hex2dec_tmp", 2)
 %def_wramA("hex2dec_first_digit", 2)
@@ -282,23 +280,6 @@ endmacro
 ; Sword beams
 ;-------------------------
 !disable_beams = $7A
-
-;-------------------------
-; HUD
-;-------------------------
-
-!POS_COUNTERS = $34
-
-!POS_HEARTS = $92
-!POS_MEM_HEART_GFX = SA1HUD+$90
-
-!POS_MEM_HEARTLAG = SA1HUD+$98
-
-!POS_CONTAINERS = $9C
-!POS_MEM_CONTAINER_GFX = SA1HUD+$9A
-
-!POS_ENEMY_HEARTS = $A4
-!POS_MEM_ENEMY_HEART_GFX = SA1HUD+$A2
 
 ;-------------------------
 ; Custom menu
