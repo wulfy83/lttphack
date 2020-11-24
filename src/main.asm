@@ -33,9 +33,6 @@ print "Custom menu size: ", pc
 org $268000
 incsrc presets.asm
 
-org $278000
-incsrc poverty_states.asm
-
 org $288000
 incsrc music.asm
 

@@ -2,7 +2,7 @@
 SA1HUD = $003400
 SA1SRAM = $400000
 
-!SRAM_VERSION = $0028
+!SRAM_VERSION = $002A
 
 !menu_end = #$0000
 !list_end = #$FF
@@ -57,28 +57,13 @@ endmacro
 !do_heart_lag = $04CE
 
 ; old stuff
-!lowram_room_gametime = $04CC
-
 !lowram_last_frame_did_saveload = $04DA
-!lowram_draw_tmp = $04DC
-!lowram_draw_tmp2 = $04DE
-!lowram_draw_tmp3 = $04E0
-
-!lowram_is_poverty_load = $04E6
 
 !lowram_idle_frames = $04EA
 !lowram_idle_frames_copy = $04EC
 
-!lowram_nmi_counter = $04EE
-
 ; AXLR|....|BYSlSt|udlr
 !ram_ctrl1 = $04E4
-%def_wramA("ctrl1_filtered", 2)
-%def_wramA("ctrl1_word_copy", 2)
-
-%def_wramA("gamemode_copy", 2)
-%def_wramA("submode_copy", 2)
-%def_wramA("received_item_copy", 2)
 
 !ram_extra_sa1_required = $6F
 
@@ -205,13 +190,11 @@ endmacro
 ; these can be moved around
 %def_sram("qw_toggle", !OFF)
 
-%def_sram("can_load_pss", !OFF)
 %def_sram("previous_preset_destination", !OFF)
 %def_sram("previous_preset_type", !OFF)
 %def_sram("autoload_preset", !OFF)
 
 %def_sram("lagometer_toggle", !OFF)
-%def_sram("secondary_counter_type", !OFF)
 %def_sram("toggle_lanmola_cycles", !ON)
 
 %def_sram("xy_toggle", !ON)
@@ -224,7 +207,7 @@ endmacro
 %def_sram("superwatch", !OFF)
 
 %def_sram("rerandomize_framecount", 0)
-%def_sram("rerandomize_accumulator", 0)
+%def_sram("rerandomize_rng", 0)
 
 %def_sram("enemy_hp_toggle", !OFF)
 %def_sram("lit_rooms_toggle", !OFF)
@@ -237,9 +220,6 @@ endmacro
 
 !lowram_oob_toggle = $037F
 !ram_eg_strength = $7E044A
-
-%def_wramA("debug", 2)
-%def_wramA("debug2", 2)
 
 %def_wramA("cm_old_gamemode", 1)
 %def_wramA("cm_old_submode", 1)
@@ -254,9 +234,8 @@ endmacro
 
 %def_wramA("cm_old_crystal_switch", 2)
 
-!sram_ss_dma_buffer = $770000
-!sram_old_music_bank = $770080
-!sram_pss_offset = $702000
+!sram_ss_dma_buffer = $420000
+!sram_old_music_bank = $420080
 
 ;-------------------------
 ; Transition detection
@@ -274,12 +253,13 @@ endmacro
 ; Layers
 ;-------------------------
 !disabled_layers = $B6
-!disabled_layers_temp = $AB ; 2 bytes
 
 ;-------------------------
 ; Sword beams
 ;-------------------------
 !disable_beams = $7A
+
+!CM_Subsub = $B1
 
 ;-------------------------
 ; Custom menu
@@ -306,14 +286,6 @@ endmacro
 %def_wramA("mash_counter", 2)
 %def_wramA("mash_inputs", 2)
 
-
-;-------------------------
-; MUSIC
-;-------------------------
-
-!SPC_DATA_OVERWORLD = $3E8000
-!SPC_DATA_UNDERWORLD = $3EC000
-!SPC_DATA_CREDITS = $3F8000
 
 ;-------------------------
 ; PRESETS
@@ -447,30 +419,6 @@ endmacro
 ;-------------------------
 ; Macros
 ;-------------------------
-
-macro a8()
-	SEP #$20
-endmacro
-
-macro a16()
-	REP #$20
-endmacro
-
-macro i8()
-	SEP #$10
-endmacro
-
-macro i16()
-	REP #$10
-endmacro
-
-macro ai8()
-	SEP #$30
-endmacro
-
-macro ai16()
-	REP #$30
-endmacro
 
 macro ppu_off()
 	LDA #$80 : STA $2100 : STA $13

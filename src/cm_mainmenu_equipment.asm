@@ -22,7 +22,7 @@ cm_submenu_equipment:
 	dw cm_equipment_bombs
 	dw cm_equipment_arrows
 	dw cm_equipment_keys
-	; dw cm_equipment_goto_small_keys_submenu ; maybe?
+;	dw cm_equipment_goto_small_keys_submenu ; maybe?
 	dw cm_equipment_goto_big_keys_submenu
 
 	dw cm_equipment_fill_everything
@@ -107,7 +107,7 @@ cm_equipment_shield:
 
 cm_equipment_armor:
 	dw !CM_ACTION_CHOICE_JSR
-	dw #.toggle_armor
+	dw .toggle_armor
 	dl !ram_equipment_armor
 	%cm_item("Armor")
 	%cm_item("Green")
@@ -130,8 +130,8 @@ cm_equipment_fill_rupees:
 	%cm_jsr("Fill rupees")
 
 .routine
-	%a16()
-	; Sets 999 rupees.
+	REP #$20
+	; Sets 999 rupees
 	LDA #$03E7 : STA $7EF360 : STA $7EF362
 	RTS
 
@@ -183,13 +183,13 @@ cm_equipment_maxhp:
 	RTS
 
 cm_equipment_bombs:
-	%cm_numfield("Bombs", !ram_item_bombs, #$00, #$1E, #$05)
+	%cm_numfield("Bombs", !ram_item_bombs, #0, #30, #5)
 
 cm_equipment_arrows:
-	%cm_numfield("Arrows", !ram_equipment_arrows_filler, #$00, #$1E, #$05)
+	%cm_numfield("Arrows", !ram_equipment_arrows_filler, #0, #50, #5)
 
 cm_equipment_keys:
-	%cm_numfield("Keys", !ram_equipment_keys, #$00, #$09, #$01)
+	%cm_numfield("Keys", !ram_equipment_keys, #0, #9, #1)
 
 cm_equipment_goto_big_keys_submenu:
 	%cm_submenu("Big keys", cm_submenu_big_keys)

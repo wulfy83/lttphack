@@ -83,7 +83,7 @@ RTL
 
 
 movie_record:
-	%ai16()
+	REP #$30
 	LDA #$3820 : STA !ram_movie_hud+44
 	LDX !ram_movie_index : LDY #$5C00 : JSR movie_hud
 
@@ -92,13 +92,13 @@ movie_record:
 	LDA.w SA1IRAM.CONTROLLER_1 : CMP !ram_prev_ctrl : BNE .save_input
 
 	INC !ram_movie_timer
-	%ai8()
+	SEP #$30
 	RTS
 
 .too_big
 	LDA #$0000 : STA !ram_movie_mode
 	JSL movie_clear_hud
-	%ai8()
+	SEP #$30
 	RTS
 
 .save_input
@@ -109,12 +109,12 @@ movie_record:
 	LDA.w SA1IRAM.CONTROLLER_1 : STA !ram_prev_ctrl
 	STZ !ram_movie_timer
 
-	%ai8()
+	SEP #$30
 	RTS
 
 
 movie_playback:
-	%ai16()
+	REP #$30
 	LDA #$3C21 : STA !ram_movie_hud+44
 	LDX !ram_movie_index : LDY !ram_movie_length : JSR movie_hud
 
@@ -122,20 +122,20 @@ movie_playback:
 
 	LDA !ram_movie+2, X : XBA : STA $00
 	DEC !ram_movie_timer : BMI .nextInput
-	%ai8()
+	SEP #$30
 	RTS
 
 .nextInput
 	INX #4 : STX !ram_movie_index
 	LDA !ram_movie, X : STA !ram_movie_timer
-	%ai8()
+	SEP #$30
 	RTS
 
 .stop_playback
 	LDA #$0000 : STA !ram_movie_mode
 	JSL movie_clear_hud
 	STZ $00
-	%ai8()
+	SEP #$30
 	RTS
 
 
@@ -143,19 +143,19 @@ movie_rng:
 	LDA !ram_movie_mode : BEQ .RandomNum
 	CMP #$01 : BEQ .recording
 
-	%ai16()
+	REP #$30
 	DEC !ram_movie_rng_index
 	LDX !ram_movie_rng_index
 	LDA !ram_movie, X
 	RTL
 
 .recording
-	%ai16()
+	REP #$30
 	DEC !ram_movie_rng_index
 	LDX !ram_movie_rng_index
 	INC !ram_movie_rng_length
 
-	%a8()
+	SEP #$20
 	JSL .RandomNum : STA !ram_movie, X
 	RTL
 
@@ -181,12 +181,13 @@ movie_preset_loaded:
 
 .startRecord
 	LDA #$0000 : STA !ram_movie_rng_length
-	%a8() : LDA $1A : STA !ram_movie_framecounter : %a16()
+	SEP #$20 : LDA $1A : STA !ram_movie_framecounter : REP #$20
 
-	PLP : RTL
+	PLP
+	RTL
 
 .startPlayback
-	%a8() : LDA !ram_movie_framecounter : STA $1A : %a16()
+	SEP #$20 : LDA !ram_movie_framecounter : STA $1A : REP #$20
 
 	LDX #$0000
 	LDA !ram_movie : CMP #$FFFF : BNE .done
@@ -194,7 +195,8 @@ movie_preset_loaded:
 
 .done
 	LDA !ram_movie, X : STA !ram_movie_timer
-	PLP : RTL
+	PLP
+	RTL
 
 
 movie_hud:

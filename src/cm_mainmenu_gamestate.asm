@@ -11,6 +11,7 @@ cm_submenu_game_state:
 	dw cm_game_state_goto_bosses_submenu
 	dw cm_game_state_goto_crystals_submenu
 	dw cm_game_state_goto_flags_submenu
+	dw cm_game_state_set_follower
 	dw cm_game_state_world
 	dw cm_game_state_progress
 	dw cm_game_state_map_indicator
@@ -53,6 +54,36 @@ cm_game_state_crystal_switch:
 .done
 	RTS
 
+cm_game_state_set_follower:
+	dw !CM_ACTION_CHOICE_JSR
+	dw .update
+	dl $7EF3CC
+	%cm_item("Follower")
+	%cm_item("Lonely Link")
+	%cm_item("Zelda")
+	%cm_item("Garbage")
+	%cm_item("Trash")
+	%cm_item("Old man")
+	%cm_item("Zelda text")
+	%cm_item("Blind")
+	%cm_item("Frog")
+	%cm_item("Dwarf")
+	%cm_item("Sign man")
+	%cm_item("Kiki")
+	%cm_item("??????")
+	%cm_item("Purple chest")
+	%cm_item("Super bomb")
+	%cm_item("Sasha text")
+	db !list_end
+
+.update
+	PHP
+	SEP #$30
+	JSL $00D463
+	PLP
+	RTS
+
+
 cm_game_state_reset_screen:
 	%cm_jsr("Reset current room")
 
@@ -94,7 +125,7 @@ cm_game_state_reset_screen:
 macro reset_dungeon(dungeon, id)
 	dw !CM_ACTION_JSR
 	dw ?routine
-	db #$24, "<dungeon>", #$FF
+	db $24, "<dungeon>", #$FF
 
 ?routine:
 	LDA #$09 : STA $012F
@@ -192,7 +223,7 @@ supertile_dungeons:
 
 reset_dungeon:
 	PHB : PHK : PLB : PHP
-	%ai16()
+	REP #$30
 	AND #$00FF
 	STA $00
 	LDA #$0000
@@ -377,7 +408,7 @@ cm_game_state_disable_sprites:
 	%cm_jsr("Remove sprites")
 
 .routine
-	%ai8()
+	SEP #$30
 	LDA #$22 : STA $012F
 	JSL !Sprite_DisableAll
 	RTS

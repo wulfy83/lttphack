@@ -10,6 +10,7 @@ org $00841E
 	; improved to: 2 scanlines + 28H
 
 	REP #$10
+	LDX.w $4300 : PHX
 
 	; first half
 	LDX #$8001 : STX $4300
@@ -32,8 +33,9 @@ org $00841E
 
 	JSL CacheSA1Stuff
 
-	LDX.w #$1801
+	PLX
 	STX.w $4300
+
 	SEP #$30
 	RTS
 warnpc $008489
@@ -48,7 +50,7 @@ org $0080D5
 	JSL nmi_expand
 
 org $008174
-	LDA.b $1C : STA.w $00AB
+	LDA.b $1C : STA.w $00AB ; 16-bit addressing to save 1 cycle by avoiding a NOP
 	LDA.b $1D : STA.w $00AC
 
 ;org $0081A0 ; save camera correction for NMI expansion
@@ -56,18 +58,10 @@ org $008174
 ;org $0081B8 : +
 
 ; HUD update hook
-org $008B6B
-	; 008b6b ldx $0219
-	; 008b6e stx $2116
-	;JSL nmi_hud_update
-	;NOP #2
-
 ;org $008220
 org $00821B
-	; LDA $9B
-	; STA $420C
 	JSL nmi_hud_update
-	ORA.w $009B
+	ORA.w $009B ; 16-bit addressing to save 1 cycle by avoiding a NOP
 
 warnpc $0089DF
 ; Unused $17 function repurposed
@@ -95,7 +89,8 @@ warnpc $00EAE5
 ; since it's never during game play
 org $00E36A
 	JSL LoadCustomHUDGFX
-	PLB : RTL
+	PLB
+	RTL
 
 pullpc
 
@@ -128,7 +123,7 @@ nmi_hud_update:
 ;	LDA.b #!ram_movie_hud>>16 : STA $4304
 ;	LDX #$0040 : STX $4305 ; number of bytes to transfer is 330
 ;	LDA #$01 : STA $420B ; refresh BG3 tilemap data with this transfer on channel 0
-	REP #$21 ; carry only needs clearing once
+	REP #$20
 	SEP #$10
 
 	LDX !lag_cache : BNE .dontbreakthings

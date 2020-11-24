@@ -5,7 +5,7 @@ cm_anyrmg_submenu_presets:
     dw cm_anyrmg_presets_goto_gtower
     dw cm_anyrmg_presets_goto_ganon
     dw cm_anyrmg_presets_goto_boss
-    dw #$0000
+    dw $0000
     %cm_header("ANY RMG PRESETS")
 
 ; EASTERN PALACE
@@ -31,7 +31,7 @@ cm_anyrmg_presets_eastern:
     dw cm_anyrmg_east_pot_room
     dw cm_anyrmg_east_zeldagamer_room
     dw cm_anyrmg_east_armos
-    dw #$0000
+    dw $0000
     %cm_header("EASTERN PALACE")
 
 cm_anyrmg_east_bed:
@@ -107,7 +107,7 @@ cm_anyrmg_presets_escape:
     dw cm_anyrmg_esc_2nd_keyguard
     dw cm_anyrmg_esc_zeldas_cell
     dw cm_anyrmg_esc_sanc_2
-    dw #$0000
+    dw $0000
     %cm_header("HYRULE CASTLE")
 
 cm_anyrmg_esc_outside_eastern:
@@ -170,7 +170,7 @@ cm_anyrmg_presets_tempered:
     dw cm_anyrmg_temp_hera_petting_zoo
     dw cm_anyrmg_temp_frog_dmd
     dw cm_anyrmg_temp_getting_tempered
-    dw #$0000
+    dw $0000
     %cm_header("TEMPERED SWORD")
 
 cm_anyrmg_temp_old_man_cave:
@@ -217,7 +217,7 @@ cm_anyrmg_presets_gtower:
     dw cm_anyrmg_gtower_bombable_wall
     dw cm_anyrmg_gtower_moldorm_2
     dw cm_anyrmg_gtower_agahnim_2
-    dw #$0000
+    dw $0000
     %cm_header("GANONS TOWER")
 
 cm_anyrmg_gtower_old_man_cave:
@@ -287,7 +287,7 @@ cm_anyrmg_presets_goto_ganon:
 
 cm_anyrmg_presets_ganon:
     dw cm_anyrmg_ganon_pyramid
-    dw #$0000
+    dw $0000
     %cm_header("GANON")
 
 cm_anyrmg_ganon_pyramid:
@@ -305,5 +305,5 @@ cm_anyrmg_presets_boss:
     dw cm_anyrmg_gtower_moldorm_2
     dw cm_anyrmg_gtower_agahnim_2
     dw cm_anyrmg_ganon_pyramid
-    dw #$0000
+    dw $0000
     %cm_header("BOSSES")

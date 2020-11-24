@@ -15,7 +15,7 @@ cm_ad2020_submenu_presets:
     dw cm_ad2020_presets_goto_atower
     dw cm_ad2020_presets_goto_ganon
     dw cm_ad2020_presets_goto_boss
-    dw #$0000
+    dw $0000
     %cm_header("ALL DUNGEONS PRESETS")
 
 ; EASTERN PALACE
@@ -41,7 +41,7 @@ cm_ad2020_presets_eastern:
     dw cm_ad2020_east_pot_room
     dw cm_ad2020_east_zeldagamer_room
     dw cm_ad2020_east_armos
-    dw #$0000
+    dw $0000
     %cm_header("EASTERN PALACE")
 
 cm_ad2020_east_bed:
@@ -118,7 +118,7 @@ cm_ad2020_presets_pod:
     dw cm_ad2020_pod_basement
     dw cm_ad2020_pod_turtle_room
     dw cm_ad2020_pod_helma
-    dw #$0000
+    dw $0000
     %cm_header("PALACE OF DARKNESS")
 
 cm_ad2020_pod_outside_eastern:
@@ -186,7 +186,7 @@ cm_ad2020_presets_escape:
     dw cm_ad2020_esc_2nd_keyguard
     dw cm_ad2020_esc_zeldas_cell
     dw cm_ad2020_esc_sanc_2
-    dw #$0000
+    dw $0000
     %cm_header("HYRULE CASTLE")
 
 cm_ad2020_esc_outside_pod:
@@ -229,7 +229,7 @@ cm_ad2020_presets_hook:
     dw cm_ad2020_hook_petting_zoo
     dw cm_ad2020_hook_fake_clippers
     dw cm_ad2020_hook_hookshot
-    dw #$0000
+    dw $0000
     %cm_header("EARLY HOOKSHOT")
 
 cm_ad2020_hook_old_man_cave:
@@ -283,7 +283,7 @@ cm_ad2020_presets_thieves:
     dw cm_ad2020_thieves_backtracking_2
     dw cm_ad2020_thieves_pot_hammerdash
     dw cm_ad2020_thieves_blind
-    dw #$0000
+    dw $0000
     %cm_header("THIEVES TOWN")
 
 cm_ad2020_thieves_outside_hera:
@@ -349,7 +349,7 @@ cm_ad2020_presets_skull:
     dw cm_ad2020_sw_mummy_hellway
     dw cm_ad2020_sw_mummy_key
     dw cm_ad2020_sw_mothula
-    dw #$0000
+    dw $0000
     %cm_header("SKULL WOODS")
 
 cm_ad2020_sw_outside_thieves:
@@ -398,7 +398,7 @@ cm_ad2020_presets_hera:
     dw cm_ad2020_hera_old_man_cave
     dw cm_ad2020_hera_entrance
     dw cm_ad2020_hera_moldorm
-    dw #$0000
+    dw $0000
     %cm_header("TOWER OF HERA")
 
 cm_ad2020_hera_outside_skull:
@@ -437,7 +437,7 @@ cm_ad2020_presets_mire:
     dw cm_ad2020_mire_canedash
     dw cm_ad2020_mire_spooky_action
     dw cm_ad2020_mire_vitty
-    dw #$0000
+    dw $0000
     %cm_header("MISERY MIRE")
 
 cm_ad2020_mire_outside_hera:
@@ -508,7 +508,7 @@ cm_ad2020_presets_desert:
     dw cm_ad2020_desert_popo_genocide_room
     dw cm_ad2020_desert_torches
     dw cm_ad2020_desert_lanmolas
-    dw #$0000
+    dw $0000
     %cm_header("DESERT PALACE")
 
 cm_ad2020_desert_outside_mire:
@@ -550,7 +550,7 @@ cm_ad2020_presets_trock:
     dw cm_ad2020_trock_laser_entrance_2
     dw cm_ad2020_trock_switch_maze
     dw cm_ad2020_trock_trinexx
-    dw #$0000
+    dw $0000
     %cm_header("TURTLE ROCK")
 
 cm_ad2020_trock_outside_desert:
@@ -598,7 +598,7 @@ cm_ad2020_presets_swamp:
     dw cm_ad2020_swamp_restock
     dw cm_ad2020_swamp_phelps_way
     dw cm_ad2020_swamp_arrghus
-    dw #$0000
+    dw $0000
     %cm_header("SWAMP PALACE")
 
 cm_ad2020_swamp_outside_trock:
@@ -651,7 +651,7 @@ cm_ad2020_presets_ice:
     dw cm_ad2020_ice_lonely_firebar
     dw cm_ad2020_ice_last_two_screens
     dw cm_ad2020_ice_kholdstare
-    dw #$0000
+    dw $0000
     %cm_header("ICE PALACE")
 
 cm_ad2020_ice_outside_swamp:
@@ -705,7 +705,7 @@ cm_ad2020_presets_gtower:
     dw cm_ad2020_gtower_bombable_wall
     dw cm_ad2020_gtower_moldorm_2
     dw cm_ad2020_gtower_agahnim_2
-    dw #$0000
+    dw $0000
     %cm_header("GANONS TOWER")
 
 cm_ad2020_gtower_outside_ice:
@@ -785,7 +785,7 @@ cm_ad2020_presets_atower:
     dw cm_ad2020_aga_circle_of_pots
     dw cm_ad2020_aga_catwalk
     dw cm_ad2020_aga_agahnim
-    dw #$0000
+    dw $0000
     %cm_header("AGAHNIMS TOWER")
 
 cm_ad2020_aga_pyramid:
@@ -819,7 +819,7 @@ cm_ad2020_presets_goto_ganon:
 
 cm_ad2020_presets_ganon:
     dw cm_ad2020_ganon_pyramid
-    dw #$0000
+    dw $0000
     %cm_header("GANON")
 
 cm_ad2020_ganon_pyramid:
@@ -844,5 +844,5 @@ cm_ad2020_presets_boss:
     dw cm_ad2020_gtower_agahnim_2
     dw cm_ad2020_aga_agahnim
     dw cm_ad2020_ganon_pyramid
-    dw #$0000
+    dw $0000
     %cm_header("BOSSES")

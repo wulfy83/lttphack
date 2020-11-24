@@ -29,8 +29,8 @@ cm_submenu_items:
 
 cm_items_bow:
 	dw !CM_ACTION_CHOICE_JSR
-	dw #.set_ram_value
-	dl #!ram_cm_item_bow
+	dw .set_ram_value
+	dl !ram_cm_item_bow
 	%cm_item("Bow")
 	%cm_item("No")
 	%cm_item("Normal")
@@ -51,7 +51,7 @@ cm_items_bow:
 
 cm_items_boom:
 	dw !CM_ACTION_CHOICE
-	dl #!ram_item_boom
+	dl !ram_item_boom
 	%cm_item("Boomerang")
 	%cm_item("No")
 	%cm_item("Blue")
@@ -63,7 +63,7 @@ cm_items_hook:
 
 cm_items_powder:
 	dw !CM_ACTION_CHOICE
-	dl #!ram_item_powder
+	dl !ram_item_powder
 	%cm_item("Powder")
 	%cm_item("No")
 	%cm_item("Shroom")
@@ -93,7 +93,7 @@ cm_items_hammer:
 
 cm_items_flute:
 	dw !CM_ACTION_CHOICE
-	dl #!ram_item_flute
+	dl !ram_item_flute
 	%cm_item("Flute")
 	%cm_item("No")
 	%cm_item("Shovel")

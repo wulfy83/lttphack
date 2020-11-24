@@ -63,14 +63,14 @@ load_entrance_local:
 	LDA !ram_preset_type : BNE .custom
 
 	JSR !Dungeon_LoadEntrance
-	%ai8()
+	SEP #$30
 	RTS
 
 .custom
 	LDA #$00 : STA !ram_preset_type
 	JSR !Dungeon_LoadEntrance
 	JSL preset_load_dungeon
-	%ai8()
+	SEP #$30
 	RTS
 warnpc $02C270
 
@@ -85,7 +85,7 @@ org $02987D
 	JSL preset_did_we_load_preset
 	BCC +
 	RTL
-+	NOP
+	NOP : +
 
 
 ; Module_Dungeon -> Spotlight_Open
@@ -100,13 +100,13 @@ org $02922F
 pullpc
 preset_load_next_frame:
 	; This subroutine is used for any preset loading (load last, replay movie, from menu, autopreset)
-	%ai8()
+	SEP #$30
 	JSR preset_deinit_current_state
-	%ai16()
+
+	REP #$30
 	JSR preset_clear_tilemap
 
-	%ai8()
-
+	SEP #$30
 	LDA #$F0 : STA $012C
 	LDA #$05 : STA $012D
 
@@ -178,7 +178,7 @@ preset_deinit_dialog_mode:
 	; Enters: AI=8
 	; Leaves: AI=8
 
-	%ai16()
+	REP #$30
 	; Clears HUD3 VRAM in case there's text present.
 	LDA $1CD2 : STA $1CD0
 
@@ -188,7 +188,7 @@ preset_deinit_dialog_mode:
 
 	LDA #$FFFF : STA $1008
 
-	%ai8()
+	SEP #$30
 	LDA #$01 : STA $14
 
 	STZ $1CD8
@@ -204,7 +204,7 @@ preset_load_overworld:
 	LDA !ram_preset_type : BNE .preset
 
 	; This means we got here from the actual Bird menu (how boring),
-	; so lets just jump to the original function.
+	; so let's just jump to the original function.
 	JML !BirdTravel_LoadTargetAreaData
 
 .preset
@@ -212,16 +212,10 @@ preset_load_overworld:
 	; Set link to be in the Overworld
 	STZ $1B
 
-	; sram or rom
-	LDA !lowram_is_poverty_load : BEQ .from_rom
-	LDA #$70 : STA $02
-	BRA +
-
-.from_rom
 	LDA !ram_preset_category : TAX
 	LDA.l cm_preset_data_banks, X : STA $02
 
-+	%ai16()
+	REP #$30
 	LDA !ram_preset_destination : STA $00
 	LDY #$0000
 
@@ -256,11 +250,7 @@ preset_load_overworld:
 
 	LDA [$00], Y : INY #2 : STA !ram_preset_end_of_sram_state
 
-	LDA !lowram_is_poverty_load : AND #$00FF : BEQ +
-	LDA !ram_preset_category : AND #$00FF : ASL : TAX
-	LDA.l preset_end_of_base_states, X : STA !ram_preset_end_of_sram_state
-
-+	%ai8()
+	SEP #$30
 	; LW/DW
 	LDA $8A : AND #$40 : STA $7EF3CA
 
@@ -269,12 +259,10 @@ preset_load_overworld:
 
 	JSR preset_reset_state_after_loading
 	JSR preset_reset_counters
-%ai16()
-	JSR preset_load_state
-	LDA !lowram_is_poverty_load : AND #$00FF : BEQ +
-	JSL load_poverty_state
 
-+	%i8()
+	REP #$30
+	JSR preset_load_state
+	SEP #$10
 
 	; Makes it possible to spawn in the middle of a field/not inside doorway?
 	STZ $0696
@@ -286,7 +274,7 @@ preset_load_overworld:
 
 	JSL music_reload
 
-	%a16()
+	REP #$20
 
 .dontNeedNewMusicBank
 
@@ -296,18 +284,11 @@ preset_load_overworld:
 
 preset_load_dungeon:
 	; Can leave with anything.
-	PHB : PHB : PLB
+	PHB
 
-	; sram or rom
-	LDA !lowram_is_poverty_load : BEQ .from_rom
-	LDA #$70 : STA $02
-	BRA +
-
-.from_rom
 	LDA !ram_preset_category : TAX
 	LDA.l cm_preset_data_banks, X : STA $02
-
-+	%ai16()
+	REP #$30
 	LDA !ram_preset_destination : STA $00
 	LDY #$0000
 
@@ -351,16 +332,16 @@ preset_load_dungeon:
 	LDA [$00], Y : INY #2 : STA $A6
 	LDA [$00], Y : INY #2 : STA $A9
 
-	%a8()
+	SEP #$20
 
 	; Set link to be in the Overworld
 	LDA #$01 : STA $1B
 
 	; Main blockset value (main graphics)
-	LDA [$00], Y : %a16() : INY : %a8() : STA $0AA1
+	LDA [$00], Y : REP #$20 : INY : SEP #$20 : STA $0AA1
 
 	; Music track value. Is it the beginning music?
-	LDA [$00], Y : %a16() : INY : %a8() : STA $0132 : CMP #$03 : BNE .notBeginningMusic
+	LDA [$00], Y : REP #$20 : INY : SEP #$20 : STA $0132 : CMP #$03 : BNE .notBeginningMusic
 
 	; Check game status
 	; Is it less than first part?
@@ -379,13 +360,13 @@ preset_load_dungeon:
 	LDA $2140 : BNE .loop
 
 	; Starting floor
-	LDA [$00], Y : %a16() : INY : %a8() : STA $A4
+	LDA [$00], Y : REP #$20 : INY : SEP #$20 : STA $A4
 
 	; Load the palace number.
-	LDA [$00], Y : %a16() : INY : %a8() : STA $040C
+	LDA [$00], Y : REP #$20 : INY : SEP #$20 : STA $040C
 
 	; Doorway orientation
-	LDA [$00], Y : %a16() : INY : %a8() : STA $6C
+	LDA [$00], Y : REP #$20 : INY : SEP #$20 : STA $6C
 
 	; Starting BG
 	; Set the position that Link starts at.
@@ -393,26 +374,19 @@ preset_load_dungeon:
 	LDA [$00], Y : STA $EE
 
 	; Set Pseudo bg level
-	LDA [$00], Y : %a16() : INY : %a8() : AND #$0F : STA $0476
+	LDA [$00], Y : REP #$20 : INY : SEP #$20 : AND #$0F : STA $0476
 
 	PHY
 
-	%ai8()
+	SEP #$30
 	JSR preset_reset_state_after_loading
 	JSR preset_reset_counters
 
-	%ai16()
+	REP #$30
 	PLY
 	LDA [$00], Y : INY #2 : STA !ram_preset_end_of_sram_state
-	LDA !lowram_is_poverty_load : AND #$00FF :  BEQ +
-	LDA !ram_preset_category : AND #$00FF : ASL : TAX
-	LDA.l preset_end_of_base_states, X : STA !ram_preset_end_of_sram_state
-
-+	JSR preset_load_state
-	LDA !lowram_is_poverty_load : AND #$00FF : BEQ +
-	JSL load_poverty_state
-
-+	%ai8()
+	JSR preset_load_state
+	SEP #$30
 	PLB
 	RTL
 
@@ -423,18 +397,14 @@ preset_sprite_reset_all:
 	JSL !Sprite_ResetAll
 
 	; Check if we want to load our own state.
-	%ai16()
+	REP #$30
 	LDA !ram_preset_end_of_sram_state : BEQ .end
 
 	JSR preset_load_state
 	LDA #$0000 : STA !ram_preset_end_of_sram_state
-	LDA !lowram_is_poverty_load : AND #$00FF : BEQ .notPoverty
-	JSL load_poverty_state
-
-.notPoverty
 	;JSL movie_preset_loaded
 .end
-	%ai8()
+	SEP #$30
 	RTL
 
 
@@ -443,10 +413,10 @@ preset_load_state:
 
 	JSR preset_clear_for_initial_preset
 
-	%a8()
+	SEP #$20
 	LDA !ram_preset_category : TAX
 	PHB : LDA.l cm_preset_data_banks, X : PHA : PLB
-	%a16()
+	REP #$20
 	LDA !ram_preset_end_of_sram_state : STA $06
 	LDA !ram_preset_category : AND #$00FF : ASL : TAX
 	LDA.l preset_start_ptrs, X : STA $00
@@ -464,19 +434,19 @@ preset_load_state:
 	BRA .next_item
 
 .one_byte
-	%a8()
+	SEP #$20
 	LDA ($00) : STA [$02]
-	%a16()
+	REP #$20
 	INC $00
 	BRA .next_item
 
 .done_with_state
 	PLB
 
-	%ai16()
+	REP #$30
 	JSL !Sprite_LoadGfxProperties
 
-	%ai8()
+	SEP #$30
 	; Reload graphics and palette for sword, shield and armor
 	JSL !DecompSwordGfx
 	JSL !Palette_Sword
@@ -507,7 +477,7 @@ preset_load_state:
 	LDA !ram_equipment_curhp : CLC : ADC #$08 : STA !ram_equipment_curhp
 
 .done
-	%ai16()
+	REP #$30
 	RTS
 
 
@@ -582,19 +552,19 @@ preset_reset_state_after_loading:
 
 
 preset_reset_counters:
-	%a16()
-	LDA #$0000
-	STA !ram_lanmola_cycles
-	%a8()
+	SEP #$20
+	LDA #$00
+	STA !ram_lanmola_cycles+0
+	STA !ram_lanmola_cycles+1
 	STA !ram_lanmola_cycles+2
 	LDA #$41 : STA SA1IRAM.TIMER_FLAG
 	RTS
 
 
 preset_load_last_preset:
-	%a16()
+	REP #$20
 	LDA !ram_previous_preset_destination : STA !ram_preset_destination
-	%a8()
+	SEP #$20
 	LDA !ram_previous_preset_type : STA !ram_preset_type
 	LDA #12 : STA $10
 	LDA #05 : STA $11
@@ -624,9 +594,7 @@ preset_duck_dropoff_hook:
 preset_autoload_preset:
 	LDA !ram_autoload_preset : BEQ .die
 
-	STZ !lowram_is_poverty_load
-	JSL preset_load_last_preset
-	RTL
+	JML preset_load_last_preset
 
 .die
 	LDA $10 : STA $010C
@@ -649,11 +617,13 @@ preset_did_we_load_preset:
 	STZ $11
 	LDA #$80 : STA $2100 : STA $13
 	LDA #$08 : STA !ram_preset_spotlight_timer
-	SEC : RTL
+	SEC
+	RTL
 
 .not_preset
 	LDA $11 : ASL : TAX
-	CLC : RTL
+	CLC
+	RTL
 
 
 preset_spotlight_open_hook:

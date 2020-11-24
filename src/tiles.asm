@@ -11,8 +11,8 @@ org $028068
 pullpc
 load_default_tileset:
 LoadCustomHUDGFX:
-	%a16()
-	%i8()
+	REP #$20
+	SEP #$10
 	LDY #$01 ; dma channel 0
 
 	LDX #$80 : STX $2115
@@ -52,7 +52,7 @@ LoadHudInputDisplay:
 	STY $420B
 
 CustomCharsDone:
-	%ai8() ; expected flags from both entry points/DecompAndDirectCopy
+	SEP #$30 ; expected flags from both entry points/DecompAndDirectCopy
 	RTL
 
 hud_table:

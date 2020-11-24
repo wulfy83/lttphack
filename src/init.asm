@@ -81,7 +81,7 @@ init_hook:
 	JSL InitSA1
 
 
-	%ai8()
+	SEP #$30
 	LDA #$81 : STA $4200
 	RTL
 
@@ -99,7 +99,7 @@ init_expand:
 	ROL $00 : ROL $01 ; roll carry from A and then from $00
 	DEY : BNE -- ; decrement
 
-	%a16()
+	REP #$20
 	LDA $00
 	AND #$FF00 : CMP #$3000 : BEQ .forcereset
 	LDA !ram_ctrl_prachack_menu : CMP #$1010 : BEQ .noforcereset
@@ -116,7 +116,7 @@ init_expand:
 
 .sram_initialized
 	; Some features probably should be turned off after a reset
-	%a8()
+	SEP #$20
 	STZ !lowram_oob_toggle
 	LDA #$00
 	STA.l !ram_superwatch
@@ -132,12 +132,13 @@ init_initialize:
 
 	LDA #!SRAM_VERSION : STA !ram_sram_initialized
 
-	%i16()
+	REP #$10
 	LDA #$0000
 	LDX #$00FE
-.loop
-	STA !sram_movies, X
-	DEX #2 : BPL .loop
-	%i8()
+
+;.loop
+;	STA !sram_movies, X
+;	DEX #2 : BPL .loop
+;	SEP #$10
 
 	RTS

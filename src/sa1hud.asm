@@ -6,9 +6,6 @@ org $0DFEC3
 org $008B71 : LDX.w #SA1HUD>>0
 org $008B77 : LDA.b #SA1HUD>>16
 
-
-
-
 ;org $0AFDB5 : STA.l SA1HUD+$0F2
 ;org $0AFDB9 : STA.l SA1HUD+$132
 ;org $0AFDBD : STA.l SA1HUD+$0F4
@@ -32,13 +29,6 @@ org $0AFE2C : STA.l SA1HUD+$132, X
 ;org $0AFD4D : STA.l SA1HUD+$134
 ;org $0AFD52 : STA.l SA1HUD+$132
 ;org $0AFD59 : STA.l SA1HUD+$0F4
-
-
-
-
-
-
-
 
 org $0DFA99 : LDY.w #SA1HUD
 org $0DFA9C : MVN $0D,$0D

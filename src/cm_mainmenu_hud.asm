@@ -15,7 +15,7 @@ cm_submenu_hud:
 	dw cm_hud_ramwatch
 	dw cm_hud_superwatch
 	dw cm_hud_lanmola_cycle_count
-	dw cm_hud_lagometer
+;	dw cm_hud_lagometer
 	dw cm_hud_enemy_hp
 	dw !menu_end
 	%cm_header("HUD EXTRAS")
@@ -44,28 +44,11 @@ cm_hud_xy:
 	%cm_item("4 digits")
 	db !list_end
 
-;	dw !CM_ACTION_CHOICE
-;	dl !ram_xy_toggle
-;	%cm_item("Coordinates")
-;	%cm_item("No")
-;	%cm_item("Hexadecimal")
-;	%cm_item("Decimal")
-;	db !list_end
-
-;cm_hud_subpixels:
-;	dw !CM_ACTION_CHOICE
-;	dl #!ram_subpixels_toggle
-;	%cm_item("Subpixels")
-;	%cm_item("No")
-;	%cm_item("Subpixels")
-;	%cm_item("Speed")
-;	db !list_end
-
 cm_hud_lagometer:
 	%cm_toggle_jsr("Lagometer", !ram_lagometer_toggle)
 
 .toggle
-	%a16()
+	REP #$20
 	LDA #$207F : STA.w SA1HUD+$42 : STA.w SA1HUD+$82 : STA.w SA1HUD+$C2 : STA $7EC802
 	RTS
 
@@ -99,12 +82,12 @@ cm_hud_lanmola_cycle_count:
 	%cm_toggle_jsr("Lanmola cycs", !ram_toggle_lanmola_cycles)
 
 .toggle
-	%a16()
+	REP #$20
 	LDA #$0000
 	STA !ram_lanmola_cycles
 	STA !ram_lanmola_cycles+2
 	STA !ram_lanmola_cycles+4
-	%a8()
+	SEP #$20
 	RTS
 
 cm_hud_superwatch:
@@ -118,7 +101,6 @@ cm_hud_superwatch:
 	db !list_end
 
 .toggle
-
 	JSL ClearWatchBuffer
 
 	PHP : PHB
@@ -135,37 +117,25 @@ cm_hud_superwatch:
 	DEX
 	BNE --
 
-	%a8()
+	SEP #$20
 	LDA !ram_superwatch : CMP #$02 : BNE ++
 
-	%i16()
-	PEA.w (!dg_hdma>>16)&$00FF ; Pushes bank $00 then bank $7F (probably)
-	PLB ; bank of the hdma table for modifying
-
-	; Set up the HDMA table
-	LDA.b #63 : STA.w !dg_hdma+0 ; for 64 scanlines
-	LDX.w #$0000 : STX.w !dg_hdma+1 ; Shift BG3 by 0 pixels
-
-	LDA.b #32 : STA.w !dg_hdma+3 ; for 32 scanlines
-	LDX #$0100 : STX.w !dg_hdma+4 ; shift BG3 by 256 pixels
-
-	LDA.b #$01 : STA.w !dg_hdma+6 ; for 1 scanline
-	LDX.w #$0000 : STX.w !dg_hdma+7 ; shift BG3 by 0 pixels
-
-	STZ.w !dg_hdma+9 ; terminate HDMA
-
-	PLB ; bank 0, where we have register/bank $7E mirrors
+	REP #$10
 
 	; Use HDMA channel 5
 	LDA #%00000010 : STA $4350 ; direct, 1 address, 2 writes
 	LDA #$11 : STA $4351 ; BG3 h scroll
-	LDX.w #!dg_hdma : STX $4352 ; address of table
-	LDA.b #!dg_hdma>>16 : STA $4354 ; bank of table
-
-	PLB : PLP
-	RTS
+	LDX.w #.doorwatchhdma : STX $4352 ; address of table
+	LDA.b #.doorwatchhdma>>16 : STA $4354 ; bank of table
 
 ++	PLB : PLP
+	RTS
+
+.doorwatchhdma
+	db 63 : dw 0
+	db 32 : dw 256
+	db 1 : dw 0
+	db 0
 
 SA1ExtraTransfersField:
 cm_hud_enemy_hp_toggle:

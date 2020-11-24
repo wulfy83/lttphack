@@ -4,15 +4,15 @@ heart_lag_extra:
 
 update_hearts_hook:
 
-	%ai8()
+	SEP #$30
 	JSL UpdateGlitchedWindow
 
-++	%ai16()
+++	REP #$30
 	; Enters: AI=16
 	; Keep AI=16 throughout (let subroutines change back/forth)
 	JSR hud_draw_hearts
 
-	%a16()
+	REP #$20
 	LDA !ram_enemy_hp_toggle : BEQ .dont_draw_enemy_hp
 
 	JSR hud_draw_enemy_hp
@@ -24,7 +24,7 @@ update_hearts_hook:
 	;JSR hud_draw_misslots
 
 .dont_update_misslots
-	%a8()
+	SEP #$20
 	LDA !ram_lit_rooms_toggle : BEQ .dont_update_lit_rooms
 	LDA #$03 : STA $045A
 
@@ -50,11 +50,11 @@ update_hearts_hook:
 	LDA !ram_lanmola_cycles+2 : INC : STA !ram_lanmola_cycles+2
 
 .draw_cycles
-	%a16()
+	REP #$20
 	JSR hud_draw_lanmola_cycles
 
 .end
-	%ai16()
+	REP #$30
 	RTL
 
 
@@ -72,7 +72,7 @@ hud_draw_hearts:
 	REP #$10
 	LDA.w SA1IRAM.CopyOf_7EF36C : SBC.w SA1IRAM.CopyOf_7EF36D : CMP.b #$04
 
-	%a16()
+	REP #$20
 	LDA #$24A0 ; keep cycles similar
 	ADC #$0000 ; give us $2A41 if carry was set for not full HP
 

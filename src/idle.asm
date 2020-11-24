@@ -5,7 +5,7 @@ org $0EFB90
 	; 0efb93 ora $00f6
 	; 0efb96 and #$c0
 	; 0efb98 beq $fba6
-	LDA $F4 ; vanilla pointlessly used address; dp is better
+	LDA $F4 ; vanilla pointlessly used absolute; dp is better
 	JSL idle_waitkey ; now we have an easy 4 bytes here for the JSL
 
 

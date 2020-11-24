@@ -14,7 +14,7 @@ cm_ad_submenu_presets:
 	dw cm_ad_presets_goto_atower
 	dw cm_ad_presets_goto_ganon
 	dw cm_ad_presets_goto_boss
-	dw #$0000
+	dw $0000
 	%cm_header("AD 2014 PRESETS")
 
 ; HYRULE CASTLE
@@ -37,7 +37,7 @@ cm_ad_presets_escape:
 	dw cm_ad_esc_sewer_rooms
 	dw cm_ad_esc_keyrat
 	dw cm_ad_esc_last_two
-	dw #$0000
+	dw $0000
 	%cm_header("HYRULE CASTLE")
 
 cm_ad_esc_links_bed:
@@ -101,7 +101,7 @@ cm_ad_presets_eastern:
 	dw cm_ad_east_pot_room
 	dw cm_ad_east_zeldagamer_room
 	dw cm_ad_east_armos
-	dw #$0000
+	dw $0000
 	%cm_header("EASTERN")
 
 cm_ad_east_before_cutscene:
@@ -165,7 +165,7 @@ cm_ad_presets_pod:
 	dw cm_ad_pod_basement
 	dw cm_ad_pod_turtle_room
 	dw cm_ad_pod_helma
-	dw #$0000
+	dw $0000
 	%cm_header("PALACE OF DARKNESS")
 
 cm_ad_pod_outside_ep:
@@ -230,7 +230,7 @@ cm_ad_presets_hera:
 	dw cm_ad_hera_beetles
 	dw cm_ad_hera_petting_zoo
 	dw cm_ad_hera_moldorm
-	dw #$0000
+	dw $0000
 	%cm_header("HERA TOWER")
 
 cm_ad_hera_outside_pod:
@@ -277,7 +277,7 @@ cm_ad_presets_thieves:
 	dw cm_ad_thieves_backtracking_2
 	dw cm_ad_thieves_pot_hammerdash
 	dw cm_ad_thieves_blind
-	dw #$0000
+	dw $0000
 	%cm_header("THIEVES TOWN")
 
 cm_ad_thieves_outside_hera:
@@ -340,7 +340,7 @@ cm_ad_presets_skull:
 	dw cm_ad_skull_mummy_hellway
 	dw cm_ad_skull_mummy_key
 	dw cm_ad_skull_mothula
-	dw #$0000
+	dw $0000
 	%cm_header("SKULL WOODS")
 
 cm_ad_skull_outside_thieves:
@@ -398,7 +398,7 @@ cm_ad_presets_desert:
 	dw cm_ad_desert_desert_2_spinspeed
 	dw cm_ad_desert_torches
 	dw cm_ad_desert_lanmolas
-	dw #$0000
+	dw $0000
 	%cm_header("DESERT PALACE")
 
 cm_ad_desert_outside_skull:
@@ -464,7 +464,7 @@ cm_ad_presets_mire:
 	dw cm_ad_mire_bridge_room
 	dw cm_ad_mire_spooky_action
 	dw cm_ad_mire_vitreous
-	dw #$0000
+	dw $0000
 	%cm_header("MISERY MIRE")
 
 cm_ad_mire_outside_desert:
@@ -536,7 +536,7 @@ cm_ad_presets_swamp:
 	dw cm_ad_swamp_restock_room
 	dw cm_ad_swamp_phelps_way
 	dw cm_ad_swamp_arrghus
-	dw #$0000
+	dw $0000
 	%cm_header("SWAMP PALACE")
 
 cm_ad_swamp_outside_mire:
@@ -580,7 +580,7 @@ cm_ad_presets_ice:
 	dw cm_ad_ice_lonely_firebar
 	dw cm_ad_ice_last_two_screens
 	dw cm_ad_ice_kholdstare
-	dw #$0000
+	dw $0000
 	%cm_header("ICE PALACE")
 
 cm_ad_ice_outside_swamp:
@@ -622,7 +622,7 @@ cm_ad_presets_trock:
 	dw cm_ad_trock_laser_entrance_2
 	dw cm_ad_trock_switch_maze
 	dw cm_ad_trock_trinexx
-	dw #$0000
+	dw $0000
 	%cm_header("TURTLE ROCK")
 
 cm_ad_trock_outside_ice:
@@ -677,7 +677,7 @@ cm_ad_presets_gtower:
 	dw cm_ad_gtower_bombable_wall
 	dw cm_ad_gtower_moldorm_2
 	dw cm_ad_gtower_agahnim_2
-	dw #$0000
+	dw $0000
 	%cm_header("GANONS TOWER")
 
 cm_ad_gtower_outside_turtle_rock:
@@ -751,7 +751,7 @@ cm_ad_presets_atower:
 	dw cm_ad_atower_circle_of_pots
 	dw cm_ad_atower_pit_room
 	dw cm_ad_atower_agahnim
-	dw #$0000
+	dw $0000
 	%cm_header("AGAHNIMS TOWER")
 
 cm_ad_atower_pyramid:
@@ -785,7 +785,7 @@ cm_ad_presets_goto_ganon:
 
 cm_ad_presets_ganon:
 	dw cm_ad_ganon_pyramid
-	dw #$0000
+	dw $0000
 	%cm_header("GANON")
 
 cm_ad_ganon_pyramid:
@@ -810,5 +810,5 @@ cm_ad_presets_boss:
 	dw cm_ad_gtower_agahnim_2
 	dw cm_ad_atower_agahnim
 	dw cm_ad_ganon_pyramid
-	dw #$0000
+	dw $0000
 	%cm_header("BOSSES")

@@ -1,8 +1,7 @@
 ; Used when turning on the console, so sound is correctly unmuted after selecting a file.
 ; This removes file screen music, but oh well.
 music_reload:
-	SEP #$30
-	SEI
+	SEP #$34 ; I flag too
 	STZ $4200
 	STZ $420C
 	STZ $0136
@@ -146,19 +145,19 @@ music_overworld_track:
 
 ; incsrc "musicvolumes.asm"
 mute_music:
-	PHP : SEP #$30
+	PHP : SEP #$34
 	LDA.b #MutedInstruments>>0 : STA $00
-	LDA.b #MutedInstruments>>8 : STA $01
+	LDA.b #MutedInstruments>>8
 	BRA DoMusic
 
 unmute_music:
-	PHP : SEP #$30
+	PHP : SEP #$34
 	LDA.b #UnmutedInstruments>>0 : STA $00
-	LDA.b #UnmutedInstruments>>8 : STA $01
+	LDA.b #UnmutedInstruments>>8
 	BRA DoMusic
 
 DoMusic:
-	SEI
+	STA $01
 	STZ $4200
 	STZ $420C
 	LDA #$FF : STA $2140

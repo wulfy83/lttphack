@@ -546,7 +546,7 @@ endmacro
 gamemode_shortcuts:
 .practiceMenu
 	LDA.w SA1IRAM.CopyOf_B0
-	%a16() ; this code is copyright Lui 2020
+	REP #$20 ; this code is copyright Lui 2020
 	BEQ .SD2SNESBranch
 -	CLC : RTS
 
@@ -554,7 +554,7 @@ gamemode_shortcuts:
 	TAY
 	LDA.w SA1IRAM.CONTROLLER_1_FILTERED : ORA.w SA1IRAM.CONTROLLER_1_FILTERED+1 : BEQ -
 	TYA
-	%a16()
+	REP #$20
 	BMI .SD2SNESBranch
 
 	%test_shortcut(!pracmenu_shortcut, gamemode_custom_menu, 1, 0)
@@ -601,7 +601,7 @@ check_mode_safety:
 	STA.b SA1IRAM.SCRATCH
 	LDY.w SA1IRAM.CopyOf_11 ; get submodule
 
-	%a8()
+	SEP #$20
 	LDA.b (SA1IRAM.SCRATCH), Y ; get safety level of submodule
 	STA.b SA1IRAM.SCRATCH ; put it in $00
 	LDA.w SA1IRAM.CopyOf_7EC011 : BEQ .safe ; check mosaics

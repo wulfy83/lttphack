@@ -1,68 +1,68 @@
 macro cm_header(title)
 	table ../resources/header.tbl
-		db #$24, "<title>", #$FF
+		db $24, "<title>", $FF
 	table ../resources/normal.tbl
 endmacro
 
 macro cm_item(title)
-	db #$24, "<title>", #$FF
+	db $24, "<title>", $FF
 endmacro
 
 macro cm_preset(title, addr)
 	dw !CM_ACTION_PRESET
 	dw <addr>
-	db #$24, "<title>", #$FF
+	db $24, "<title>", $FF
 endmacro
 
 macro cm_toggle(title, addr)
 	dw !CM_ACTION_TOGGLE
-	dl #<addr>
-	db #$24, "<title>", #$FF
+	dl <addr>
+	db $24, "<title>", $FF
 endmacro
 
 macro cm_toggle_jsr(title, addr)
 	dw !CM_ACTION_TOGGLE_JSR
 	dw .toggle
 	dl <addr>
-	db #$24, "<title>", #$FF
+	db $24, "<title>", $FF
 endmacro
 
 macro cm_submenu(title, addr)
 	dw !CM_ACTION_SUBMENU
 	dl <addr>
-	db #$24, "<title>", #$FF
+	db $24, "<title>", $FF
 endmacro
 
 macro cm_numfield(title, addr, start, end, increment)
 	dw !CM_ACTION_NUMFIELD
 	dl <addr>
 	db <start>, <end>, <increment>
-	db #$24, "<title>", #$FF
+	db $24, "<title>", $FF
 endmacro
 
 macro cm_toggle_bit(title, addr, mask)
 	dw !CM_ACTION_TOGGLE_BIT
 	dl <addr>
 	db <mask>
-	db #$24, "<title>", #$FF
+	db $24, "<title>", $FF
 endmacro
 
 macro cm_jsr(title)
 	dw !CM_ACTION_JSR
 	dw .routine
-	db #$24, "<title>", #$FF
+	db $24, "<title>", $FF
 endmacro
 
 macro cm_ctrl_shortcut(title, addr)
 	dw !CM_ACTION_CTRL_SHORTCUT
 	dl <addr>
-	db #$24, "<title>", #$FF
+	db $24, "<title>", $FF
 endmacro
 
 macro cm_movie(title, slot)
 	dw !CM_ACTION_MOVIE
-	db #<slot>
-	db #$00, "<title>", #$FF
+	db <slot>
+	db $00, "<title>", $FF
 endmacro
 
 ; MAIN MENU

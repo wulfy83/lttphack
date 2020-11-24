@@ -3,8 +3,6 @@ org $008056 ; Game Mode Hijack
 	JSL gamemode_hook
 pullpc
 
-
-
 gamemode_hook:
 	LDA.l SA1IRAM.SHORTCUT_USED
 	BEQ .askforshortcut
@@ -28,14 +26,10 @@ gamemode_hook:
 	JML $0080B5 ; GameMode
 
 
-	LDA !ram_lagometer_toggle : BEQ .done
-	JSR gamemode_lagometer
+	;LDA !ram_lagometer_toggle : BEQ .done
+	;JSR gamemode_lagometer
 .done
 	RTL
-
-
-
-
 
 ; Custom Menu
 gamemode_custom_menu:
@@ -43,49 +37,52 @@ gamemode_custom_menu:
 
 	LDA #$000C : STA $10
 
-	SEC : RTS
+	SEC
+	RTS
 
 
 ; Load previous preset
 gamemode_load_previous_preset:
-	%ai8()
+	SEP #$30
 
 	; Loading during text mode make the text stay or the item menu to bug
 	LDA $10 : CMP #$0E : BEQ .no_load_preset
-	%a16()
+	REP #$20
 	LDA !ram_previous_preset_destination
-	%a8()
+	SEP #$20
 	BEQ .no_load_preset
 
-	STZ !lowram_is_poverty_load
-
 	JSL preset_load_last_preset
-	SEC : RTS
+	SEC
+	RTS
 
 .no_load_preset
-	CLC : RTS
+	CLC
+	RTS
 
 ; Replay last movie
 gamemode_replay_last_movie:
-	%a8()
+	SEP #$20
 	LDA !ram_movie_mode : CMP #$02 : BEQ .no_replay
 
-	%ai8()
+	SEP #$30
 	JSR gamemode_load_previous_preset : BCC .no_replay
 	LDA #$02 : STA !ram_movie_next_mode
 
-	SEC : RTS
+	SEC
+	RTS
 
 .no_replay
-	%a8()
-	CLC : RTS
+	SEP #$20
+	CLC
+	RTS
 
 ; Save state
 gamemode_savestate:
 .save
 ;if !FEATURE_SD2SNES
-	%a8()
-	%i16()
+	SEP #$20
+	REP #$10
 	; Remember which song bank was loaded before load stating
 	; I put it here too, since `end` code runs both on save and load state..
 	LDA $0136 : STA !sram_old_music_bank
@@ -107,11 +104,11 @@ gamemode_savestate:
 
 	LDA #$81 : STA $4310
 	LDA #$39 : STA $4311
-	JMP end
+	JMP gamemode_end
 
 .load
-	%a8()
-	%i16()
+	SEP #$20
+	REP #$10
 	; Remember which song bank was loaded before load stating (so we can change if needed)
 	LDA $0136 : STA !sram_old_music_bank
 
@@ -119,12 +116,12 @@ gamemode_savestate:
 
 	; Save the current framecounter & rng accumulator
 	LDA $1A : STA !ram_rerandomize_framecount
-	LDA $0FA1 : STA !ram_rerandomize_accumulator
+	LDA $0FA1 : STA !ram_rerandomize_rng
 
 .dont_rerandomize_1
 ;if !FEATURE_SD2SNES
 
-	%a8()
+	SEP #$20
 	; Mute music
 	LDA #$F0 : STA $2140
 
@@ -163,7 +160,7 @@ gamemode_savestate:
 	LDA !ram_rerandomize_toggle : BEQ .dont_rerandomize_2
 
 	LDA !ram_rerandomize_framecount : STA $1A
-	LDA !ram_rerandomize_accumulator : STA $0FA1
+	LDA !ram_rerandomize_rng : STA $0FA1
 
 .dont_rerandomize_2
 	LDA.l !ram_framerule
@@ -172,8 +169,8 @@ gamemode_savestate:
 	STA $1A
 
 .nofixedframerule
-+ %a8()
-	JMP end
++	SEP #$20
+	JMP gamemode_end
 
 ppuoff:
 	LDA #$80 : STA $2100
@@ -214,13 +211,13 @@ func_dma2b:
 	LDA #$02 : STA $420B
 	RTS
 
-end:
+gamemode_end:
 	JSR func_dma1
 
 	; load DMA from SRAM
 	LDY #$0000 : LDX #$0000
-	%a8()
-	%i16()
+	SEP #$20
+	REP #$10
 -	LDA !sram_ss_dma_buffer, X : STA $4300, X
 	INX
 	INY : CPY #$000B : BNE -
@@ -237,29 +234,31 @@ end:
 
 	LDA #$81 : STA $4200
 	LDA $13 : STA $2100
-	%ai8()
+	SEP #$30
 	LDA #$01 : STA !lowram_last_frame_did_saveload
-	SEC : RTS
+	SEC
+	RTS
 
 after_save_state:
-	%ai8()
-	CLC : RTS
+	SEP #$30
+	CLC
+	RTS
 
 
 gamemode_oob:
-	%a8()
+	SEP #$20
 	LDA !lowram_oob_toggle : EOR #$01 : STA !lowram_oob_toggle
 	RTS
 
 
 gamemode_skip_text:
-	%a8()
+	SEP #$20
 	LDA #$04 : STA $1CD4
 	RTS
 
 
 gamemode_disable_sprites:
-	%a8()
+	SEP #$20
 	JSL !Sprite_DisableAll
 	RTS
 
@@ -272,7 +271,7 @@ gamemode_fill_everything_long:
 	RTL
 
 gamemode_fill_everything:
-	%a8()
+	SEP #$20
 	LDA #$01
 	STA !ram_item_book
 	STA !ram_item_hook
@@ -319,7 +318,7 @@ gamemode_fill_everything:
 	LDA #19<<3 : STA !ram_equipment_curhp
 
 	; rupees
-	%a16() : LDA #$03E7 : STA $7EF360 : STA $7EF362 : %a8()
+	REP #$20 : LDA #$03E7 : STA $7EF360 : STA $7EF362 : SEP #$20
 
 	LDA #$78
 	STA !ram_equipment_magic_meter
@@ -345,23 +344,23 @@ gamemode_fill_everything:
 	RTS
 
 gamemode_reset_segment_timer:
-	%a16()
+	REP #$20
 	STZ.w SA1IRAM.SEG_TIME_F
 	STZ.w SA1IRAM.SEG_TIME_S
 	STZ.w SA1IRAM.SEG_TIME_M
-	%a8()
+	SEP #$20
 	RTS
 
 gamemode_fix_vram:
-	%a16()
-	%i16()
+	REP #$20
+	REP #$10
 	LDA #$0280 : STA $2100
 	LDA #$0313 : STA $2107
 	LDA #$0063 : STA $2109 ; zeros out unused bg4
 	LDA #$0722 : STA $210B
 	STZ $2133 ; mode 7 register hit, but who cares
 
-	%a8()
+	SEP #$20
 	LDA #$80 : STA $13 : STA $2100 ; keep fblank on while we do stuff
 	LDA $1B : BEQ ++
 	JSR fix_vram_uw
@@ -375,12 +374,12 @@ gamemode_fix_vram:
 
 fixpegs:
 
-	%ai16()
+	REP #$30
 	LDX #$0000
 --	LDA $7EB4C0, X : STA $7F0000, X
 	LDA $7EB340, X : STA $7F0080, X
 	INX #2 : CPX #$0080 : BNE --
-	%ai8()
+	SEP #$30
 	LDA #$17 : STA $17
 	RTS
 
@@ -413,12 +412,13 @@ fix_vram_uw: ; mostly copied from PalaceMap_RestoreGraphics - pc: $56F19
 	STZ $B0
 
 	PLA : STA $9B
-	PLB : RTS
+	PLB
+	RTS
 
 ; wrapper because of push and pull logic
 ; need this to make it safe and ultimately fix INIDISP ($13)
 gamemode_somaria_pits_wrapper:
-	%ai8()
+	SEP #$30
 	LDA $1B : BEQ ++ ; don't do this outdoors
 
 	LDA #$80 : STA $13 : STA $2100 ; keep fblank on while we do stuff
@@ -432,7 +432,7 @@ gamemode_somaria_pits:
 	PEA $007F ; push both bank 00 and bank 7F (wram)
 	PLB ; but only pull 7F for now
 
-	%ai16()
+	REP #$30
 
 	LDY #$0FFE
 
@@ -450,7 +450,7 @@ gamemode_somaria_pits:
 	DEY : BPL --
 
 .time_for_tilemaps ; just a delimiting label
-	%ai8()
+	SEP #$30
 	PLB ; pull to bank 00 for this next stuff
 
 	LDA $9B : PHA ; rebalanced in redraw
@@ -458,50 +458,50 @@ gamemode_somaria_pits:
 
 	JMP fix_vram_uw_just_redraw ; jmp to have 1 less rts and because of stack
 
-gamemode_lagometer:
-	%ai16()
-	LDA !lowram_nmi_counter : CMP #$0002 : BCS .lag_frame
-	LDA #$3C00 : STA !lowram_draw_tmp
-
-	LDA $2137 : LDA $213D : AND #$00FF : CMP #$007F : BCS .warning
-	BRA .draw
-
-.warning
-	PHA : LDA #$2800 : STA !lowram_draw_tmp : PLA
-	BRA .draw
-
-.lag_frame
-	LDA #$3400 : STA !lowram_draw_tmp
-	LDA #$00FF
-
-.draw
-	STZ !lowram_nmi_counter
-
-	AND #$00FF : LSR : CLC : ADC #$0007 : AND #$FFF8 : TAX
-
-	LDA.l .mp_tilemap+0, X : ORA !lowram_draw_tmp : STA.w SA1HUD+$42
-	LDA.l .mp_tilemap+2, X : ORA !lowram_draw_tmp : STA.w SA1HUD+$82
-	LDA.l .mp_tilemap+4, X : ORA !lowram_draw_tmp : STA.w SA1HUD+$C2
-	LDA.l .mp_tilemap+6, X : ORA !lowram_draw_tmp : STA.w SA1HUD+$102
-
-	%ai8()
-	RTS
-
-.mp_tilemap
-	dw $00F5, $00F5, $00F5, $00F5
-	dw $00F5, $00F5, $00F5, $005F
-	dw $00F5, $00F5, $00F5, $004C
-	dw $00F5, $00F5, $00F5, $004D
-	dw $00F5, $00F5, $00F5, $004E
-	dw $00F5, $00F5, $005F, $005E
-	dw $00F5, $00F5, $004C, $005E
-	dw $00F5, $00F5, $004D, $005E
-	dw $00F5, $00F5, $004E, $005E
-	dw $00F5, $005F, $005E, $005E
-	dw $00F5, $004C, $005E, $005E
-	dw $00F5, $004D, $005E, $005E
-	dw $00F5, $004E, $005E, $005E
-	dw $005F, $005E, $005E, $005E
-	dw $004C, $005E, $005E, $005E
-	dw $004D, $005E, $005E, $005E
-	dw $004E, $005E, $005E, $005E
+;gamemode_lagometer:
+;	REP #$30
+;	LDA !lowram_nmi_counter : CMP #$0002 : BCS .lag_frame
+;	LDA #$3C00 : STA !lowram_draw_tmp
+;
+;	LDA $2137 : LDA $213D : AND #$00FF : CMP #$007F : BCS .warning
+;	BRA .draw
+;
+;.warning
+;	PHA : LDA #$2800 : STA !lowram_draw_tmp : PLA
+;	BRA .draw
+;
+;.lag_frame
+;	LDA #$3400 : STA !lowram_draw_tmp
+;	LDA #$00FF
+;
+;.draw
+;	STZ !lowram_nmi_counter
+;
+;	AND #$00FF : LSR : CLC : ADC #$0007 : AND #$FFF8 : TAX
+;
+;	LDA.l .mp_tilemap+0, X : ORA !lowram_draw_tmp : STA.w SA1HUD+$42
+;	LDA.l .mp_tilemap+2, X : ORA !lowram_draw_tmp : STA.w SA1HUD+$82
+;	LDA.l .mp_tilemap+4, X : ORA !lowram_draw_tmp : STA.w SA1HUD+$C2
+;	LDA.l .mp_tilemap+6, X : ORA !lowram_draw_tmp : STA.w SA1HUD+$102
+;
+;	SEP #$30
+;	RTS
+;
+;.mp_tilemap
+;	dw $00F5, $00F5, $00F5, $00F5
+;	dw $00F5, $00F5, $00F5, $005F
+;	dw $00F5, $00F5, $00F5, $004C
+;	dw $00F5, $00F5, $00F5, $004D
+;	dw $00F5, $00F5, $00F5, $004E
+;	dw $00F5, $00F5, $005F, $005E
+;	dw $00F5, $00F5, $004C, $005E
+;	dw $00F5, $00F5, $004D, $005E
+;	dw $00F5, $00F5, $004E, $005E
+;	dw $00F5, $005F, $005E, $005E
+;	dw $00F5, $004C, $005E, $005E
+;	dw $00F5, $004D, $005E, $005E
+;	dw $00F5, $004E, $005E, $005E
+;	dw $005F, $005E, $005E, $005E
+;	dw $004C, $005E, $005E, $005E
+;	dw $004D, $005E, $005E, $005E
+;	dw $004E, $005E, $005E, $005E

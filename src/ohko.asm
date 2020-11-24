@@ -2,7 +2,7 @@ lorom
 
 
 org $00FFD7
-	db #11 ; 2mb
+	db 11 ; 2mb
 
 
 org $0697DF
@@ -134,9 +134,9 @@ org $1EB944
 
 
 ; Nerf Ether (magic needed)
-; db #$20, #$10, #$08
+; db $20, #$10, #$08
 org $07B073
-	db #$48, #$48, #$48
+	db $48, #$48, #$48
 
 ; 1de7e3 lda $0ed0,x
 ; 1de7e6 sta $04

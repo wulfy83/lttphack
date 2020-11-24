@@ -321,11 +321,11 @@ draw_camera:
 ;
 ;	LDA $BA : BNE .preloaded
 ;
-;	%i16()
+;	REP #$10
 ;	LDA $04BA : ASL : CLC : ADC $04BA : TAX
 ;	LDA.l OverlayPTR+1, X : STA.b SA1IRAM.SCRATCH+1
 ;	LDA.l OverlayPTR+0, X : STA.b SA1IRAM.SCRATCH+0
-;	%i8()
+;	SEP #$10
 ;	LDA.w #char($1C)|!RED_PAL ; from ROM
 ;	BRA .draw
 ;
@@ -371,7 +371,7 @@ draw_camera:
 ;	STA !dg_buffer_r1+56
 
 trigger_update:
-	%a8()
+	SEP #$20
 	RTS
 
 !CHEST_TILE = char($15)

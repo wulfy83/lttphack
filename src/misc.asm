@@ -100,9 +100,9 @@ probe_draw:
 	LDA $01 : CMP #$01
 	LDA #$01 : ROL : STA ($92)
 
-	%a16()
+	REP #$20
 	LDA $02 : INY
-	CLC : ADC #$0010 : CMP #$0100 : %a8() : BCS .skip
+	CLC : ADC #$0010 : CMP #$0100 : SEP #$20 : BCS .skip
 
 	SBC #$0F : STA ($90), Y
 	INY
@@ -111,7 +111,8 @@ probe_draw:
 	LDA $05 : STA ($90), Y
 
 .skip
-	PLP : RTL
+	PLP
+	RTL
 
 absorbable_check:
 	LDA !ram_bonk_items_toggle : BNE .alwaysdraw ; always draw, if on
@@ -131,7 +132,8 @@ absorbable_check:
 
 set_moving_wall_speed:
 	LDA !ram_fast_moving_walls : BEQ .normal
-	LDA #$0008 : RTL
+	LDA #$0008
+	RTL
 .normal
 	LDA #$2200 : CLC : ADC $041C : STA $041C
 	ROL : AND #$0001

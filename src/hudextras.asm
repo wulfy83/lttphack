@@ -6,22 +6,25 @@
 
 pushpc
 org $0DFAAE
-	JSL fire_hud_irq
+	JMP fire_hud_irq
 
 org $0DDD24
-	JSL fire_hud_irq
+	JSR fire_hud_irq
+	PLB
+	RTL
 
-pullpc
-
-;==============================================================================
-; 
-;==============================================================================
+; some nice free ram here
+org $0DDB07
 fire_hud_irq:
 	SEP #$30
 	LDA.b #$83
 	STA.w $2200
 	INC $16
-	RTL
+	RTS
+
+warnpc $0DDB3F
+
+pullpc
 
 ;==============================================================================
 ; 
@@ -58,34 +61,38 @@ UpdateCounterLine:
 	dw (4<<6)+$2E
 
 ;==============================================================================
-; Stack:           with X
-; ret     +1        +1
-; color   +1+2+2    +1
+; A = address
+; Y = color
 ;==============================================================================
 Draw:
 .all
 ..one
 	STA.b SA1IRAM.SCRATCH+10
+	STY.b SA1IRAM.SCRATCH+12
 	BRA .digit1
 
 ..two
 	STA.b SA1IRAM.SCRATCH+10
+	STY.b SA1IRAM.SCRATCH+12
 	SEP #$41 ; set overflow and carry flags for unconditional draws
 	BRA .digit10
 
 ..three
 	STA.b SA1IRAM.SCRATCH+10
+	STY.b SA1IRAM.SCRATCH+12
 	SEP #$41 ; set overflow and carry flags for unconditional draws
 	BRA .digit100
 
 .short
 ..two
 	STA.b SA1IRAM.SCRATCH+10
+	STY.b SA1IRAM.SCRATCH+12
 	JSR .set_conditional_flags_d2
 	BRA .digit10
 
 ..three
 	STA.b SA1IRAM.SCRATCH+10
+	STY.b SA1IRAM.SCRATCH+12
 	JSR .set_conditional_flags_d3
 	BRA .digit100
 
@@ -95,7 +102,7 @@ Draw:
 	LDA.b (SA1IRAM.SCRATCH+10)
 	XBA
 	AND.w #$000F
-	ORA 3, S ; color
+	ORA.b SA1IRAM.SCRATCH+12
 ..draw
 	STA.w SA1HUD+10, X
 
@@ -108,21 +115,17 @@ Draw:
 	LSR
 	LSR
 	LSR
-	ORA 3, S ; color
+	ORA.b SA1IRAM.SCRATCH+12
 ..draw
 	STA.w SA1HUD+12, X
 
 .digit1
 	LDA.b (SA1IRAM.SCRATCH+10)
 	AND.w #$000F
-	ORA 3, S ; color
+	ORA.b SA1IRAM.SCRATCH+12
 	STA.w SA1HUD+14, X
 
 .done
-	PLA ; get return address
-	PLY ; remove color from stack
-	PHA ; put address back
-
 	RTS
 
 .set_conditional_flags
@@ -142,17 +145,6 @@ Draw:
 ;==============================================================================
 ; 
 ;==============================================================================
-hex_to_dec:
-	REP #$10
-	ASL : TAX
-	LDA.l hex_to_dec_fast_table, X
-	SEP #$20 ; slightly faster overall to use this
-	TAY : AND #$0F : STA.b SA1IRAM.SCRATCH+4
-	TYA : AND #$F0 : LSR #4 : STA.b SA1IRAM.SCRATCH+2
-	XBA : AND #$0F : STA.b SA1IRAM.SCRATCH+0
-	REP #$20 : TYA
-	RTL
-
 hex_to_dec_snes:
 	REP #$10
 	ASL : TAX
@@ -173,7 +165,6 @@ hex_to_dec_fast:
 	TAY : AND #$0F : STA.b SA1IRAM.SCRATCH+4
 	TYA : AND #$F0 : LSR #4 : STA.b SA1IRAM.SCRATCH+2
 	XBA : AND #$0F : STA.b SA1IRAM.SCRATCH+0
-	REP #$20 : TYA
 	PLP
 	RTS
 
@@ -400,7 +391,7 @@ draw_hud_extras:
 	JSR UpdateCounterLine
 	BCC ..skip
 
-	PEA.w !yellow ; color
+	LDY.w #!yellow ; color
 	LDA.w #SA1IRAM.ROOM_TIME_F_DISPLAY ; address
 	JSR Draw_all_two
 
@@ -408,7 +399,7 @@ draw_hud_extras:
 	DEX
 	DEX
 	DEX
-	PEA.w !white ; color
+	LDY.w #!white ; color
 	LDA.w #SA1IRAM.ROOM_TIME_S_DISPLAY ; address
 	JSR Draw_short_three
 
@@ -418,7 +409,7 @@ draw_hud_extras:
 	JSR UpdateCounterLine
 	BCC ..skip
 
-	PEA.w !red ; color
+	LDY.w #!red ; color
 	LDA.w #SA1IRAM.ROOM_TIME_LAG_DISPLAY ; address
 	JSR Draw_short_three
 
@@ -428,7 +419,7 @@ draw_hud_extras:
 	JSR UpdateCounterLine
 	BCC ..skip
 
-	PEA.w !white
+	LDY.w #!white
 	LDA.w #SA1IRAM.ROOM_TIME_IDLE_DISPLAY
 	JSR Draw_short_three
 
@@ -438,7 +429,7 @@ draw_hud_extras:
 	JSR UpdateCounterLine
 	BCC ..skip
 
-	PEA.w !gray
+	LDY.w #!gray
 	LDA.w #SA1IRAM.SEG_TIME_F_DISPLAY
 	JSR Draw_all_two
 
@@ -446,7 +437,7 @@ draw_hud_extras:
 	DEX
 	DEX
 	DEX
-	PEA.w !yellow
+	LDY.w #!yellow
 	LDA.w #SA1IRAM.SEG_TIME_S_DISPLAY
 	JSR Draw_all_two
 
@@ -454,7 +445,7 @@ draw_hud_extras:
 	DEX
 	DEX
 	DEX
-	PEA.w !white
+	LDY.w #!white
 	LDA.w #SA1IRAM.SEG_TIME_M_DISPLAY
 	JSR Draw_short_three
 
@@ -752,26 +743,4 @@ DrawCoordinates:
 	DEY
 	BNE .next_digit
 	RTS
-
-draw2_white_lttp:
-	LDA.b SA1IRAM.SCRATCH+2 : ORA #$3C90 : STA.w !HUD_EXTRAS_BUFFER+0, X
-	LDA.b SA1IRAM.SCRATCH+4 : ORA #$3C90 : STA.w !HUD_EXTRAS_BUFFER+2, X
-	RTL
-
-draw3_white_aligned_left_lttp:
-	; Clear "leading" 0's
-	LDA #$207F : STA.w !HUD_EXTRAS_BUFFER+2, X
-	LDA #$207F : STA.w !HUD_EXTRAS_BUFFER+4, X
-
-	LDA.b SA1IRAM.SCRATCH+0 : BEQ .draw_second_digit
-	ORA #$3C90 : STA.w !HUD_EXTRAS_BUFFER+0, X
-	INX #2
-
-.draw_second_digit
-	LDA.b SA1IRAM.SCRATCH+2 : ORA #$3C90 : STA.w !HUD_EXTRAS_BUFFER+0, X
-	INX #2
-
-.draw_third_digit
-	LDA.b SA1IRAM.SCRATCH+4 : ORA #$3C90 : STA.w !HUD_EXTRAS_BUFFER+0, X
-	RTL
 

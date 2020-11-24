@@ -7,9 +7,9 @@ pushpc
 
 
 ; Overrides Game Mode 0x0C.
-org $00806D : db #CM_Main
-org $008089 : db #CM_Main>>8
-org $0080A5 : db #CM_Main>>16
+org $00806D : db CM_Main
+org $008089 : db CM_Main>>8
+org $0080A5 : db CM_Main>>16
 
 pullpc
 
@@ -27,10 +27,10 @@ endmacro
 
 ; jsr ($0000,x) equivalent but program bank != data bank
 macro jsr_ptr_table(addr)
-	LDA.l <addr>,x
-	STA $B7
+	LDA.l <addr>,X
+	STA.b $0A
 	PEA ?ret-1
-	JMP ($00B7)
+	JMP.w ($000A)
 ?ret:
 endmacro
 
@@ -65,22 +65,22 @@ CM_Init:
 	LDA #$01 : STA !ram_cm_opened_menu_maunally
 	; Start with new state when opening the menu.
 	JSR cm_clear_stack
-	STZ $B0
+	STZ $B1
 
 	; Scroll down
-	%a16()
+	REP #$20
 	LDA #$0100 : STA $E4
 	LDA #$0118 : STA $EA
 	; Put the main menu onto the stack.
 	LDA #$0000 : STA !lowram_cm_stack_index
 	LDA #cm_mainmenu_indices : STA !ram_cm_menu_stack
-	%a8()
+	SEP #$20
 	LDA.b #cm_mainmenu_indices>>16 : STA !ram_cm_menu_bank_stack
 	LDA $9B : AND #$DF : STA $9B
 	JSR cm_init_item_variables
 
 .end
-	%a8()
+	SEP #$20
 	INC $11
 	RTS
 
@@ -97,7 +97,7 @@ CM_DrawMenu:
 
 	%ppu_off()
 	JSR cm_transfer_tileset
-	JSR cm_redraw
+	JSR cm_redraw_clean
 	%ppu_on()
 
 	; play sound effect for opening menu
@@ -120,7 +120,7 @@ CM_Active:
 	PHA
 	PLB
 
-	LDA $B0 : BEQ .in_menu
+	LDA $B1 : BEQ .in_menu
 	JSR cm_do_ctrl_config
 
 	PLB
@@ -157,18 +157,18 @@ CM_Active:
 	BRA .done
 
 .pressed_up
-	%a16()
+	REP #$20
 	LDX !lowram_cm_stack_index
 	LDA !lowram_cm_cursor_stack, X : DEC #2 : JSR cm_fix_cursor_wrap : STA !lowram_cm_cursor_stack, X
-	%a8()
+	SEP #$20
 	%menubeep()
 	BRA .redraw
 
 .pressed_down
-	%a16()
+	REP #$20
 	LDX !lowram_cm_stack_index
 	LDA !lowram_cm_cursor_stack, X : INC #2 : JSR cm_fix_cursor_wrap : STA !lowram_cm_cursor_stack, X
-	%a8()
+	SEP #$20
 	%menubeep()
 	BRA .redraw
 
@@ -184,9 +184,9 @@ CM_Active:
 	LDA #$01 : STA $72 : BRA --
 
 .pressed_b
-	%ai16()
+	REP #$30
 	JSR cm_execute_back
-	%ai8()
+	SEP #$30
 	BRA .redraw
 
 .redraw
@@ -198,9 +198,9 @@ CM_Active:
 
 
 CM_MenuUp:
-	%a16()
+	REP #$20
 	STZ $E4 : STZ $EA
-	%a8()
+	SEP #$20
 
 	INC $11
 
@@ -217,7 +217,7 @@ CM_Return:
 .tileset_is_ok
 	LDA #$00 : STA !ram_cm_opened_menu_maunally
 
-	%ai8()
+	SEP #$30
 	LDA !ram_preset_type : BEQ .no_preset
 	JSL preset_load_next_frame
 	RTS
@@ -233,9 +233,9 @@ CM_Return:
 	BRA .end
 
 .item_menu_is_scrolled
-	%a16()
+	REP #$20
 	LDA #$FF18 : STA $EA
-	%a8()
+	SEP #$20
 
 .end
 	RTS
@@ -279,7 +279,7 @@ cm_init_item_variables:
 	RTS
 
 cm_get_pressed_button:
-	%ai16()
+	REP #$30
 	LDA.w SA1IRAM.CONTROLLER_1 : CMP !ram_cm_last_frame_input : BEQ .same_as_last_frame
 
 	STA !ram_cm_last_frame_input
@@ -311,14 +311,14 @@ cm_get_pressed_button:
 	TAY
 	XBA
 	TAX
-	%ai8()
+	SEP #$30
 	RTS
 
 cm_clear_stack:
 	; Assumes I=8
 	;
 	; Clears cursor index for all but the main menu.
-	%a16()
+	REP #$20
 	LDX.b #$02
 	LDA #$0000
 
@@ -328,13 +328,13 @@ cm_clear_stack:
 	STA !ram_cm_menu_bank_stack, X
 	INX #2
 	CPX.b #$10 : BNE .loop
-	%a8()
+	SEP #$20
 	RTS
 
 
 cm_clear_buffer:
 	; Assumes I=8
-	%a16()
+	REP #$20
 
 	PHB
 	LDX.b #!menu_dma_buffer>>16 : PHX : PLB
@@ -354,15 +354,15 @@ cm_clear_buffer:
 	STA.w !menu_dma_buffer+$0700, X : STA.w !menu_dma_buffer+$0780, X
 
 	INX #2
-	CPX.b #$80 : BNE .loop
+	CPX.b #$80 : BCC .loop
 
-	%a8()
+	SEP #$20
 	PLB
 	RTS
 
 cm_transfer_tileset:
 	; Assumes A=8
-	%i16()
+	REP #$10
 
 	; word-access, incr by 1
 	LDA #$80 : STA $2115
@@ -375,15 +375,17 @@ cm_transfer_tileset:
 	LDA #$18 : STA $4301 ; destination (VRAM write)
 	LDA #$01 : STA $420B ; initiate DMA (channel 1)
 
-	%i8()
+	SEP #$10
 	RTS
 
 ; ---------
 ; Draw
 ; ---------
+cm_redraw_clean:
+	JSR cm_clear_buffer
 cm_redraw:
 	; Assumes A=8 I=8
-	JSR cm_clear_buffer
+	
 	JSR cm_draw_background_gfx
 	JSR cm_draw_active_menu
 
@@ -393,11 +395,11 @@ cm_redraw:
 	RTS
 
 cm_draw_background_gfx:
-	%a8()
+	SEP #$20
 	PHB
 	LDA.b #!menu_dma_buffer>>16 : PHA : PLB
 
-	%ai16()
+	REP #$30
 	LDA #$30FB : STA.w !menu_dma_buffer+$0102
 	ORA #$8000 : STA.w !menu_dma_buffer+$0742
 	ORA #$4000 : STA.w !menu_dma_buffer+$077C
@@ -450,7 +452,7 @@ cm_draw_background_gfx:
 
 	DEY : BPL .drawBoxInterior
 
-	%ai8()
+	SEP #$30
 	PLB
 	RTS
 
@@ -462,7 +464,7 @@ cm_draw_active_menu:
 	; $00[0x2] = menu indices
 	; $02[0x2] = current menu item index
 	; Then we call the action draw method, which can consume its arguments and draw the text however it wants.
-	%ai16()
+	REP #$30
 	LDX !lowram_cm_stack_index
 	LDA !ram_cm_menu_stack, X : STA $00
 	LDY #$0000
@@ -499,12 +501,12 @@ cm_draw_active_menu:
 	LDX #$0186
 	JSR cm_draw_text
 
-	%ai8()
+	SEP #$30
 	RTS
 
 cm_draw_text:
 	; Assumes I=16
-	%a8()
+	SEP #$20
 	LDY #$0000
 	; grab palette info
 	LDA ($02), Y : INY : CMP #$FF : BEQ .end
@@ -520,7 +522,7 @@ cm_draw_text:
 	LDA $0E : BIT #$10 : BNE ++
 	AND #$FB
 ++	STA $0D : STZ $0C
-	%a16()
+	REP #$20
 	RTS
 
 ; ---------
@@ -534,7 +536,7 @@ cm_fix_cursor_wrap:
 	;          A = the current cursor position (might be out of bounds)
 	;
 	; Checks if new cursor is out of bounds, and if so, sets it to the appropriate index.
-	%ai16()
+	REP #$30
 	PHA
 	LDA !ram_cm_menu_stack, X : STA $00
 	LDY #$0000
@@ -562,7 +564,7 @@ cm_fix_cursor_wrap:
 	DEC #2
 
 .end
-	%ai8()
+	SEP #$30
 	RTS
 
 cm_execute_cursor:
@@ -570,7 +572,7 @@ cm_execute_cursor:
 	; Leave with AI=8
 	;
 	; The user selected a menu item.
-	%ai16()
+	REP #$30
 	LDX !lowram_cm_stack_index
 	LDA !ram_cm_menu_stack, X : STA $00
 	LDY !lowram_cm_cursor_stack, X
@@ -580,7 +582,7 @@ cm_execute_cursor:
 	LDA ($00) : INC $00 : INC $00 : TAX
 
 	%jsr_ptr_table(cm_execute_action_table)
-	%ai8()
+	SEP #$30
 	RTS
 
 ; ---------------
@@ -610,7 +612,7 @@ cm_execute_toggle:
 	; Will only toggle the first bit.
 	LDA ($00) : INC $00 : INC $00 : STA $02
 	LDA ($00) : INC $00 : STA $04
-	%ai8()
+	SEP #$30
 	LDA $72 : BNE .zero
 .toggle
 	LDA [$02] : EOR #$01 : BRA ++
@@ -626,21 +628,21 @@ cm_execute_toggle_jsr:
 	LDA ($00) : INC $00 : INC $00 : STA $06
 	JSR cm_execute_toggle
 
-	%ai8()
+	SEP #$30
 	LDX.b #$00 : JSR ($0006, X)
 	RTS
 
 cm_execute_jsr:
 	; < and > should do nothing here
-	%a8()
+	SEP #$20
 	BIT $F2 : BPL .end
 
-	%a16()
+	REP #$20
 	LDA ($00) : INC $00 : INC $00 : STA $02
-	%a8()
+	SEP #$20
 	LDX #$0000
 	JSR ($0002, X)
-	%a8()
+	SEP #$20
 	PHA
 	LDA #$25 : STA $012F ; switch sound
 	PLA
@@ -648,30 +650,30 @@ cm_execute_jsr:
 	RTS
 
 cm_execute_submenu:
-	%a8()
+	SEP #$20
 	LDA $F6 : BPL .end
 	LDA #$24 : STA $012F
 	; Increments stack index and puts the submenu into the stack.
-	%a16()
+	REP #$20
 	LDA !lowram_cm_stack_index : INC #2 : STA !lowram_cm_stack_index : TAX
 	LDA ($00) : INC $00 : INC $00 : STA !ram_cm_menu_stack, X
-	%a8()
+	SEP #$20
 	LDA ($00) : INC $00 : STA !ram_cm_menu_bank_stack, X
 	PHA : PLB
-	%a16()
+	REP #$20
 
 .end
 	RTS
 
 cm_execute_back:
 	; > should do nothing here
-	%a8()
+	SEP #$20
 	BIT $F0 : BPL .end
 	PHA
 	LDA #$24 : STA $012F
 	PLA
 	; Decrements the stack index.
-	%a16()
+	REP #$20
 	; make sure next time we go to a submenu, we start on the first line.
 	LDX !lowram_cm_stack_index
 	LDA #$0000 : STA !lowram_cm_cursor_stack, X
@@ -682,21 +684,21 @@ cm_execute_back:
 
 .done
 	STA !lowram_cm_stack_index
-	%a8()
+	SEP #$20
 	TAX
 	LDA !ram_cm_menu_bank_stack,x
 	PHA
 	PLB
-	%a16()
+	REP #$20
 
 .end
 	RTS
 
 cm_execute_choice:
-	%a16()
+	REP #$20
 	LDA ($00) : INC $00 : INC $00 : STA $02
 	LDA ($00) : INC $00 : STA $04
-	%ai8()
+	SEP #$30
 	LDA $72 : BNE .set_to_zero
 	LDA $F0
 	CMP #$02 : BEQ .pressed_left
@@ -715,10 +717,10 @@ cm_execute_choice:
 	LDY.b #$00  ; Y will be set to max
 
 .loop_choices
-	LDA ($00) : %a16() : INC $00 : %a8() : CMP.b #$FF : BEQ .loop_done
+	LDA ($00) : REP #$20 : INC $00 : SEP #$20 : CMP.b #$FF : BEQ .loop_done
 
 .loop_text
-	LDA ($00) : %a16() : INC $00 : %a8()
+	LDA ($00) : REP #$20 : INC $00 : SEP #$20
 	CMP.b #$FF : BNE .loop_text
 	INY : BRA .loop_choices
 
@@ -744,7 +746,7 @@ cm_execute_choice:
 	TYA : DEC
 
 .end
-	%ai8()
+	SEP #$30
 	STA [$02]
 	PHA
 	LDA #$1D : STA $012F ; magic boop
@@ -754,9 +756,7 @@ cm_execute_choice:
 cm_execute_choice_jsr:
 	LDA ($00) : INC $00 : INC $00 : STA $08
 	JSR cm_execute_choice
-	LDX.b #$00
-	JSR ($0008, X)
-	RTS
+	JMP ($0008)
 
 cm_execute_numfield:
 	; Puts:
@@ -767,13 +767,13 @@ cm_execute_numfield:
 	PHX
 	PHY
 	PHP
-	%a16()
+	REP #$20
 	LDA ($00) : INC $00 : INC $00 : STA $02
 	LDA ($00) : INC $00 : INC $00 : STA $04
 	; One additional INC on the max value here, for convenience later.
 	LDA ($00) : INC $00 : INC $00 : INC : STA $06
 	TAY ; for comparison for FF
-	%ai8()
+	SEP #$30
 
 	LDA $72 : BNE .set_to_min
 	LDA $F0 : AND #$03
@@ -826,19 +826,18 @@ cm_execute_numfield:
 cm_execute_preset:
 	LDA $F0 : BNE .end
 
-	%a16()
+	REP #$20
 	LDA ($00) : STA $02
 	INC : STA !ram_preset_destination : STA !ram_previous_preset_destination
-	%ai8()
+	SEP #$30
 	PHB
 	LDA !ram_preset_category : TAX
 	LDA.l cm_preset_data_banks, X : PHA : PLB
 	LDA ($02) : STA !ram_preset_type : STA !ram_previous_preset_type
-	STZ !lowram_is_poverty_load
 	PLB
 	INC $11
 .end
-	%ai16()
+	REP #$30
 	RTS
 
 cm_preset_data_banks:
@@ -856,7 +855,7 @@ cm_execute_toggle_bit:
 	LDA ($00) : INC $00 : STA $04
 	; Load which bit(s) to toggle
 	LDA ($00) : INC $00 : STA $05
-	%ai8()
+	SEP #$30
 	LDA [$02] : EOR $05 : STA [$02]
 	PHA
 	LDA #$1D : STA $012F ; magic boop
@@ -865,7 +864,7 @@ cm_execute_toggle_bit:
 
 cm_execute_ctrl_shortcut:
 	; < and > should do nothing here
-	%a8()
+	SEP #$20
 
 	; check if we pressed X or A
 	BIT $F6
@@ -873,35 +872,35 @@ cm_execute_ctrl_shortcut:
 	BVC .end
 
 .continue
-	%a16()
+	REP #$20
 	LDA ($00) : STA $35 : INC $00 : INC $00
 	LDA ($00) : STA $37 : INC $00
 	LDA #!ram_ctrl_prachack_menu : CMP $35 : BEQ .end
 
-	%a8()
+	SEP #$20
 	BIT $F6 : BVS .reset_shortcut
 
-	INC $B0
+	INC $B1
 	STZ $0200
 	BRA .end
 
 .reset_shortcut
-	%a16()
+	REP #$20
 
 	LDA #$0000 : STA [$35]
 
 .end
-	%a16()
+	REP #$20
 	RTS
 
 cm_execute_submenu_variable:
 	; dpad should do nothing here
-	%a8()
+	SEP #$20
 	LDA $F0 : BNE .end
 	LDA #$24 : STA $012F
 
 	; Increments stack index and puts the submenu into the stack.
-	%a16()
+	REP #$20
 	LDA !lowram_cm_stack_index : INC #2 : STA !lowram_cm_stack_index : TAX
 
 	LDA ($00) : STA $02 : INC $00 : INC $00
@@ -925,12 +924,12 @@ cm_execute_submenu_variable:
 	STA !ram_cm_menu_stack,x
 	INY
 	INY
-	%a8()
+	SEP #$20
 	LDA ($00),y
 	STA !ram_cm_menu_bank_stack,x
 	PHA
 	PLB
-	%a16()
+	REP #$20
 
 	LDA $05
 	ASL
@@ -944,7 +943,7 @@ cm_execute_submenu_variable:
 cm_execute_movie:
 	LDA #$0000
 	LDX #$0000
-	%a8()
+	SEP #$20
 	; dpad should do nothing here
 	LDA $F0 : BNE .end
 
@@ -955,29 +954,29 @@ cm_execute_movie:
 	LDA !sram_movies, X : BEQ .save
 
 .load
-	%a16()
+	REP #$20
 	JSR cm_movie_load
 	BRA .end
 
 .save
-	%a16()
+	REP #$20
 	LDA !ram_movie_length : BEQ .error
 	JSR cm_movie_save
 	BRA .end
 
 .delete_movie
-	%a16()
+	REP #$20
 	LDA !sram_movies, X : BEQ .error
 	JSR cm_movie_delete
 	BRA .end
 
 .error
-	%a8()
+	SEP #$20
 	PHA
 	LDA #$3C : STA $012E
 	PLA
 .end
-	%ai16()
+	REP #$30
 	RTS
 
 ; -------------
@@ -1031,7 +1030,7 @@ cm_draw_toggle:
 	; Set position for ON/OFF
 	TXA : CLC : ADC.w #!OPTION_OFFSET : TAX
 
-	%a8()
+	SEP #$20
 	; set palette
 	LDA $0E
 	STA.l !menu_dma_buffer+1, X
@@ -1054,7 +1053,7 @@ cm_draw_toggle:
 	LDA.b #$3C : STA.l !menu_dma_buffer+4, X
 
 .end
-	%a16()
+	REP #$20
 	RTS
 
 
@@ -1154,7 +1153,7 @@ cm_draw_choice:
 
 .found
 	JSR cm_draw_text
-	%a16()
+	REP #$20
 	RTS
 
 
@@ -1194,10 +1193,10 @@ cm_draw_numfield:
 	STA.l !menu_dma_buffer+4, X
 
 	; Set palette
-	%a8()
+	SEP #$20
 	LDA.b #$24 : ORA $0E : STA $0F
 	LDA.b #$20 : STA $0E
-	%a16()
+	REP #$20
 
 	; Draw numbers
 	LDA.w !ram_hex2dec_first_digit : BEQ .second_digit
@@ -1216,7 +1215,7 @@ cm_draw_numfield:
 	RTS
 
 cm_draw_preset:
-	%a16()
+	REP #$20
 	INC $02 : INC $02
 	%item_index_to_vram_index() : PHX
 	JSR cm_draw_text
@@ -1242,7 +1241,7 @@ cm_draw_toggle_bit:
 	; set position for ON/OFF
 	TXA : CLC : ADC.w #!OPTION_OFFSET : TAX
 
-	%a8()
+	SEP #$20
 	; set palette
 	LDA $0E
 	STA.l !menu_dma_buffer+1, X
@@ -1265,7 +1264,7 @@ cm_draw_toggle_bit:
 	LDA.b #$3C : STA.l !menu_dma_buffer+4, X
 
 .end
-	%a16()
+	REP #$20
 	RTS
 
 cm_draw_ctrl_shortcut:
@@ -1274,10 +1273,13 @@ cm_draw_ctrl_shortcut:
 
 	PHY
 	%item_index_to_vram_index()
+	PHX
 	JSR cm_draw_text
+	PLX
+	%set_menu_icon($4F)
 	PLY
 
-	%ai16()
+	REP #$30
 	TYA : ASL #5
 	CLC : ADC #$022A : TAX
 
@@ -1376,13 +1378,13 @@ cm_draw_movie: RTS
 
   table ../resources/normal.tbl
   .emptyFileText
-    db #$20, "empty)      ", #$FF
+    db $20, "empty)      ", #$FF
   .bytesLeftText
-    db #$24, "Space left 0000", #$FF
+    db $24, "Space left 0000", #$FF
   .instruction1
-    db #$24, "A  Load or Save", #$FF
+    db $24, "A  Load or Save", #$FF
   .instruction2
-    db #$24, "X  Delete", #$FF
+    db $24, "X  Delete", #$FF
 
 
 
@@ -1433,7 +1435,7 @@ cm_ctrl_clear_input_display:
 cm_do_ctrl_config:
 	; Enters AI=8
 	; Leaves AI=8
-	%a16()
+	REP #$20
 	LDA #$2080 : STA $0E
 	LDA.w SA1IRAM.CONTROLLER_1 : BEQ .clear_and_draw
 	CMP !ram_ctrl_last_input : BNE .clear_and_draw
@@ -1450,7 +1452,7 @@ cm_do_ctrl_config:
 
 .draw
 
-	%ai16()
+	REP #$30
 	; Put text cursor in X
 	LDX !lowram_cm_stack_index
 	LDY !lowram_cm_cursor_stack, X
@@ -1462,18 +1464,18 @@ cm_do_ctrl_config:
 	LDA.w SA1IRAM.CONTROLLER_1
 	JSR cm_ctrl_input_display
 
-	%ai8()
+	SEP #$30
 	LDA.b #$06 : STA $17
 
 .next_frame
-	%ai8()
+	SEP #$30
 	RTS
 
 .exit
 	LDA #$000 : STA !ram_ctrl_last_input
 
-	%ai8()
-	STZ $B0
+	SEP #$30
+	STZ $B1
 	STZ $0200
 	JSR cm_redraw
 	RTS
@@ -1543,12 +1545,12 @@ cm_movie_save:
 	LDA !ram_movie_rng_length : STA !sram_movies_rng_length, X
 	LDA #$FFFF : STA !sram_movies_next_slot, X
 
-	%a8() : LDA !ram_previous_preset_type : STA !sram_movies_preset_type, X : %a16()
+	SEP #$20 : LDA !ram_previous_preset_type : STA !sram_movies_preset_type, X : REP #$20
 	LDA !ram_previous_preset_destination : STA !sram_movies_preset_destination, X
 
 	PLA : STA !sram_movies_offset, X
 
-	%a8() : LDA !ram_movie_framecounter : STA !sram_movies_frame_counter, X : %a16()
+	SEP #$20 : LDA !ram_movie_framecounter : STA !sram_movies_frame_counter, X : REP #$20
 
 	LDA.w #!ram_movie : STA $06
 	LDA.w #!ram_movie>>16 : STA $08
@@ -1634,9 +1636,9 @@ cm_movie_load:
 	; X = movie slot
 	LDA !sram_movies_input_length, X : STA !ram_movie_length
 	LDA !sram_movies_rng_length, X : STA !ram_movie_rng_length
-	%a8() : LDA !sram_movies_frame_counter, X : STA !ram_movie_framecounter : %a16()
+	SEP #$20 : LDA !sram_movies_frame_counter, X : STA !ram_movie_framecounter : REP #$20
 
-	%a8() : LDA !sram_movies_preset_type, X : STA !ram_previous_preset_type : %a16()
+	SEP #$20 : LDA !sram_movies_preset_type, X : STA !ram_previous_preset_type : REP #$20
 	LDA !sram_movies_preset_destination, X : STA !ram_previous_preset_destination
 
 	LDA.w #!sram_movie_data : CLC : ADC !sram_movies_offset, X : STA $06
@@ -1663,10 +1665,10 @@ cm_movie_load:
 
 	LDA #$0002 : STA !ram_movie_next_mode
 	LDA !ram_previous_preset_destination : STA !ram_preset_destination
-	%a8()
+	SEP #$20
 	LDA !ram_previous_preset_type : STA !ram_preset_type
 	LDA #$04 : STA $11
-	%a16()
+	REP #$20
 	RTS
 
 

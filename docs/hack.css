@@ -450,6 +450,10 @@ span.menuIcon.menuPreset {
 	background-position: -80px 0px
 }
 
+span.menuIcon.menuBinding {
+	background-position: -96px 0px
+}
+
 code.size16 {
 	font-family: inherit;
 	color: #777777;
