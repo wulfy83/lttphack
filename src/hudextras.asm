@@ -567,7 +567,7 @@ endmacro
 hud_draw_input_display_options:
 	dw .off
 	dw .cool
-	dw .lame
+	dw .old
 	dw .off
 
 .off
@@ -603,7 +603,7 @@ hud_draw_input_display_options:
 	LDA #$2C06 : STA  !POS_MEM_INPUT_DISPLAY_TOP+4
 	RTS
 
-.lame
+.old
 	SEP #$20
 	REP #$10
 	; basically: this bank | bank $7E
@@ -641,6 +641,9 @@ extra_ram_watch_routines:
 	dw .arc-1
 	dw .icebreaker-1
 
+.nothing
+	RTS
+
 .icebreaker
 	LDA.w SA1IRAM.CopyOf_6C : AND #$00FF : BEQ ..nodoor
 	LDA.w #$216A : BRA ++
@@ -651,80 +654,47 @@ extra_ram_watch_routines:
 ++	STA.w SA1HUD+06, X
 
 .subpixels
-	; can't macro this, since 1 byte addresses
-; first digit
-	LDA.w SA1IRAM.CopyOf_2A : AND #$000F
-	ORA.w #!yellow
-	STA.w SA1HUD+14, X
+	LDA.w #!yellow
+	STA.b SA1IRAM.SCRATCH+10
+	LDY.w #2
+	LDA.w SA1IRAM.CopyOf_2A
+	JSR DrawHex
 
-; second digit
-	LDA.w SA1IRAM.CopyOf_2A : AND #$00F0 : LSR #4
-	ORA.w #!yellow
-	STA.w SA1HUD+12, X
-
-; first digit
-	LDA.w SA1IRAM.CopyOf_2B : AND #$000F
-	ORA.w #!white
-	STA.w SA1HUD+10, X
-
-; second digit
-	LDA.w SA1IRAM.CopyOf_2B : AND #$00F0 : LSR #4
-	ORA.w #!white
-	STA.w SA1HUD+08, X
-
-.nothing
-	RTS
-
-.spooky
-; first digit
-	LDA.w SA1IRAM.CopyOf_02A2 : AND #$000F
-	ORA.w #!white
-	STA !HUD_EXTRAS_BUFFER+14, X
-
-; second digit
-	LDA.w SA1IRAM.CopyOf_02A2 : AND #$00F0 : LSR #4
-	ORA.w #!white
-	STA !HUD_EXTRAS_BUFFER+12, X
-	RTS
-
-.arc
-	LDA.w SA1IRAM.CopyOf_0B08 : TAY
-
-; fourth digit
-	AND #$000F
-	ORA.w #!white
-	STA !HUD_EXTRAS_BUFFER+14, X
-
-; third digit
-	TYA : AND #$00F0 : LSR #4
-	ORA.w #!white
-	STA !HUD_EXTRAS_BUFFER+12, X
-
-; second digit
-	TYA : XBA : AND #$000F
-	ORA.w #!white
-	STA !HUD_EXTRAS_BUFFER+10, X
-
-; first digit
-	TYA : XBA : AND #$00F0 : LSR #4
-	ORA.w #!white
-	STA !HUD_EXTRAS_BUFFER+8, X
-
-	RTS
-
-;==============================================================================
-DrawCoordinates:
-	PHY ; x coordinate first
 	LDA.w #!white
 	STA.b SA1IRAM.SCRATCH+10
-	LDA.b SA1IRAM.CopyOf_22
-	JSR .draw_n_digits
+	LDY.w #2
+	LDA.w SA1IRAM.CopyOf_2B
+	JMP DrawHex
 
-	PLY ; x coordinate after
+.spooky
+	LDA.w #!white
+	STA.b SA1IRAM.SCRATCH+10
+	LDY.w #2
+	LDA.w SA1IRAM.CopyOf_02A2
+	JMP DrawHex
+
+
+.arc
+	LDA.w #!white
+	STA.b SA1IRAM.SCRATCH+10
+	LDY.w #4
+	LDA.w SA1IRAM.CopyOf_0B08
+	JMP DrawHex
+
+;==============================================================================
+
+DrawCoordinates:
+	PHY ; y coordinate first as it's right-to-left
 	LDA.w #!yellow
 	STA.b SA1IRAM.SCRATCH+10
 	LDA.b SA1IRAM.CopyOf_20
-	JMP .draw_n_digits
+	JSR .draw_n_digits
+
+	PLY ; x coordinate after
+	LDA.w #!white
+	STA.b SA1IRAM.SCRATCH+10
+	LDA.b SA1IRAM.CopyOf_22
+	BRA .draw_n_digits
 
 .next_digit
 	LSR
@@ -732,6 +702,7 @@ DrawCoordinates:
 	LSR
 	LSR
 
+#DrawHex:
 .draw_n_digits
 	PHA ; remember coordinates
 	AND.w #$000F ; get digit
@@ -744,3 +715,44 @@ DrawCoordinates:
 	BNE .next_digit
 	RTS
 
+;==============================================================================
+; For cleaning up superwatch in VRAM
+;==============================================================================
+CleanVRAMSW:
+	SEP #$30
+	STZ.w $4200
+
+--	BIT.w $4210
+	BPL --
+
+	LDA.b #$81
+	STA.w $2100
+
+	LDA.b #$80
+	STA.w $2115
+
+	REP #$30
+	LDA.w #$C200>>1
+	STA.w $2116
+	LDX.w #$0140/2
+	LDA.w #$207F
+
+--	STA.w $2118
+	DEX
+	BNE --
+
+	SEP #$30
+	LDA.b #$81
+	STA.w $4200
+
+	RTL
+
+ClearSWBuffer:
+	REP #$30
+	LDA.w #$207F
+	LDX.w #$013C
+--	STA.w !dg_buffer, X
+	DEX
+	DEX
+	BPL --
+	RTL

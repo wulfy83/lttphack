@@ -77,36 +77,37 @@ UpdateUWWindow:
 	CPX #$0C : BEQ NoSuperWatch_set
 	TSB.b SA1IRAM.HDMA_ASK
 
-clear_buffer:
-	REP #$20
+	JSL ClearSWBuffer
 
+	SEP #$10
 print_coords:
 	LDA.w #char(0)|!RED_PAL : STA !dg_buffer_r0+4 ; XY
-	LDX #6 : LDA.b SA1IRAM.CopyOf_22 : JSR draw_hex_4digits_white
-	LDX #14 : LDA.b SA1IRAM.CopyOf_20 : JSR draw_hex_4digits_yellow
+	LDX #14
+	LDA.b SA1IRAM.CopyOf_20 : JSR DrawHexSW_four_yellow
+	LDA.b SA1IRAM.CopyOf_22 : JSR DrawHexSW_four_white
 
 print_room_id:
 	LDA.w #char(1)|!RED_PAL : STA !dg_buffer_r0+24 ; IDr
 	INC : STA !dg_buffer_r0+26 ; INC for next char cheaply
 	LDA.w #!HAMMER : STA !dg_buffer_r0+34 ; hammer
 
-	LDX #28 : LDA.b SA1IRAM.CopyOf_A0 : JSR draw_hex_3digits_white
+	LDX #26 : LDA.b SA1IRAM.CopyOf_A0 : JSR DrawHexSW_three_white
 
 calc_correct_room_id:
 	LDA.b SA1IRAM.CopyOf_21 : AND #$00FE : ASL #3 : STA.b SA1IRAM.SCRATCH+0
 	LDA.b SA1IRAM.CopyOf_23 : AND #$00FE : LSR ; bit 0 is off, so it clears carry
 	ADC.b SA1IRAM.SCRATCH+0 : STA.b SA1IRAM.SCRATCH+0
 
-	LDX #36
+	LDX #34
 	CMP.b SA1IRAM.CopyOf_A0 : BNE .roomdesync
 
 .roomsynced
-	JSR draw_hex_3digits_gray
+	JSR DrawHexSW_three_gray
 	LDA.w #!SYNCED
 	BRA .doneRoom
 
 .roomdesync
-	JSR draw_hex_3digits_red
+	JSR DrawHexSW_three_red
 	LDA.w #!DESYNC
 
 .doneRoom
@@ -114,8 +115,8 @@ calc_correct_room_id:
 
 calc_room_flags:
 	LDX #(2*(16-1))
-	LDA.b SA1IRAM.CopyOf_0401 : ORA.b SA1IRAM.CopyOf_0408 : STA.b SA1IRAM.SCRATCH+0 ; not sure if I need $0400 at all?
-	LDA.b SA1IRAM.CopyOf_0403 : STA.b SA1IRAM.SCRATCH+1
+	LDA.w SA1IRAM.CopyOf_0401 : ORA.w SA1IRAM.CopyOf_0408 : STA.b SA1IRAM.SCRATCH+0 ; not sure if I need $0400 at all?
+	LDA.w SA1IRAM.CopyOf_0403 : STA.b SA1IRAM.SCRATCH+1
 --	LDA.l .tiles, X : LSR.b SA1IRAM.SCRATCH+0 : BCS .flagSet
 	ORA.w #!GRAY_PAL : BRA +
 
@@ -210,12 +211,12 @@ draw_camera:
 	LDA.w #char($13)|!GRAY_PAL ; camera icon
 	STA !dg_buffer_r2+4
 	STA !dg_buffer_r3+4
-	LDX.b #(64+64)+6 : LDA.b SA1IRAM.CopyOf_E2 : JSR draw_hex_4digits_white
-	LDX.b #(64+64+64)+6 : LDA.b SA1IRAM.CopyOf_E8 : JSR draw_hex_4digits_yellow
+	LDX.b #(64+64)+6 : LDA.b SA1IRAM.CopyOf_E2 : JSR DrawHexSW_four_white
+	LDX.b #(64+64+64)+6 : LDA.b SA1IRAM.CopyOf_E8 : JSR DrawHexSW_four_yellow
 
 	LDX.b SA1IRAM.CopyOf_A6
-	LDA.b SA1IRAM.CopyOf_0608, X : STA.b SA1IRAM.SCRATCH+0 ; cache X camera for desync check
-	LDA.b SA1IRAM.CopyOf_060C, X : STA.b SA1IRAM.SCRATCH+2
+	LDA.w SA1IRAM.CopyOf_0608, X : STA.b SA1IRAM.SCRATCH+0 ; cache X camera for desync check
+	LDA.w SA1IRAM.CopyOf_060C, X : STA.b SA1IRAM.SCRATCH+2
 	CPX #$02 : BEQ .XSet2
 
 .XSet1
@@ -227,10 +228,10 @@ draw_camera:
 	STA !dg_buffer_r2+36
 	INC : STA !dg_buffer_r2+46
 
-	LDX.b #(64+64)+18 : LDA.b SA1IRAM.CopyOf_0608 : JSR draw_hex_4digits_white
-	LDX.b #(64+64)+28 : LDA.b SA1IRAM.CopyOf_060C : JSR draw_hex_4digits_white
-	LDX.b #(64+64)+38 : LDA.b SA1IRAM.CopyOf_060A : JSR draw_hex_4digits_gray
-	LDX.b #(64+64)+48 : LDA.b SA1IRAM.CopyOf_060E : JSR draw_hex_4digits_gray
+	LDX.b #(64+64)+18 : LDA.w SA1IRAM.CopyOf_0608 : JSR DrawHexSW_four_white
+	LDX.b #(64+64)+28 : LDA.w SA1IRAM.CopyOf_060C : JSR DrawHexSW_four_white
+	LDX.b #(64+64)+38 : LDA.w SA1IRAM.CopyOf_060A : JSR DrawHexSW_four_gray
+	LDX.b #(64+64)+48 : LDA.w SA1IRAM.CopyOf_060E : JSR DrawHexSW_four_gray
 	BRA .checkXSync
 
 .XSet2
@@ -242,10 +243,10 @@ draw_camera:
 	STA !dg_buffer_r2+36
 	INC : STA !dg_buffer_r2+46
 
-	LDX.b #(64+64)+18 : LDA.b SA1IRAM.CopyOf_0608 : JSR draw_hex_4digits_gray
-	LDX.b #(64+64)+28 : LDA.b SA1IRAM.CopyOf_060C : JSR draw_hex_4digits_gray
-	LDX.b #(64+64)+38 : LDA.b SA1IRAM.CopyOf_060A : JSR draw_hex_4digits_white
-	LDX.b #(64+64)+48 : LDA.b SA1IRAM.CopyOf_060E : JSR draw_hex_4digits_white
+	LDX.b #(64+64)+18 : LDA.w SA1IRAM.CopyOf_0608 : JSR DrawHexSW_four_gray
+	LDX.b #(64+64)+28 : LDA.w SA1IRAM.CopyOf_060C : JSR DrawHexSW_four_gray
+	LDX.b #(64+64)+38 : LDA.w SA1IRAM.CopyOf_060A : JSR DrawHexSW_four_white
+	LDX.b #(64+64)+48 : LDA.w SA1IRAM.CopyOf_060E : JSR DrawHexSW_four_white
 
 .checkXSync
 	LDA.b SA1IRAM.CopyOf_E2 : CMP.b SA1IRAM.SCRATCH+0 : BCC .xDesynced
@@ -264,8 +265,8 @@ draw_camera:
 
 
 	LDX.b SA1IRAM.CopyOf_A7
-	LDA.b SA1IRAM.CopyOf_0600, X : STA.b SA1IRAM.SCRATCH+0 ; cache Y camera for desync check
-	LDA.b SA1IRAM.CopyOf_0604, X : STA.b SA1IRAM.SCRATCH+2
+	LDA.w SA1IRAM.CopyOf_0600, X : STA.b SA1IRAM.SCRATCH+0 ; cache Y camera for desync check
+	LDA.w SA1IRAM.CopyOf_0604, X : STA.b SA1IRAM.SCRATCH+2
 	CPX #$02 : BEQ .YSet2
 
 .YSet1
@@ -277,10 +278,10 @@ draw_camera:
 	STA !dg_buffer_r3+36
 	INC : STA !dg_buffer_r3+46
 
-	LDX.b #(64+64+64)+18 : LDA.b SA1IRAM.CopyOf_0600 : JSR draw_hex_4digits_yellow
-	LDX.b #(64+64+64)+28 : LDA.b SA1IRAM.CopyOf_0604 : JSR draw_hex_4digits_yellow
-	LDX.b #(64+64+64)+38 : LDA.b SA1IRAM.CopyOf_0602 : JSR draw_hex_4digits_gray
-	LDX.b #(64+64+64)+48 : LDA.b SA1IRAM.CopyOf_0606 : JSR draw_hex_4digits_gray
+	LDX.b #(64+64+64)+18 : LDA.w SA1IRAM.CopyOf_0600 : JSR DrawHexSW_four_yellow
+	LDX.b #(64+64+64)+28 : LDA.w SA1IRAM.CopyOf_0604 : JSR DrawHexSW_four_yellow
+	LDX.b #(64+64+64)+38 : LDA.w SA1IRAM.CopyOf_0602 : JSR DrawHexSW_four_gray
+	LDX.b #(64+64+64)+48 : LDA.w SA1IRAM.CopyOf_0606 : JSR DrawHexSW_four_gray
 	BRA .checkYSync
 
 .YSet2
@@ -292,10 +293,10 @@ draw_camera:
 	STA !dg_buffer_r3+36
 	INC : STA !dg_buffer_r3+46
 
-	LDX.b #(64+64+64)+18 : LDA.b SA1IRAM.CopyOf_0600 : JSR draw_hex_4digits_gray
-	LDX.b #(64+64+64)+28 : LDA.b SA1IRAM.CopyOf_0604 : JSR draw_hex_4digits_gray
-	LDX.b #(64+64+64)+38 : LDA.b SA1IRAM.CopyOf_0602 : JSR draw_hex_4digits_yellow
-	LDX.b #(64+64+64)+48 : LDA.b SA1IRAM.CopyOf_0606 : JSR draw_hex_4digits_yellow
+	LDX.b #(64+64+64)+18 : LDA.w SA1IRAM.CopyOf_0600 : JSR DrawHexSW_four_gray
+	LDX.b #(64+64+64)+28 : LDA.w SA1IRAM.CopyOf_0604 : JSR DrawHexSW_four_gray
+	LDX.b #(64+64+64)+38 : LDA.w SA1IRAM.CopyOf_0602 : JSR DrawHexSW_four_yellow
+	LDX.b #(64+64+64)+48 : LDA.w SA1IRAM.CopyOf_0606 : JSR DrawHexSW_four_yellow
 
 .checkYSync
 	LDA.b SA1IRAM.CopyOf_E8 : CMP.b SA1IRAM.SCRATCH+0 : BCC .yDesynced
@@ -337,8 +338,8 @@ draw_camera:
 ;.draw
 ;	STA !dg_buffer_r1+42
 ;	;REP #$10
-;	LDX #(64+44) : LDA.b SA1IRAM.SCRATCH+2 : JSR draw_hex_2digits_white ; this doesn't change X flag
-;	LDX #(64+48) : LDA.b SA1IRAM.SCRATCH+0 : JSR draw_hex_4digits_white ; this exits i=10 - might not need
+;	LDX #(64+44) : LDA.b SA1IRAM.SCRATCH+2 : JSR DrawHexSW_two_white ; this doesn't change X flag
+;	LDX #(64+48) : LDA.b SA1IRAM.SCRATCH+0 : JSR DrawHexSW_four_white ; this exits i=10 - might not need
 ;
 ;	LDA.b SA1IRAM.SCRATCH+1 : AND #$FF00
 ;	CMP #$7000 : BCC .notSRAM ; check <$70 first, to avoid work ram checks
@@ -394,106 +395,94 @@ calc_room_flags_palettes:
 	dw !BROWN_PAL, !BROWN_PAL, !BROWN_PAL, !BROWN_PAL
 	dw !BLUE_PAL, !RED_PAL, !GREEN_PAL, !YELLOW_PAL
 
-draw_hex_4digits_white:
-	REP #$10
-	TAY ; cache A
-	AND #$000F : ORA #$10|!P3|!RED_PAL : STA !dg_dma_buffer+6, X
-	TYA : LSR #4 : AND #$000F : ORA #$10|!P3|!RED_PAL : STA !dg_dma_buffer+4, X
 
-	TYA : XBA : TAY ; get old value back, change to high byte
+DrawHexSW:
+.four
+..white
+	LDY.b #(!P3|!RED_PAL)>>8
+	BRA ..set
 
-	AND #$000F : ORA #$10|!P3|!RED_PAL : STA !dg_dma_buffer+2, X
-	TYA : LSR #4 : AND #$000F : ORA #$10|!P3|!RED_PAL : STA !dg_dma_buffer+0, X
+..yellow
+	LDY.b #(!P3|!REDYELLOW)>>8
+	BRA ..set
 
-	SEP #$10
-	RTS
+..gray
+	LDY.b #(!P3|!GRAY_PAL)>>8
+	BRA ..set
 
-draw_hex_4digits_yellow:
-	REP #$10
-	TAY ; cache A
-	AND #$000F : ORA #$10|!P3|!REDYELLOW : STA !dg_dma_buffer+6, X
-	TYA : LSR #4 : AND #$000F : ORA #$10|!P3|!REDYELLOW : STA !dg_dma_buffer+4, X
+..red
+	LDY.b #(!P3|!TEXT_PAL)>>8
+	BRA ..set
 
-	TYA : XBA : TAY ; get old value back, change to high byte
+..set
+	STY.w SA1IRAM.SCRATCH+11
+	LDY.b #$10
+	STY.w SA1IRAM.SCRATCH+10
+	LDY.b #4
+	BRA .draw_n_digits
 
-	AND #$000F : ORA #$10|!P3|!REDYELLOW : STA !dg_dma_buffer+2, X
-	TYA : LSR #4 : AND #$000F : ORA #$10|!P3|!REDYELLOW : STA !dg_dma_buffer+0, X
+.three
+..white
+	LDY.b #(!P3|!RED_PAL)>>8
+	BRA ..set
 
-	SEP #$10
-	RTS
+..yellow
+	LDY.b #(!P3|!REDYELLOW)>>8
+	BRA ..set
 
-draw_hex_4digits_gray:
-	REP #$10
-	TAY ; cache A
-	AND #$000F : ORA #$10|!P3|!GRAY_PAL : STA !dg_dma_buffer+6, X
-	TYA : LSR #4 : AND #$000F : ORA #$10|!P3|!GRAY_PAL : STA !dg_dma_buffer+4, X
+..gray
+	LDY.b #(!P3|!GRAY_PAL)>>8
+	BRA ..set
 
-	TYA : XBA : TAY ; get old value back, change to high byte
+..red
+	LDY.b #(!P3|!TEXT_PAL)>>8
+	BRA ..set
 
-	AND #$000F : ORA #$10|!P3|!GRAY_PAL : STA !dg_dma_buffer+2, X
-	TYA : LSR #4 : AND #$000F : ORA #$10|!P3|!GRAY_PAL : STA !dg_dma_buffer+0, X
+..set
+	STY.w SA1IRAM.SCRATCH+11
+	LDY.b #$10
+	STY.w SA1IRAM.SCRATCH+10
+	LDY.b #3
+	BRA .draw_n_digits
 
-	SEP #$10
-	RTS
+.two
+..white
+	LDY.b #(!P3|!RED_PAL)>>8
+	BRA ..set
 
-draw_hex_3digits_white:
-	REP #$10
-	TAY ; cache A
-	AND #$000F : ORA #$10|!P3|!RED_PAL : STA !dg_dma_buffer+4, X
-	TYA : LSR #4 : AND #$000F : ORA #$10|!P3|!RED_PAL : STA !dg_dma_buffer+2, X
+..yellow
+	LDY.b #(!P3|!REDYELLOW)>>8
+	BRA ..set
 
-	TYA : XBA ; get old value back, change to high byte
-	AND #$000F : ORA #$10|!P3|!RED_PAL : STA !dg_dma_buffer+0, X
+..gray
+	LDY.b #(!P3|!GRAY_PAL)>>8
+	BRA ..set
 
-	SEP #$10
-	RTS
+..red
+	LDY.b #(!P3|!TEXT_PAL)>>8
+	BRA ..set
 
-draw_hex_3digits_yellow:
-	REP #$10
-	TAY ; cache A
-	AND #$000F : ORA #$10|!P3|!REDYELLOW : STA !dg_dma_buffer+4, X
-	TYA : LSR #4 : AND #$000F : ORA #$10|!P3|!REDYELLOW : STA !dg_dma_buffer+2, X
+..set
+	STY.w SA1IRAM.SCRATCH+11
+	LDY.b #$10
+	STY.w SA1IRAM.SCRATCH+10
+	LDY.b #3
+	BRA .draw_n_digits
 
-	TYA : XBA ; get old value back, change to high byte
-	AND #$000F : ORA #$10|!P3|!REDYELLOW : STA !dg_dma_buffer+0, X
+.next_digit
+	LSR
+	LSR
+	LSR
+	LSR
 
-	SEP #$10
-	RTS
-
-draw_hex_3digits_red:
-	REP #$10
-	TAY ; cache A
-	AND #$000F : ORA #$10|!P3|!TEXT_PAL : STA !dg_dma_buffer+4, X
-	TYA : LSR #4 : AND #$000F : ORA #$10|!P3|!TEXT_PAL : STA !dg_dma_buffer+2, X
-
-	TYA : XBA ; get old value back, change to high byte
-	AND #$000F : ORA #$10|!P3|!TEXT_PAL : STA !dg_dma_buffer+0, X
-
-	SEP #$10
-	RTS
-
-draw_hex_3digits_gray:
-	REP #$10
-	TAY ; cache A
-	AND #$000F : ORA #$10|!P3|!GRAY_PAL : STA !dg_dma_buffer+4, X
-	TYA : LSR #4 : AND #$000F : ORA #$10|!P3|!GRAY_PAL : STA !dg_dma_buffer+2, X
-
-	TYA : XBA ; get old value back, change to high byte
-	AND #$000F : ORA #$10|!P3|!GRAY_PAL : STA !dg_dma_buffer+0, X
-
-	SEP #$10
-	RTS
-
-draw_hex_2digits_white:
-	TAY ; cache A
-	AND #$000F : ORA #$10|!P3|!RED_PAL : STA !dg_dma_buffer+2, X
-	TYA : LSR #4 : AND #$000F : ORA #$10|!P3|!RED_PAL : STA !dg_dma_buffer+0, X
-
-	RTS
-
-draw_hex_2digits_yellow:
-	TAY ; cache A
-	AND #$000F : ORA #$10|!P3|!REDYELLOW : STA !dg_dma_buffer+2, X
-	TYA : LSR #4 : AND #$000F : ORA #$10|!P3|!REDYELLOW : STA !dg_dma_buffer+0, X
-
+.draw_n_digits
+	PHA ; remember coordinates
+	AND.w #$000F ; get digit
+	ORA.b SA1IRAM.SCRATCH+10 ; add in color
+	STA.w !dg_dma_buffer+6, X
+	PLA ; recover value
+	DEX
+	DEX
+	DEY
+	BNE .next_digit
 	RTS

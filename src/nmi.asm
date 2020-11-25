@@ -146,8 +146,8 @@ nmi_hud_update:
 
 .nowatch
 .dontbreakthings
-	LDX $13
-	STX $2100
+	LDX.b $13
+	STX.w $2100
 	SEP #$20
 	LDA.w SA1IRAM.HDMA_ASK
 	STZ.w SA1IRAM.HDMA_ASK
@@ -164,15 +164,15 @@ nmi_hud_update:
 	LDY #$01
 	LDA #$1801 : STA $4300
 	LDA.w #!dg_dma_buffer : STA $4302
-	LDX.b #!dg_dma_buffer>>16 : STX $4304
+	LDX.b #$00 : STX $4304
 
 	LDA #$C202>>1 : STA $2116
 	LDA #$0010 : STA $4305
 	STY $420B
 
 macro draw_ancilla_row(n)
-	LDA #($C202+(64*<n>))>>1 : STA $2116
-	LDA #$0010 : STA $4305
+	LDA.w #($C202+(64*<n>))>>1 : STA.w $2116
+	LDA.w #$0010 : STA.w $4305
 	STY $420B
 
 	;LDA #($C22E+(64*<n>))>>1 : STA $2116

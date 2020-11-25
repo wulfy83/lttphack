@@ -101,37 +101,52 @@ cm_hud_superwatch:
 	db !list_end
 
 .toggle
-	JSL ClearWatchBuffer
+	PHP
+	PHB
 
-	PHP : PHB
-	; wait for vblank
-	SEP #$30
-	LDA.b #$80
-	STA.w $2100
-	REP #$30
-	LDA.w #$C200>>1 ; tile map location of BG3 
-	STA.w $2116
-	LDX.w #$140
-	LDA.w #$207F
---	STA.w $2118
-	DEX
-	BNE --
+	JSL ClearSWBuffer
+	JSL CleanVRAMSW
 
 	SEP #$20
-	LDA !ram_superwatch : CMP #$02 : BNE ++
+	LDA.l !ram_superwatch
+	ASL
+	TAX
 
+	JSR (.togglesss, X)
+
+	PLB
+	PLP
+	RTS
+
+.togglesss
+	dw .off
+	dw .ancillae
+	dw .doorwatch
+
+.off
+	STZ.b !ram_extra_sa1_required
+	RTS
+
+.ancillae
+	LDA.b #$01
+	STA.b !ram_extra_sa1_required
+	RTS
+
+.doorwatch
+	SEP #$20
 	REP #$10
 
 	; Use HDMA channel 5
 	LDA #%00000010 : STA $4350 ; direct, 1 address, 2 writes
 	LDA #$11 : STA $4351 ; BG3 h scroll
-	LDX.w #.doorwatchhdma : STX $4352 ; address of table
-	LDA.b #.doorwatchhdma>>16 : STA $4354 ; bank of table
+	LDX.w #..doorwatchhdma : STX $4352 ; address of table
+	LDA.b #..doorwatchhdma>>16 : STA $4354 ; bank of table
 
-++	PLB : PLP
+	LDA.b #$01
+	STA.b !ram_extra_sa1_required
 	RTS
 
-.doorwatchhdma
+..doorwatchhdma
 	db 63 : dw 0
 	db 32 : dw 256
 	db 1 : dw 0

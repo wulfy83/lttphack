@@ -41,10 +41,14 @@
 ; rr = various usage ($0C5E)
 
 UpdateAncillaWindow:
+	JSL ClearSWBuffer
+
 	REP #$10
+	SEP #$20
+
 	LDA #$20
 	TRB.b SA1IRAM.HDMA_ASK
-	LDA #$7F : PHA : PLB
+
 	LDA #$24 : XBA
 
 	; do search index
@@ -63,71 +67,48 @@ UpdateAncillaWindow:
 	LDA.w SA1IRAM.CopyOf_03A4  : AND #$0F
 	ORA #$10 : TAX : STX.w !dg_buffer+8
 
-	; unfurled loop because I said so
-macro do_ancilla_id(n)
-	LDA #$00 : XBA
-	LDA.w SA1IRAM.CopyOf_0C4A+<n>
-	TAX
+	; do each ancilla
+	LDY.w #$0009
+
+.nextancilla
+	; get row
+	REP #$20
+	TYA
+
+	; A = (Y+1)*16
+	INC
+	ASL
+	ASL
+	ASL
+	ASL
+
+	ADC.w #!dg_buffer
+	STA.b SA1IRAM.SCRATCH+10
+
+	; get ID color in top byte of A
+	SEP #$30
+	LDX.w SA1IRAM.CopyOf_0C4A, Y
 	LDA.l .replacable_color, X
 	XBA
 
 	; write ID
-	LDA.w SA1IRAM.CopyOf_0C4A+<n> : LSR #4
-	ORA #$10 : TAX : STX.w !dg_buffer+(16*<n>+16)+0
+	TXA
+	JSR write_2hex_ancilla
 
-	LDA.w SA1IRAM.CopyOf_0C4A+<n> : AND #$0F
-	ORA #$10 : TAX : STX.w !dg_buffer+(16*<n>+16)+2
+	; 2 more for gap between ID and next thing
+	INC.b SA1IRAM.SCRATCH+10
+	INC.b SA1IRAM.SCRATCH+10
 
-	; do timer
-	LDA #$34 : XBA ; yellow pal
+	LDA.w #$3400 ; yellow pal
+	SEP #$20
+	LDA.w SA1IRAM.CopyOf_0C5E, Y
+	JSR write_2hex_ancilla
 
-	LDA.w SA1IRAM.CopyOf_0C5E+<n> : LSR #4
-	ORA #$10 : TAX : STX.w !dg_buffer+(16*<n>+16)+6
-
-	LDA.w SA1IRAM.CopyOf_0C5E+<n> : AND #$0F
-	ORA #$10 : TAX : STX.w !dg_buffer+(16*<n>+16)+8
-
-	; do X and Y coords
-
-;	LDA.l $0C18+<n> : LSR #4
-;	ORA #$10 : TAX : STX.w !dg_buffer+(32*<n>+16)+0+16
-;
-;	LDA.l $0C18+<n> : AND #$0F
-;	ORA #$10 : TAX : STX.w !dg_buffer+(32*<n>+16)+2+16
-;
-;	LDA.l $0C04+<n> : LSR #4
-;	ORA #$10 : TAX : STX.w !dg_buffer+(32*<n>+16)+4+16
-;
-;	LDA.l $0C04+<n> : AND #$0F
-;	ORA #$10 : TAX : STX.w !dg_buffer+(32*<n>+16)+6+16
-;
-;	LDA #$34 : XBA ; red/yellow pal
-;	LDA.l $0C0E+<n> : LSR #4
-;	ORA #$10 : TAX : STX.w !dg_buffer+(32*<n>+16)+8+16
-;
-;	LDA.l $0C0E+<n> : AND #$0F
-;	ORA #$10 : TAX : STX.w !dg_buffer+(32*<n>+16)+10+16
-;
-;	LDA.l $0BFA+<n> : LSR #4
-;	ORA #$10 : TAX : STX.w !dg_buffer+(32*<n>+16)+12+16
-;
-;	LDA.l $0BFA+<n> : AND #$0F
-;	ORA #$10 : TAX : STX.w !dg_buffer+(32*<n>+16)+14+16
-
-endmacro
-
-	%do_ancilla_id(0)
-	%do_ancilla_id(1)
-	%do_ancilla_id(2)
-	%do_ancilla_id(3)
-	%do_ancilla_id(4)
-	%do_ancilla_id(5)
-	%do_ancilla_id(6)
-	%do_ancilla_id(7)
-	%do_ancilla_id(8)
-	%do_ancilla_id(9)
+	DEY
+	BPL .nextancilla
 
 	RTS
+
 !z = $30 ; gray
 !r = $38 ; white text
 !p = $24 ; red outline
@@ -142,3 +123,27 @@ endmacro
 	db !p, !p, !p, !p, !r, !p, !p, !p ; 0x38-0x3F
 	db !p, !p, !p, !p ; 0x40-0x43
 	fillbyte !z : fill $50 ; fill the rest with 0
+
+write_2hex_ancilla:
+	REP #$10
+	TAX
+	LSR
+	LSR
+	LSR
+	LSR
+	ORA.b #$10
+
+	REP #$20
+	STA.b (SA1IRAM.SCRATCH+10)
+	INC.b SA1IRAM.SCRATCH+10
+	INC.b SA1IRAM.SCRATCH+10
+
+	TXA ; low byte
+	AND.w #$FF0F
+	ORA.w #$0010
+
+	STA.b (SA1IRAM.SCRATCH+10)
+	INC.b SA1IRAM.SCRATCH+10
+	INC.b SA1IRAM.SCRATCH+10
+	RTS
+

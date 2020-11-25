@@ -8,8 +8,8 @@ org $00802F
 	NOP
 
 ; need to fix a small buffer myself since it empties to 0 not in init
-org $0CC1FF
-JSL ClearWatchBuffer_pre
+;org $0CC1FF
+;JSL ClearWatchBuffer_pre
 
 org $008829
 ;JSL ClearBank7F
