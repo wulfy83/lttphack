@@ -718,6 +718,26 @@ DrawCoordinates:
 ;==============================================================================
 ; For cleaning up superwatch in VRAM
 ;==============================================================================
+UpdateGlitchedWindow:
+	SEP #$30
+	LDA.l !ram_superwatch
+	AND.b #$03
+	ASL : TAX
+	JMP (.routines, X)
+
+.routines
+	dw NoSuperWatch
+	dw UpdateAncillaWindow
+	dw UpdateUWWindow
+	dw NoSuperWatch
+
+NoSuperWatch:
+	LDA #$20
+
+.set
+	TRB.b SA1IRAM.HDMA_ASK
+	RTS
+
 CleanVRAMSW:
 	SEP #$30
 	STZ.w $4200

@@ -47,6 +47,26 @@ org $07999D : PHB : JSL UpdateOnReceiveItem
 
 org $0DFA90 : PHB : JSL StupidMVN : NOP
 
+; Waitkey
+org $0EFB90
+	LDA $F4 ; vanilla pointlessly used absolute; dp is better
+	JSL idle_waitkey ; now we have an easy 4 bytes here for the JSL
+
+
+; EndMessage
+org $0efbbb
+	JSL idle_endmessage
+
+; MenuActive
+org $0DDF1E
+	JSL idle_menu
+
+
+; BottleMenu
+org $0DE0E2
+	JSL idle_menu
+
+
 !reset = $42
 !update = $02
 pullpc
@@ -253,4 +273,42 @@ UpdateOnReceiveItem:
 	LDA #$07 : PHA : PLB ; to make up for PHK : PLB
 	%update_timer()
 	LDA $4D
+	RTL
+
+;==============================================================================
+; Idle frames
+;==============================================================================
+macro inc_idle()
+	REP #$21
+	SED
+	LDA SA1IRAM.ROOM_TIME_IDLE : ADC #$0001 : STA SA1IRAM.ROOM_TIME_IDLE
+	CLD
+	SEP #$20
+endmacro
+
+idle_waitkey:
+	; LDA $F4 from entry point
+	ORA $F6 : AND #$C0 : BNE .pressed_key
+	%inc_idle()
+	LDA $F4 : ORA $F6 : AND #$C0 
+.pressed_key
+	RTL
+
+idle_endmessage:
+	LDA $F4 : ORA $F6 : BNE .pressed_key
+
+	%inc_idle()
+	LDA $F4 : ORA $F6
+
+.pressed_key
+	RTL
+
+idle_menu:
+	LDA $F4 : BNE .pressed_key
+
+	%inc_idle()
+	LDA $F4
+
+.pressed_key
+	AND #$10
 	RTL
