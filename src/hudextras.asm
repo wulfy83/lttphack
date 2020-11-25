@@ -731,13 +731,6 @@ UpdateGlitchedWindow:
 	dw UpdateUWWindow
 	dw NoSuperWatch
 
-NoSuperWatch:
-	LDA #$20
-
-.set
-	TRB.b SA1IRAM.HDMA_ASK
-	RTS
-
 CleanVRAMSW:
 	SEP #$30
 	STZ.w $4200

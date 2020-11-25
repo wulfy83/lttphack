@@ -5,7 +5,7 @@ org $00FFD5 : db $23, $35
 org $00FFD7 : db 11 ; 2mb
 
 ; SRAM Size
-org $00FFD8 : db $05
+org $00FFD8 : db 5 ; 256k
 
 ; == CTRL 2 ==
 ;
@@ -72,6 +72,12 @@ if stringsequal("!VERSION", "DEBUG")
 endif
 !VERSIONTEXT += !VERSION
 %file_select_text("PRACTICE HACK !VERSIONTEXT")
+
+org $00FFC0
+db "                     " ; empty this
+
+org $00FFC0
+db "ALTTPRAC !VERSIONTEXT"
 
 macro what_item_is_this()
 	fillword !BLANK_TILE : fill 16

@@ -47,6 +47,13 @@ function char(n) = $2150+n
 ; 01234567890123456789012345678901
 ; ................................
 
+NoSuperWatch:
+	LDA #$20
+
+.set
+	TRB.b SA1IRAM.HDMA_ASK
+	RTS
+
 UpdateUWWindow:
 	LDA.l !ram_superwatch
 	LSR : AND.b SA1IRAM.CopyOf_1B : LSR ; set or clear carry

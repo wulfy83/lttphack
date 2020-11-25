@@ -165,65 +165,31 @@ incsrc sa1hud.asm
 incsrc sa1sram.asm
 
 pullpc
-InitSA1:
-	REP #$20
-
-	LDA #$0020
-	STA.w $2200
-
-	LDA.w #SA1Reset00
-	STA.w $2203
-
-	LDA.w #SA1NMI00
-	STA.w $2205
-
-	LDA.w #SA1IRQ00
-	STA.w $2207
-
-	LDA.w #$8180
-	STA.w $2220
-	STA.w $2222
-
-	SEP #$20
-	LDA #$80
-	STA.w $2226
-
-	LDA #$FF
-	STA.w $2229
-	STZ.w $2228
-
-	STZ.w $2200
-
-	SEP #$30
-	LDA.b #$81
-	STA.w NMITIMEN
-	RTL
-
 CacheSA1Stuff:
-	LDX.w $10 : STX.w SA1IRAM.CopyOf_10
-	LDX.w $1A : STX.w SA1IRAM.CopyOf_1A
-	LDX.w $20 : STX.w SA1IRAM.CopyOf_20
-	LDX.w $22 : STX.w SA1IRAM.CopyOf_22
-	LDX.w $24 : STX.w SA1IRAM.CopyOf_24
-	LDX.w $27 : STX.w SA1IRAM.CopyOf_27
-	LDA.w $29 : STA.w SA1IRAM.CopyOf_29
-	LDX.w $2A : STX.w SA1IRAM.CopyOf_2A
-	LDX.w $30 : STX.w SA1IRAM.CopyOf_30
-	LDA.w $5B : STA.w SA1IRAM.CopyOf_5B
-	LDX.w $5D : STX.w SA1IRAM.CopyOf_5D
-	LDA.w $6C : STA.w SA1IRAM.CopyOf_6C
-	LDX.w $A0 : STX.w SA1IRAM.CopyOf_A0
-	LDX.w $A6 : STX.w SA1IRAM.CopyOf_A6
-	LDX.w $A8 : STX.w SA1IRAM.CopyOf_A8
-	LDA.w $AA : STA.w SA1IRAM.CopyOf_AA
-	LDA.w $B0 : STA.w SA1IRAM.CopyOf_B0
-	LDX.w $E2 : STX.w SA1IRAM.CopyOf_E2
-	LDX.w $E8 : STX.w SA1IRAM.CopyOf_E8
-	LDA.w $EE : STA.w SA1IRAM.CopyOf_EE
-	LDA.w $F0 : STA.w SA1IRAM.CopyOf_F0
-	LDA.w $F2 : STA.w SA1IRAM.CopyOf_F2
-	LDA.w $F4 : STA.w SA1IRAM.CopyOf_F4
-	LDA.w $F6 : STA.w SA1IRAM.CopyOf_F6
+	LDX.b $10 : STX.w SA1IRAM.CopyOf_10
+	LDX.b $1A : STX.w SA1IRAM.CopyOf_1A
+	LDX.b $20 : STX.w SA1IRAM.CopyOf_20
+	LDX.b $22 : STX.w SA1IRAM.CopyOf_22
+	LDX.b $24 : STX.w SA1IRAM.CopyOf_24
+	LDX.b $27 : STX.w SA1IRAM.CopyOf_27
+	LDA.b $29 : STA.w SA1IRAM.CopyOf_29
+	LDX.b $2A : STX.w SA1IRAM.CopyOf_2A
+	LDX.b $30 : STX.w SA1IRAM.CopyOf_30
+	LDA.b $5B : STA.w SA1IRAM.CopyOf_5B
+	LDX.b $5D : STX.w SA1IRAM.CopyOf_5D
+	LDA.b $6C : STA.w SA1IRAM.CopyOf_6C
+	LDX.b $A0 : STX.w SA1IRAM.CopyOf_A0
+	LDX.b $A6 : STX.w SA1IRAM.CopyOf_A6
+	LDX.b $A8 : STX.w SA1IRAM.CopyOf_A8
+	LDA.b $AA : STA.w SA1IRAM.CopyOf_AA
+	LDA.b $B0 : STA.w SA1IRAM.CopyOf_B0
+	LDX.b $E2 : STX.w SA1IRAM.CopyOf_E2
+	LDX.b $E8 : STX.w SA1IRAM.CopyOf_E8
+	LDA.b $EE : STA.w SA1IRAM.CopyOf_EE
+	LDA.b $F0 : STA.w SA1IRAM.CopyOf_F0
+	LDA.b $F2 : STA.w SA1IRAM.CopyOf_F2
+	LDA.b $F4 : STA.w SA1IRAM.CopyOf_F4
+	LDA.b $F6 : STA.w SA1IRAM.CopyOf_F6
 	LDX.w $0208 : STX.w SA1IRAM.CopyOf_0208
 	LDA.w $020A : STA.w SA1IRAM.CopyOf_020A
 	LDA.w $02A2 : STA.w SA1IRAM.CopyOf_02A2
@@ -262,11 +228,6 @@ Extra_SA1_Transfers:
 
 	RTS
 
-
-
-
-
-
 .superwatchtransfers
 	dw ..off
 	dw ..ancillae
@@ -303,12 +264,52 @@ Extra_SA1_Transfers:
 
 	RTS
 
+;==============================================================================
+InitSA1:
+	REP #$20
+
+	LDA #$0020
+	STA.w $2200
+
+	LDA.w #SA1Reset00
+	STA.w $2203
+
+	LDA.w #SA1NMI00
+	STA.w $2205
+
+	LDA.w #SA1IRQ00
+	STA.w $2207
+
+	LDA.w #$8180
+	STA.w $2220
+	STA.w $2222
+
+	SEP #$20
+	LDA #$80
+	STA.w $2226
+
+	STZ.w $2224
+	STZ.w $2225
+
+	LDA #$FF
+	STA.w $2202
+	STA.w $2229
+	STZ.w $2228
+
+	STZ.w $2200
+
+	STZ.w SA1IRAM.SHORTCUT_USED
+	SEP #$30
+	LDA.b #$81
+	STA.w NMITIMEN
+	RTL
+
 SA1Reset:
 	SEI
 	CLC
 	XCE
 
-	REP #$38
+	REP #$FB
 
 	LDA #$0000
 	TCD
@@ -320,9 +321,12 @@ SA1Reset:
 
 	SEP #$30
 	STZ.w $2230
+	STZ.w $2231
+	STZ.w $2225
+	STZ.w $2209
+	STZ.w $2210
 
 	LDA #$80
-	STZ.w $2225
 	STA.w $2227
 
 	LDA #$FF
@@ -360,52 +364,45 @@ SA1NMI:
 	LDA.w SA1IRAM.CopyOf_12 : STA.w SA1IRAM.CopyOf_12_B : LSR
 
 	REP #$20
-	LDA.w SA1IRAM.ROOM_TIME_LAG : ADC #$0000 ; carry set from $12 being 1
+	LDA.w SA1IRAM.ROOM_TIME_LAG : ADC.w #$0000 ; carry set from $12 being 1
 	STA.w SA1IRAM.ROOM_TIME_LAG
 
 	; cycle controlled room time
 	SEP #$21 ; include carry
-	LDA.w SA1IRAM.ROOM_TIME_F : ADC #$00
-	CMP #$60
-	BCS .rtF60
+	LDA.w SA1IRAM.ROOM_TIME_F : ADC.b #$00
+	CMP.b #$60
+	BCC .rtFOK
+
+.rtF60
+	LDA.b #$00
 
 .rtFOK
-	BCC ++ ; 3 cycles
-
-.rtF60 ; 1 cycle for branch
-	LDA #$00 ; 2 cycles
-
-++	STA.w SA1IRAM.ROOM_TIME_F
+	STA.w SA1IRAM.ROOM_TIME_F
 
 	REP #$20 ; seconds have 3 digits
-	LDA.w SA1IRAM.ROOM_TIME_S : ADC #$0000 ; increments by 1 if F>=60
+	LDA.w SA1IRAM.ROOM_TIME_S : ADC.w #$0000 ; increments by 1 if F>=60
 	STA.w SA1IRAM.ROOM_TIME_S
 
-	; cycle controlled segment time
 	SEP #$21 ; include carry
-	LDA.w SA1IRAM.SEG_TIME_F : ADC #$00
-	CMP #$60
-	BCS .stF60
+	LDA.w SA1IRAM.SEG_TIME_F : ADC.b #$00
+	CMP.b #$60
+	BCC .stFOK
+
+.stF60
+	LDA.b #$00
 
 .stFOK
-	BCC ++ ; 3 cycles
+	STA SA1IRAM.SEG_TIME_F
 
-.stF60 ; 1 cycle for branch
-	LDA #$00 ; 2 cycles
+	LDA SA1IRAM.SEG_TIME_S : ADC.b #$00 ; increments by 1 if F>=60
+	CMP.b #$60
+	BCC .stSOK
 
-++	STA SA1IRAM.SEG_TIME_F
-
-	LDA SA1IRAM.SEG_TIME_S : ADC #$00 ; increments by 1 if F>=60
-	CMP #$60
-	BCS .stS60
+.stS60
+	LDA.b #$00
 
 .stSOK
-	BCC ++ ; 3 cycles
-
-.stS60 ; 1 cycle for branch
-	LDA #$00 ; 2 cycles
-
-++	STA SA1IRAM.SEG_TIME_S
+	STA SA1IRAM.SEG_TIME_S
 
 	REP #$20
 	LDA SA1IRAM.SEG_TIME_M : ADC #$0000 ; increments by 1 if S>=60

@@ -7,48 +7,7 @@ org $00802F
 	JSL init_hook
 	NOP
 
-; need to fix a small buffer myself since it empties to 0 not in init
-;org $0CC1FF
-;JSL ClearWatchBuffer_pre
-
-org $008829
-;JSL ClearBank7F
-
 pullpc
-ClearBank7F:
-	STA.b $13
-	INC.b $15
-
-	STZ $2181
-	STZ $2182
-	LDA.b #$01
-	STA $2183
-
-	LDA.b #.zero>>0
-	STA $4302
-	LDA.b #.zero>>8
-	STA $4303
-	LDA.b #.zero>>16
-	STA $4304
-
-	LDA #$FF ; fill the whole thing
-	STA $4305
-	STA $4306
-
-	LDA #$08
-	STA $4300
-	LDA #$80
-	STA $4301
-
-	LDA #$01
-	STA $420B ; can't write bank 7F yet
-
-	STZ $2180 ; last byte
-
-	RTL
-
-.zero
-	dw 0
 
 ClearWatchBuffer:
 	PHX
@@ -79,7 +38,6 @@ ClearWatchBuffer:
 init_hook:
 	JSL init_expand
 	JSL InitSA1
-
 
 	SEP #$30
 	LDA #$81 : STA $4200
