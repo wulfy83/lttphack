@@ -51,7 +51,7 @@ CM_Local:
 
 	LDA $11
 
-	JSL !UseImplicitRegIndexedLocalJumpTable
+	JSL UseImplicitRegIndexedLocalJumpTable
 
 	dw CM_Init
 	dw CM_DrawMenu

@@ -85,8 +85,8 @@ cm_equipment_sword:
 	db !list_end
 
 .toggle_sword
-	JSL !DecompSwordGfx
-	JSL !Palette_Sword
+	JSL DecompSwordGfx
+	JSL Palette_Sword
 	RTS
 
 cm_equipment_shield:
@@ -101,8 +101,8 @@ cm_equipment_shield:
 	db !list_end
 
 .toggle_shield
-	JSL !DecompShieldGfx
-	JSL !Palette_Shield
+	JSL DecompShieldGfx
+	JSL Palette_Shield
 	RTS
 
 cm_equipment_armor:
@@ -116,7 +116,7 @@ cm_equipment_armor:
 	db !list_end
 
 .toggle_armor
-	JSL !Palette_Armor
+	JSL Palette_Armor
 	RTS
 
 cm_equipment_fill_magic:

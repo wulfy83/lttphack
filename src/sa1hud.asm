@@ -66,12 +66,8 @@ org $0DFDA2 : STA.l SA1HUD+$042, X
 org $0DFDAB : STA.l SA1HUD+$044, X
 org $0DFDB4 : STA.l SA1HUD+$046, X
 
-
 ; HP stuff we leave writing to vanilla WRAM
 ; org $0DFDC1 : STA.l SA1HUD+$042, X
-
-
-
 
 ; tracking stuff related to heart refill, but leaving it alone
 ;org $0DF151 : LDA.b #SA1HUD+$068>>0
@@ -83,10 +79,3 @@ org $0DFDB4 : STA.l SA1HUD+$046, X
 ;org $0DFBEE : LDA.b #SA1HUD+$068>>0
 ;org $0DFBF2 : LDA.b #SA1HUD+$068>>8
 ;org $0DFBF6 : LDA.b #SA1HUD+$068>>16
-
-
-
-
-
-
-

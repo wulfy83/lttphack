@@ -45,7 +45,7 @@ org $06D192 : JSL UpdateOnKey ; normal key
 org $078FFB : JSL UpdateOnBonk
 org $07999D : PHB : JSL UpdateOnReceiveItem
 
-org $0DFA90 : PHB : JSL StupidMVN : NOP
+;org $0DFA90 : PHB : JSL StupidMVN : NOP
 
 ; Waitkey
 org $0EFB90

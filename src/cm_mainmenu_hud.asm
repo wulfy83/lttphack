@@ -82,12 +82,11 @@ cm_hud_lanmola_cycle_count:
 	%cm_toggle_jsr("Lanmola cycs", !ram_toggle_lanmola_cycles)
 
 .toggle
-	REP #$20
-	LDA #$0000
-	STA !ram_lanmola_cycles
-	STA !ram_lanmola_cycles+2
-	STA !ram_lanmola_cycles+4
 	SEP #$20
+	STZ.w SA1IRAM.LanmoCycles+0
+	STZ.w SA1IRAM.LanmoCycles+1
+	STZ.w SA1IRAM.LanmoCycles+2
+	
 	RTS
 
 cm_hud_superwatch:
@@ -112,6 +111,10 @@ cm_hud_superwatch:
 	ASL
 	TAX
 
+	LSR.b !ram_extra_sa1_required ; clear bottom bit for superwatch
+	CMP.b #$01
+	ROL.b !ram_extra_sa1_required ; bring carry in for flag
+
 	JSR (.togglesss, X)
 
 	PLB
@@ -124,12 +127,9 @@ cm_hud_superwatch:
 	dw .doorwatch
 
 .off
-	STZ.b !ram_extra_sa1_required
 	RTS
 
 .ancillae
-	LDA.b #$01
-	STA.b !ram_extra_sa1_required
 	RTS
 
 .doorwatch
@@ -142,8 +142,6 @@ cm_hud_superwatch:
 	LDX.w #..doorwatchhdma : STX $4352 ; address of table
 	LDA.b #..doorwatchhdma>>16 : STA $4354 ; bank of table
 
-	LDA.b #$01
-	STA.b !ram_extra_sa1_required
 	RTS
 
 ..doorwatchhdma
@@ -152,15 +150,26 @@ cm_hud_superwatch:
 	db 1 : dw 0
 	db 0
 
-SA1ExtraTransfersField:
 cm_hud_enemy_hp_toggle:
 	PHP
-	SEP #$20
-	LDA.l !ram_superwatch
-	ORA.l !ram_extra_ram_watch
-	ORA.l !ram_enemy_hp_toggle
+	SEP #$30
 
-	STA.b !ram_extra_sa1_required
+	LDA.l !ram_enemy_hp_toggle
+	PHA
+
+	LDA.b #$02
+	PLX
+
+	BEQ .unset
+
+.set
+	TSB.b !ram_extra_sa1_required
+	BRA .done
+
+.unset
+	TRB.b !ram_extra_sa1_required
+
+.done
 	PLP
 	RTS
 

@@ -62,13 +62,13 @@ load_entrance_local:
 	; This is called without using presets too, so need to redirect to the correct code.
 	LDA !ram_preset_type : BNE .custom
 
-	JSR !Dungeon_LoadEntrance
+	JSR Dungeon_LoadEntrance
 	SEP #$30
 	RTS
 
 .custom
 	LDA #$00 : STA !ram_preset_type
-	JSR !Dungeon_LoadEntrance
+	JSR Dungeon_LoadEntrance
 	JSL preset_load_dungeon
 	SEP #$30
 	RTS
@@ -92,7 +92,7 @@ org $02987D
 ; This is called last
 org $02922F
 	JSL preset_spotlight_open_hook
-	NOP #2
+	BRA + : +
 	;02922f jsl $00f290
 	;029233 inc $b0
 	;029235 rts
@@ -151,7 +151,7 @@ preset_deinit_current_state:
 	; Leaves: AI=8
 
 	; This is mainly needed to stop interactions with nearby sprites (e.g. talking to Kiki)
-	JSL !Sprite_ResetAll
+	JSL Sprite_ResetAll
 
 	; Clears the warp vortex.
 	STZ $1ABF
@@ -205,7 +205,7 @@ preset_load_overworld:
 
 	; This means we got here from the actual Bird menu (how boring),
 	; so let's just jump to the original function.
-	JML !BirdTravel_LoadTargetAreaData
+	JML BirdTravel_LoadTargetAreaData
 
 .preset
 	PHB : PHK : PLB
@@ -279,7 +279,7 @@ preset_load_overworld:
 .dontNeedNewMusicBank
 
 	PLB
-	JML !BirdTravel_LoadTargetAreaData_AfterData
+	JML BirdTravel_LoadTargetAreaData_AfterData
 
 
 preset_load_dungeon:
@@ -394,7 +394,7 @@ preset_load_dungeon:
 preset_sprite_reset_all:
 	; Enters AI=8
 	; Call the original routine
-	JSL !Sprite_ResetAll
+	JSL Sprite_ResetAll
 
 	; Check if we want to load our own state.
 	REP #$30
@@ -444,30 +444,30 @@ preset_load_state:
 	PLB
 
 	REP #$30
-	JSL !Sprite_LoadGfxProperties
+	JSL Sprite_LoadGfxProperties
 
 	SEP #$30
 	; Reload graphics and palette for sword, shield and armor
-	JSL !DecompSwordGfx
-	JSL !Palette_Sword
-	JSL !DecompShieldGfx
-	JSL !Palette_Shield
-	JSL !Palette_Armor
+	JSL DecompSwordGfx
+	JSL Palette_Sword
+	JSL DecompShieldGfx
+	JSL Palette_Shield
+	JSL Palette_Armor
 
 	; Check if we're in overworld
 	LDA $1B : BEQ .in_overworld
 
-	JSL !UpdateBarrierTileChr
+	JSL UpdateBarrierTileChr
 
 	LDA $11 : PHA
 	LDA #$07 : STA $0690
-	JSL !Dungeon_AnimateTrapDoors
+	JSL Dungeon_AnimateTrapDoors
 	PLA : STA $11
 
 .in_overworld
 	; Check if we currently have a tagalong
 	LDA $7EF3CC : BEQ .no_tagalong
-	JSL !Tagalong_LoadGfx
+	JSL Tagalong_LoadGfx
 
 .no_tagalong
 	LDA !ram_game_progress : CMP #$02 : BMI .done
@@ -522,7 +522,7 @@ preset_reset_state_after_loading:
 	; Assumes A=8
 
 	; Reset a bunch of Link state (sleeping, falling in hole etc).
-	JSL !Player_ResetState
+	JSL Player_ResetState
 
 	; Resets "Link Immovable" flag
 	STZ $02E4
@@ -584,7 +584,7 @@ preset_duck_dropoff_hook:
 	LDA $02E0 : ORA $56 : BEQ .notBunny
 
 	; Fixes bunny graphics after Palette_ArmorAndGloves messes it up
-	JSL !LoadGearPalettes_bunny
+	JSL LoadGearPalettes_bunny
 
 .notBunny
 	PLA
@@ -640,7 +640,7 @@ preset_spotlight_open_hook:
 	LDA $02E0 : ORA $56 : BEQ .notBunny
 
 	; Fixes bunny graphics after Palette_ArmorAndGloves messes it up
-	JSL !LoadGearPalettes_bunny
+	JSL LoadGearPalettes_bunny
 
 .notBunny
 	LDA $010C : STA $10

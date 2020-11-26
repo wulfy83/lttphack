@@ -259,7 +259,7 @@ gamemode_skip_text:
 
 gamemode_disable_sprites:
 	SEP #$20
-	JSL !Sprite_DisableAll
+	JSL Sprite_DisableAll
 	RTS
 
 
@@ -331,11 +331,11 @@ gamemode_fill_everything:
 	STA !ram_capabilities
 
 	SEP #$30
-	JSL !DecompSwordGfx
-	JSL !Palette_Sword
-	JSL !DecompShieldGfx
-	JSL !Palette_Shield
-	JSL !Palette_Armor
+	JSL DecompSwordGfx
+	JSL Palette_Sword
+	JSL DecompShieldGfx
+	JSL Palette_Shield
+	JSL Palette_Armor
 
 	LDA !ram_game_progress : BNE .exit
 	LDA #$01 : STA !ram_game_progress

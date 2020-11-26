@@ -410,7 +410,7 @@ cm_game_state_disable_sprites:
 .routine
 	SEP #$30
 	LDA #$22 : STA $012F
-	JSL !Sprite_DisableAll
+	JSL Sprite_DisableAll
 	RTS
 
 cm_game_state_skip_text:

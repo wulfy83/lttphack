@@ -22,6 +22,7 @@ SA1SRAM = $400000
 !dg_buffer_r2 #= !dg_dma_buffer+(64*2)
 !dg_buffer_r3 #= !dg_dma_buffer+(64*3)
 !dg_buffer_r4 #= !dg_dma_buffer+(64*4)
+!dg_buffer_r4 #= !dg_dma_buffer+(64*5)
 
 !NUMBER_OF_COUNTERS = 6
 !HUD_EXTRAS_BUFFER = SA1HUD
@@ -53,17 +54,8 @@ endmacro
 ; $7EC900[0x1F00] (7EE800)
 ;  * 7ED000 - 7ED780 = VRAM buffer backup in custom_menu.asm
 
-!lag_cache = $04CC
-!do_heart_lag = $04CE
-
 ; old stuff
 !lowram_last_frame_did_saveload = $04DA
-
-!lowram_idle_frames = $04EA
-!lowram_idle_frames_copy = $04EC
-
-; AXLR|....|BYSlSt|udlr
-!ram_ctrl1 = $04E4
 
 !ram_extra_sa1_required = $6F
 
@@ -219,7 +211,6 @@ endmacro
 %def_sram("bonk_items_toggle", !OFF)
 
 !lowram_oob_toggle = $037F
-!ram_eg_strength = $7E044A
 
 %def_wramA("cm_old_gamemode", 1)
 %def_wramA("cm_old_submode", 1)
@@ -241,13 +232,6 @@ endmacro
 ; Transition detection
 ;-------------------------
 !ram_linkOAMpos = $7C
-
-;-------------------------
-; Transition detection
-;-------------------------
-
-!TD_RESET = $00
-!TD_SHOW = $01
 
 ;-------------------------
 ; Layers
@@ -290,7 +274,6 @@ endmacro
 ;-------------------------
 ; PRESETS
 ;-------------------------
-
 !PRESET_OVERWORLD = #$01
 !PRESET_DUNGEON = #$02
 
@@ -334,25 +317,25 @@ endmacro
 ; From ROM
 ;-------------------------
 
-!RandomNumGen = $0DBA71
-!UseImplicitRegIndexedLocalJumpTable = $008781
-!BirdTravel_LoadTargetAreaData = $02E99D
-!BirdTravel_LoadTargetAreaData_AfterData = $02EA30
-!Player_ResetState = $07F18C
-!Tagalong_LoadGfx = $00D463
-!Sprite_ResetAll = $09C44E
-!Sprite_DisableAll = $09C44E
-!Sprite_LoadGfxProperties = $00FC41
-!UpdateBarrierTileChr = $0296AD ; $117B2-$117C7
-!Dungeon_AnimateTrapDoors = $01D38D
-!Dungeon_LoadEntrance = $D617
+RandomNumGen = $0DBA71
+UseImplicitRegIndexedLocalJumpTable = $008781
+BirdTravel_LoadTargetAreaData = $02E99D
+BirdTravel_LoadTargetAreaData_AfterData = $02EA30
+Player_ResetState = $07F18C
+Tagalong_LoadGfx = $00D463
+Sprite_ResetAll = $09C44E
+Sprite_DisableAll = $09C44E
+Sprite_LoadGfxProperties = $00FC41
+UpdateBarrierTileChr = $0296AD ; $117B2-$117C7
+Dungeon_AnimateTrapDoors = $01D38D
+Dungeon_LoadEntrance = $02D617
 
-!DecompSwordGfx = $00D308
-!Palette_Sword = $1BED03
-!DecompShieldGfx = $00D348
-!Palette_Shield = $1BED29
-!Palette_Armor = $1BEDF9
-!LoadGearPalettes_bunny = $02FD8A
+DecompSwordGfx = $00D308
+Palette_Sword = $1BED03
+DecompShieldGfx = $00D348
+Palette_Shield = $1BED29
+Palette_Armor = $1BEDF9
+LoadGearPalettes_bunny = $02FD8A
 
 ; ITEM MENU
 

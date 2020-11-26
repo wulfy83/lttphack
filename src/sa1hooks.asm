@@ -26,17 +26,9 @@ struct SA1IRAM $003000
 	.CopyOf_2B: skip 1
 	.CopyOf_30: skip 1
 	.CopyOf_31: skip 1
-	.CopyOf_5B: skip 1
-	.CopyOf_5D: skip 1
-	.CopyOf_5E: skip 1
 	.CopyOf_6C: skip 1
 	.CopyOf_A0: skip 1
 	.CopyOf_A1: skip 1
-	.CopyOf_A6: skip 1
-	.CopyOf_A7: skip 1
-	.CopyOf_A8: skip 1
-	.CopyOf_A9: skip 1
-	.CopyOf_AA: skip 1
 	.CopyOf_B0: skip 1
 	.CopyOf_E2: skip 1
 	.CopyOf_E3: skip 1
@@ -91,6 +83,8 @@ struct SA1IRAM $003000
 	.TIMER_FLAG: skip 2
 	.SHORTCUT_USED: skip 2
 
+	.LanmoCycles: skip 3
+
 	; extra stuff
 	; ancilla watch
 	.CopyOf_03C4: skip 1
@@ -99,6 +93,12 @@ struct SA1IRAM $003000
 	.CopyOf_0C5E: skip 10
 
 	; dg watch
+	.CopyOf_A6: skip 1
+	.CopyOf_A7: skip 1
+	.CopyOf_A8: skip 1
+	.CopyOf_A9: skip 1
+	.CopyOf_AA: skip 1
+
 	.CopyOf_0400: skip 1
 	.CopyOf_0401: skip 1
 	.CopyOf_0402: skip 1
@@ -108,6 +108,14 @@ struct SA1IRAM $003000
 	.CopyOf_040C: skip 1
 	.CopyOf_04BA: skip 1
 	.CopyOf_04BB: skip 1
+
+
+	.CopyOf_068E: skip 1
+	.CopyOf_068F: skip 1
+	.CopyOf_0690: skip 1
+	.CopyOf_0691: skip 1
+
+	.CopyOf_7EC000: skip 1
 
 	.CopyOf_0600: skip 1
 	.CopyOf_0601: skip 1
@@ -141,10 +149,6 @@ struct SA1IRAM $003000
 	.CopyOf_061D: skip 1
 	.CopyOf_061E: skip 1
 	.CopyOf_061F: skip 1
-	.CopyOf_068E: skip 1
-	.CopyOf_068F: skip 1
-	.CopyOf_0690: skip 1
-	.CopyOf_0691: skip 1
 
 	print "SA1 mirroring: ", pc
 endstruct
@@ -175,13 +179,9 @@ CacheSA1Stuff:
 	LDA.b $29 : STA.w SA1IRAM.CopyOf_29
 	LDX.b $2A : STX.w SA1IRAM.CopyOf_2A
 	LDX.b $30 : STX.w SA1IRAM.CopyOf_30
-	LDA.b $5B : STA.w SA1IRAM.CopyOf_5B
-	LDX.b $5D : STX.w SA1IRAM.CopyOf_5D
 	LDA.b $6C : STA.w SA1IRAM.CopyOf_6C
 	LDX.b $A0 : STX.w SA1IRAM.CopyOf_A0
-	LDX.b $A6 : STX.w SA1IRAM.CopyOf_A6
-	LDX.b $A8 : STX.w SA1IRAM.CopyOf_A8
-	LDA.b $AA : STA.w SA1IRAM.CopyOf_AA
+
 	LDA.b $B0 : STA.w SA1IRAM.CopyOf_B0
 	LDX.b $E2 : STX.w SA1IRAM.CopyOf_E2
 	LDX.b $E8 : STX.w SA1IRAM.CopyOf_E8
@@ -247,18 +247,25 @@ Extra_SA1_Transfers:
 	RTS
 
 ..uw
+	REP #$20
+	LDA.b $A6 : STA.w SA1IRAM.CopyOf_A6
+	LDA.b $A8 : STA.w SA1IRAM.CopyOf_A8
+	LDX.b $AA : STX.w SA1IRAM.CopyOf_AA
+	
 	LDA.w $0400 : STA.w SA1IRAM.CopyOf_0400
-	LDA.w $0401 : STA.w SA1IRAM.CopyOf_0401
 	LDA.w $0402 : STA.w SA1IRAM.CopyOf_0402
-	LDA.w $0403 : STA.w SA1IRAM.CopyOf_0403
-	LDA.w $0408 : STA.w SA1IRAM.CopyOf_0408
-	LDA.w $040A : STA.w SA1IRAM.CopyOf_040A
-	LDA.w $040C : STA.w SA1IRAM.CopyOf_040C
+	LDX.w $0408 : STX.w SA1IRAM.CopyOf_0408
+	LDX.w $040A : STX.w SA1IRAM.CopyOf_040A
+	LDX.w $040C : STX.w SA1IRAM.CopyOf_040C
 	LDA.w $04BA : STA.w SA1IRAM.CopyOf_04BA
-	LDA.w $04BB : STA.w SA1IRAM.CopyOf_04BB
+	LDA.w $068E : STA.w SA1IRAM.CopyOf_068E
+	LDA.w $0690 : STA.w SA1IRAM.CopyOf_0690
 
-	LDX.b #$1F
+	LDA.l $7EC000 : TAX : STX.w SA1IRAM.CopyOf_7EC000
+
+	LDX.b #$1E
 --	LDA.w $0600, X : STA.w SA1IRAM.CopyOf_0600, X
+	DEX
 	DEX
 	BPL --
 

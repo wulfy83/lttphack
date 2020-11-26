@@ -4,6 +4,10 @@
 !red = $3810
 !gray = $2010
 
+; $6C   - in door
+; $EE   - EG
+; $EF   - EG swap
+; $114  - tile type
 pushpc
 org $0DFAAE
 	JMP fire_hud_irq
@@ -13,7 +17,7 @@ org $0DDD24
 	PLB
 	RTL
 
-; some nice free ram here
+; some nice free rom here
 org $0DDB07
 fire_hud_irq:
 	SEP #$30
@@ -22,9 +26,23 @@ fire_hud_irq:
 	INC $16
 	RTS
 
+; for lanmo counters
+org $05A40E
+	JSL UpdateLanmoCycles
+	NOP
+
+
 warnpc $0DDB3F
 
 pullpc
+;==============================================================================
+; 
+;==============================================================================
+UpdateLanmoCycles:
+	INC.w $0D80, X
+	INC.w SA1IRAM.LanmoCycles, X
+	LDA.b #$18
+	RTL
 
 ;==============================================================================
 ; 
@@ -486,6 +504,42 @@ hud_draw_input_display:
 	JSR (.options, X)
 
 ;==============================================================================
+; clean up the stuff right under items
+	REP #$30
+	LDA.w #$207F
+	STA.w SA1HUD+$10A
+	STA.w SA1HUD+$10C
+	STA.w SA1HUD+$10E
+
+	LDA.b SA1IRAM.CopyOf_1B
+	LSR
+	BCC draw_quickwarp
+
+draw_lanmo_cycles:
+	LDA.l !ram_toggle_lanmola_cycles
+	LSR
+	BCC extra_ram
+
+	LDA.b SA1IRAM.CopyOf_A0
+	CMP.w #$0033
+	BNE extra_ram
+
+	LDX.w #$0002
+	LDY.w #$0004
+
+.nextlanmo
+	LDA.w SA1IRAM.LanmoCycles, X
+	AND.w #$00FF
+	ORA.w #$2010
+	STA.w SA1HUD+$10A, Y
+	DEY
+	DEY
+	DEX
+	BPL .nextlanmo
+
+	BRA extra_ram
+
+;==============================================================================
 draw_quickwarp:
 	SEP #$30 ; M=8 for just this is few cycles faster
 	LDA.l !ram_qw_toggle : LSR ; shift toggle into carry
@@ -498,20 +552,14 @@ draw_quickwarp:
 	; then we'll have $0F, and it will fail
 	CMP #$0D ; 6 shifted left once and with a carry flag in bottom bit
 	REP #$20 ; faster because it removes an AND #$00FF to get rid of leakage
-	BEQ .qw
+	BNE .skip
 
-.notqw
-	LDA.w #$207F
-	STA.w SA1HUD+$10A ; 6
-	BRA ++ ; 3
-	; 18 cycles total
-
-.qw ; 1 for branch
 	LDA #$340C ; 3
-	STA.w SA1HUD+$10A ; 6
+	STA.w SA1HUD+$10A
 	INC
-++	STA.w SA1HUD+$10C
+	STA.w SA1HUD+$10C
 
+.skip
 ;==============================================================================
 extra_ram:
 	LDA.l !ram_extra_ram_watch : BEQ .nowatch
@@ -747,7 +795,7 @@ CleanVRAMSW:
 	REP #$30
 	LDA.w #$C200>>1
 	STA.w $2116
-	LDX.w #$0140/2
+	LDX.w #$0300
 	LDA.w #$207F
 
 --	STA.w $2118

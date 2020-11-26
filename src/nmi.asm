@@ -6,7 +6,7 @@ pushpc
 ;======================================================================================
 org $00841E
 	; 246,16 : 250,18
-	; Vanilla OAM cycles: 4 scanlines + 2 H
+	; Vanilla OAM cycles: 4 scanlines - 10 H
 	; improved to: 2 scanlines + 28H
 
 	REP #$10
@@ -126,7 +126,7 @@ nmi_hud_update:
 	REP #$20
 	SEP #$10
 
-	LDX !lag_cache : BNE .dontbreakthings
+	LDX.w SA1IRAM.CopyOf_12 : BNE .dontbreakthings
 	LDA.l !ram_superwatch
 	AND #$0003
 	ASL

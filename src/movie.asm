@@ -12,7 +12,7 @@ org $0083D1
 	;RTS
 
 
-;org !RandomNumGen
+;org RandomNumGen
 ;    PHX : PHP
 ;    JSL movie_rng
 ;    PLP : PLX

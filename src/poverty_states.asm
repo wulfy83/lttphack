@@ -150,29 +150,29 @@ load_poverty_state:
 
 .nofixedframerule
 	REP #$30
-	JSL !Sprite_LoadGfxProperties
+	JSL Sprite_LoadGfxProperties
 
 	SEP #$30
-	JSL !DecompSwordGfx
-	JSL !Palette_Sword
-	JSL !DecompShieldGfx
-	JSL !Palette_Shield
-	JSL !Palette_Armor
+	JSL DecompSwordGfx
+	JSL Palette_Sword
+	JSL DecompShieldGfx
+	JSL Palette_Shield
+	JSL Palette_Armor
 
 	; Check if we're in overworld
 	LDA $1B : BEQ .in_overworld
 
-	JSL !UpdateBarrierTileChr
+	JSL UpdateBarrierTileChr
 
 	LDA $11 : PHA
 	LDA.b #$07 : STA $0690
-	JSL !Dungeon_AnimateTrapDoors
+	JSL Dungeon_AnimateTrapDoors
 	PLA : STA $11
 
 .in_overworld
 	; Check if we currently have a tagalong
 	LDA $7EF3CC : BEQ +
-	JSL !Tagalong_LoadGfx
+	JSL Tagalong_LoadGfx
 +	REP #$30
 	RTL
 

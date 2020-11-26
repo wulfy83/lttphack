@@ -69,7 +69,7 @@ cm_link_state_armed_eg:
 
 cm_link_state_eg_strength:
 	dw !CM_ACTION_CHOICE
-	dl !ram_eg_strength
+	dl $7E044A
 	%cm_item("EG strength")
 	%cm_item("EG 0")
 	%cm_item("Strong")

@@ -117,7 +117,7 @@ calc_room_flags:
 calc_quadrant:
 	LDA.w #char($14)|!BLUE_PAL : STA !dg_buffer_r0+44
 	LDA.w #!HAMMER : STA !dg_buffer_r0+48
-	LDA.b SA1IRAM.CopyOf_A9 : LSR ; $A9 is 0 or 1
+	LDA.w SA1IRAM.CopyOf_A9 : LSR ; $A9 is 0 or 1
 	BCS .east
 
 .west
@@ -194,6 +194,51 @@ calc_correct_quadrant:
 	LDA.w #!SYNCED
 ++	STA !dg_buffer_r0+52
 
+draw_pits:
+	LDX #(64+48)
+	LDA.w SA1IRAM.CopyOf_7EC000
+	JSR DrawHexSW_two_white
+
+	REP #$30
+	LDX.b SA1IRAM.CopyOf_A0
+
+	LDA.l RoomHasPitDamage, X
+	SEP #$10
+	LSR ; carry set if room has pit damage
+	BCS .pitdamage
+
+	LDA.w #char($16)|!GRAY_PAL
+	BRA .drawflag
+
+.pitdamage
+	LDA.w #char($16)|!YELLOW_PAL
+
+.drawflag
+	STA.w !dg_buffer_r1+50
+
+;draw_west_somaria:
+;	LDX #(64+48) : LDA.w SA1IRAM.CopyOf_0690
+;	CMP.w #$0010
+;	BCC .fine
+;
+;	JSR DrawHexSW_four_red
+;	LDA.w #char($17)|!RED_PAL
+;	BRA .door
+;
+;.fine
+;	JSR DrawHexSW_four_gray
+;	LDA.w #char($17)|!GRAY_PAL
+;
+;.door
+;	STA.w !dg_buffer_r1+46
+;	DEX
+;	DEX
+;	LDA.w SA1IRAM.CopyOf_068E
+;	JSR DrawHexSW_four_white
+
+
+
+
 draw_camera:
 	LDA.w #char($13)|!GRAY_PAL ; camera icon
 	STA !dg_buffer_r2+4
@@ -201,7 +246,7 @@ draw_camera:
 	LDX.b #(64+64)+6 : LDA.b SA1IRAM.CopyOf_E2 : JSR DrawHexSW_four_white
 	LDX.b #(64+64+64)+6 : LDA.b SA1IRAM.CopyOf_E8 : JSR DrawHexSW_four_yellow
 
-	LDX.b SA1IRAM.CopyOf_A6
+	LDX.w SA1IRAM.CopyOf_A6
 	LDA.w SA1IRAM.CopyOf_0608, X : STA.b SA1IRAM.SCRATCH+0 ; cache X camera for desync check
 	LDA.w SA1IRAM.CopyOf_060C, X : STA.b SA1IRAM.SCRATCH+2
 	CPX #$02 : BEQ .XSet2
@@ -250,8 +295,7 @@ draw_camera:
 .drawXSync
 	STA !dg_buffer_r2+14
 
-
-	LDX.b SA1IRAM.CopyOf_A7
+	LDX.w SA1IRAM.CopyOf_A7
 	LDA.w SA1IRAM.CopyOf_0600, X : STA.b SA1IRAM.SCRATCH+0 ; cache Y camera for desync check
 	LDA.w SA1IRAM.CopyOf_0604, X : STA.b SA1IRAM.SCRATCH+2
 	CPX #$02 : BEQ .YSet2
@@ -299,64 +343,6 @@ draw_camera:
 
 .drawYSync
 	STA !dg_buffer_r3+14
-
-;OverlayPTR = $04E9A0
-;!NON_VANILLA = char($16)|!YELLOW_PAL
-;!CRITICAL = char($17)|!RED_PAL
-;
-;draw_overlay:
-;	LDA.w #char($18)|!YELLOW_PAL : STA !dg_buffer_r1+40
-;
-;	LDA $BA : BNE .preloaded
-;
-;	REP #$10
-;	LDA $04BA : ASL : CLC : ADC $04BA : TAX
-;	LDA.l OverlayPTR+1, X : STA.b SA1IRAM.SCRATCH+1
-;	LDA.l OverlayPTR+0, X : STA.b SA1IRAM.SCRATCH+0
-;	SEP #$10
-;	LDA.w #char($1C)|!RED_PAL ; from ROM
-;	BRA .draw
-;
-;.preloaded
-;	LDA $B8 : STA.b SA1IRAM.SCRATCH+1
-;	LDA $B7 : STA.b SA1IRAM.SCRATCH+0
-;	LDA.w #char($1B)|!RED_PAL ; from RAM
-;
-;.draw
-;	STA !dg_buffer_r1+42
-;	;REP #$10
-;	LDX #(64+44) : LDA.b SA1IRAM.SCRATCH+2 : JSR DrawHexSW_two_white ; this doesn't change X flag
-;	LDX #(64+48) : LDA.b SA1IRAM.SCRATCH+0 : JSR DrawHexSW_four_white ; this exits i=10 - might not need
-;
-;	LDA.b SA1IRAM.SCRATCH+1 : AND #$FF00
-;	CMP #$7000 : BCC .notSRAM ; check <$70 first, to avoid work ram checks
-;	CMP #$7E00 : BEQ .workRAM
-;	CMP #$7F00 : BEQ .workRAM
-;	CMP #$7000 : BCS .notSRAM
-;	LDA.w #!CRITICAL
-;	BRA .drawWarning
-;
-;.notSRAM
-;	LDA.b SA1IRAM.SCRATCH+1 : AND #$00FF ; see what page it's on
-;	CMP #$0080 : BCC .workRAM ; if it's less than page $80, we're not in ROM
-;
-;	LDA.b SA1IRAM.SCRATCH+1 : AND #$3FFF ; account for mirroring of ROM
-;	CMP #$2080 : BCC .notHacked ; before bank20 and we're okay
-;	CMP.w #(((EndOfPracticeROM>>8)&$FF00)+$0100) : BCS .notHacked ; the last bank we *don't* use
-;	LDA.w #!NON_VANILLA : BRA .drawWarning
-;
-;; this assumes before $8000 is volatile in all banks
-;; while some banks don't mirror work ram or registers
-;; I think that just means the lower half is open bus
-;; in which case it's as volatile as you can get
-;.workRAM 
-;	LDA.w #!CRITICAL : BRA .drawWarning
-;
-;.notHacked
-;	LDA.w #!EMPTY
-;
-;.drawWarning
-;	STA !dg_buffer_r1+56
 
 trigger_update:
 	SEP #$20
@@ -453,7 +439,7 @@ DrawHexSW:
 	STY.w SA1IRAM.SCRATCH+11
 	LDY.b #$10
 	STY.w SA1IRAM.SCRATCH+10
-	LDY.b #3
+	LDY.b #2
 	BRA .draw_n_digits
 
 .next_digit
