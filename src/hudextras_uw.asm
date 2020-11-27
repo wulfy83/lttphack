@@ -55,7 +55,7 @@ NoSuperWatch:
 	RTS
 
 UpdateUWWindow:
-	LDA.l !ram_superwatch
+	LDA.w !ram_superwatch
 	LSR : AND.b SA1IRAM.CopyOf_1B : LSR ; set or clear carry
 
 	LDA #$20
@@ -68,15 +68,15 @@ UpdateUWWindow:
 
 	SEP #$10
 print_coords:
-	LDA.w #char(0)|!RED_PAL : STA !dg_buffer_r0+4 ; XY
+	LDA.w #char(0)|!RED_PAL : STA SA1RAM.SW_BUFFER_r0+4 ; XY
 	LDX #14
 	LDA.b SA1IRAM.CopyOf_20 : JSR DrawHexSW_four_yellow
 	LDA.b SA1IRAM.CopyOf_22 : JSR DrawHexSW_four_white
 
 print_room_id:
-	LDA.w #char(1)|!RED_PAL : STA !dg_buffer_r0+24 ; IDr
-	INC : STA !dg_buffer_r0+26 ; INC for next char cheaply
-	LDA.w #!HAMMER : STA !dg_buffer_r0+34 ; hammer
+	LDA.w #char(1)|!RED_PAL : STA SA1RAM.SW_BUFFER_r0+24 ; IDr
+	INC : STA SA1RAM.SW_BUFFER_r0+26 ; INC for next char cheaply
+	LDA.w #!HAMMER : STA SA1RAM.SW_BUFFER_r0+34 ; hammer
 
 	LDX #26 : LDA.b SA1IRAM.CopyOf_A0 : JSR DrawHexSW_three_white
 
@@ -98,7 +98,7 @@ calc_correct_room_id:
 	LDA.w #!DESYNC
 
 .doneRoom
-	STA !dg_buffer_r0+22
+	STA SA1RAM.SW_BUFFER_r0+22
 
 calc_room_flags:
 	LDX #(2*(16-1))
@@ -109,14 +109,14 @@ calc_room_flags:
 
 .flagSet
 	ORA.l .palettes, X
-+	STA !dg_buffer_r1+2+4, X
++	STA SA1RAM.SW_BUFFER_r1+2+4, X
 	DEX #2 : BPL --
 
-	LDA.w #char($19)|!RED_PAL : STA !dg_buffer_r1+4
+	LDA.w #char($19)|!RED_PAL : STA SA1RAM.SW_BUFFER_r1+4
 
 calc_quadrant:
-	LDA.w #char($14)|!BLUE_PAL : STA !dg_buffer_r0+44
-	LDA.w #!HAMMER : STA !dg_buffer_r0+48
+	LDA.w #char($14)|!BLUE_PAL : STA SA1RAM.SW_BUFFER_r0+44
+	LDA.w #!HAMMER : STA SA1RAM.SW_BUFFER_r0+48
 	LDA.w SA1IRAM.CopyOf_A9 : LSR ; $A9 is 0 or 1
 	BCS .east
 
@@ -149,7 +149,7 @@ calc_quadrant:
 
 .doQuadrant
 	STY.b SA1IRAM.SCRATCH+0
-	STA !dg_buffer_r0+46
+	STA SA1RAM.SW_BUFFER_r0+46
 
 calc_correct_quadrant:
 	LDA #$0100 ; checking the same bit on both coordinates
@@ -186,13 +186,13 @@ calc_correct_quadrant:
 .doQuadrant
 	CPY.b SA1IRAM.SCRATCH+0 : BEQ .quadrantsSynced
 	ORA.w #!TEXT_PAL
-	STA !dg_buffer_r0+50
+	STA SA1RAM.SW_BUFFER_r0+50
 	LDA.w #!DESYNC : BRA ++
 
 .quadrantsSynced
-	STA !dg_buffer_r0+50
+	STA SA1RAM.SW_BUFFER_r0+50
 	LDA.w #!SYNCED
-++	STA !dg_buffer_r0+52
+++	STA SA1RAM.SW_BUFFER_r0+52
 
 draw_pits:
 	LDX #(64+48)
@@ -214,7 +214,7 @@ draw_pits:
 	LDA.w #char($16)|!YELLOW_PAL
 
 .drawflag
-	STA.w !dg_buffer_r1+50
+	STA.w SA1RAM.SW_BUFFER_r1+50
 
 ;draw_west_somaria:
 ;	LDX #(64+48) : LDA.w SA1IRAM.CopyOf_0690
@@ -230,7 +230,7 @@ draw_pits:
 ;	LDA.w #char($17)|!GRAY_PAL
 ;
 ;.door
-;	STA.w !dg_buffer_r1+46
+;	STA.w SA1RAM.SW_BUFFER_r1+46
 ;	DEX
 ;	DEX
 ;	LDA.w SA1IRAM.CopyOf_068E
@@ -241,8 +241,8 @@ draw_pits:
 
 draw_camera:
 	LDA.w #char($13)|!GRAY_PAL ; camera icon
-	STA !dg_buffer_r2+4
-	STA !dg_buffer_r3+4
+	STA SA1RAM.SW_BUFFER_r2+4
+	STA SA1RAM.SW_BUFFER_r3+4
 	LDX.b #(64+64)+6 : LDA.b SA1IRAM.CopyOf_E2 : JSR DrawHexSW_four_white
 	LDX.b #(64+64+64)+6 : LDA.b SA1IRAM.CopyOf_E8 : JSR DrawHexSW_four_yellow
 
@@ -253,12 +253,12 @@ draw_camera:
 
 .XSet1
 	LDA.w #char(9)|!RED_PAL ; labels
-	STA !dg_buffer_r2+16
-	INC : STA !dg_buffer_r2+26
+	STA SA1RAM.SW_BUFFER_r2+16
+	INC : STA SA1RAM.SW_BUFFER_r2+26
 
 	LDA.w #char(9)|!GRAY_PAL
-	STA !dg_buffer_r2+36
-	INC : STA !dg_buffer_r2+46
+	STA SA1RAM.SW_BUFFER_r2+36
+	INC : STA SA1RAM.SW_BUFFER_r2+46
 
 	LDX.b #(64+64)+18 : LDA.w SA1IRAM.CopyOf_0608 : JSR DrawHexSW_four_white
 	LDX.b #(64+64)+28 : LDA.w SA1IRAM.CopyOf_060C : JSR DrawHexSW_four_white
@@ -268,12 +268,12 @@ draw_camera:
 
 .XSet2
 	LDA.w #char(9)|!GRAY_PAL ; labels
-	STA !dg_buffer_r2+16
-	INC : STA !dg_buffer_r2+26
+	STA SA1RAM.SW_BUFFER_r2+16
+	INC : STA SA1RAM.SW_BUFFER_r2+26
 
 	LDA.w #char(9)|!RED_PAL
-	STA !dg_buffer_r2+36
-	INC : STA !dg_buffer_r2+46
+	STA SA1RAM.SW_BUFFER_r2+36
+	INC : STA SA1RAM.SW_BUFFER_r2+46
 
 	LDX.b #(64+64)+18 : LDA.w SA1IRAM.CopyOf_0608 : JSR DrawHexSW_four_gray
 	LDX.b #(64+64)+28 : LDA.w SA1IRAM.CopyOf_060C : JSR DrawHexSW_four_gray
@@ -293,7 +293,7 @@ draw_camera:
 	LDA.w #!DESYNC 
 
 .drawXSync
-	STA !dg_buffer_r2+14
+	STA SA1RAM.SW_BUFFER_r2+14
 
 	LDX.w SA1IRAM.CopyOf_A7
 	LDA.w SA1IRAM.CopyOf_0600, X : STA.b SA1IRAM.SCRATCH+0 ; cache Y camera for desync check
@@ -302,12 +302,12 @@ draw_camera:
 
 .YSet1
 	LDA.w #char(11)|!REDYELLOW ; labels
-	STA !dg_buffer_r3+16
-	INC : STA !dg_buffer_r3+26
+	STA SA1RAM.SW_BUFFER_r3+16
+	INC : STA SA1RAM.SW_BUFFER_r3+26
 
 	LDA.w #char(11)|!GRAY_PAL
-	STA !dg_buffer_r3+36
-	INC : STA !dg_buffer_r3+46
+	STA SA1RAM.SW_BUFFER_r3+36
+	INC : STA SA1RAM.SW_BUFFER_r3+46
 
 	LDX.b #(64+64+64)+18 : LDA.w SA1IRAM.CopyOf_0600 : JSR DrawHexSW_four_yellow
 	LDX.b #(64+64+64)+28 : LDA.w SA1IRAM.CopyOf_0604 : JSR DrawHexSW_four_yellow
@@ -317,12 +317,12 @@ draw_camera:
 
 .YSet2
 	LDA.w #char(11)|!GRAY_PAL ; labels
-	STA !dg_buffer_r3+16
-	INC : STA !dg_buffer_r3+26
+	STA SA1RAM.SW_BUFFER_r3+16
+	INC : STA SA1RAM.SW_BUFFER_r3+26
 
 	LDA.w #char(11)|!REDYELLOW
-	STA !dg_buffer_r3+36
-	INC : STA !dg_buffer_r3+46
+	STA SA1RAM.SW_BUFFER_r3+36
+	INC : STA SA1RAM.SW_BUFFER_r3+46
 
 	LDX.b #(64+64+64)+18 : LDA.w SA1IRAM.CopyOf_0600 : JSR DrawHexSW_four_gray
 	LDX.b #(64+64+64)+28 : LDA.w SA1IRAM.CopyOf_0604 : JSR DrawHexSW_four_gray
@@ -342,7 +342,7 @@ draw_camera:
 	LDA.w #!DESYNC 
 
 .drawYSync
-	STA !dg_buffer_r3+14
+	STA SA1RAM.SW_BUFFER_r3+14
 
 trigger_update:
 	SEP #$20
@@ -452,7 +452,7 @@ DrawHexSW:
 	PHA ; remember coordinates
 	AND.w #$000F ; get digit
 	ORA.b SA1IRAM.SCRATCH+10 ; add in color
-	STA.w !dg_dma_buffer+6, X
+	STA.w SA1RAM.SW_BUFFER+6, X
 	PLA ; recover value
 	DEX
 	DEX

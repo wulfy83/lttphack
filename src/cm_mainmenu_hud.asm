@@ -49,7 +49,7 @@ cm_hud_lagometer:
 
 .toggle
 	REP #$20
-	LDA #$207F : STA.w SA1HUD+$42 : STA.w SA1HUD+$82 : STA.w SA1HUD+$C2 : STA $7EC802
+	LDA #$207F : STA.w SA1RAM.HUD+$42 : STA.w SA1RAM.HUD+$82 : STA.w SA1RAM.HUD+$C2 : STA $7EC802
 	RTS
 
 cm_hud_input_display:
@@ -107,7 +107,7 @@ cm_hud_superwatch:
 	JSL CleanVRAMSW
 
 	SEP #$20
-	LDA.l !ram_superwatch
+	LDA.w !ram_superwatch
 	ASL
 	TAX
 
@@ -154,12 +154,8 @@ cm_hud_enemy_hp_toggle:
 	PHP
 	SEP #$30
 
-	LDA.l !ram_enemy_hp_toggle
-	PHA
-
 	LDA.b #$02
-	PLX
-
+	LDX.w !ram_enemy_hp_toggle
 	BEQ .unset
 
 .set

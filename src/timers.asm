@@ -166,7 +166,7 @@ UpdateOnMovingWallStart:
 ; mire/pod: 1704->17
 
 UpdateOnMovingWallEndPodMire:
-	LDA.l !ram_fast_moving_walls : BEQ .slowwalls
+	LDA.w !ram_fast_moving_walls : BEQ .slowwalls
 	SED
 	CLC
 	LDA.w SA1IRAM.ROOM_TIME_F : ADC.w #$47
@@ -184,7 +184,7 @@ UpdateOnMovingWallEndPodMire:
 
 ; desert: 918->10
 UpdateOnMovingWallEndDesert:
-	LDA.l !ram_fast_moving_walls : BEQ .slowwalls
+	LDA.w !ram_fast_moving_walls : BEQ .slowwalls
 	SED
 	CLC
 	LDA.w SA1IRAM.ROOM_TIME_F : ADC.w #$08

@@ -33,14 +33,14 @@ cm_equipment_boots:
 	%cm_toggle_jsr("Boots", !ram_equipment_boots)
 
 .toggle
-	STA !ram_equipment_boots
+	STA.l !ram_equipment_boots
 	LSR ; set carry based on having boots
-	LDA !ram_capabilities : AND #$FB
+	LDA.l !ram_capabilities : AND #$FB
 	BCC .no_boots
 .yes_boots
 	ORA #$04
 .no_boots
-	STA !ram_capabilities
+	STA.l !ram_capabilities
 	RTS
 
 cm_equipment_gloves:
@@ -56,14 +56,14 @@ cm_equipment_flippers:
 	%cm_toggle_jsr("Flippers", !ram_equipment_flippers)
 
 .toggle
-	STA !ram_equipment_flippers
+	STA.l !ram_equipment_flippers
 	LSR ; set carry based on having flippers
-	LDA !ram_capabilities : AND #$FD
+	LDA.l !ram_capabilities : AND #$FD
 	BCC .no_flips
 .yes_flips
 	ORA #$02
 .no_flips
-	STA !ram_capabilities
+	STA.l !ram_capabilities
 	RTS
 
 cm_equipment_moon_pearl:
@@ -87,6 +87,7 @@ cm_equipment_sword:
 .toggle_sword
 	JSL DecompSwordGfx
 	JSL Palette_Sword
+	STZ.w $15
 	RTS
 
 cm_equipment_shield:
@@ -103,6 +104,7 @@ cm_equipment_shield:
 .toggle_shield
 	JSL DecompShieldGfx
 	JSL Palette_Shield
+	STZ.w $15
 	RTS
 
 cm_equipment_armor:
@@ -117,13 +119,14 @@ cm_equipment_armor:
 
 .toggle_armor
 	JSL Palette_Armor
+	STZ.w $15
 	RTS
 
 cm_equipment_fill_magic:
 	%cm_jsr("Fill magic")
 
 .routine
-	LDA #$80 : STA !ram_equipment_magic_meter
+	LDA #$80 : STA.l !ram_equipment_magic_meter
 	RTS
 
 cm_equipment_fill_rupees:
@@ -139,7 +142,7 @@ cm_equipment_fill_hearts:
 	%cm_jsr("Fill HP")
 
 .routine
-	LDA !ram_equipment_maxhp : STA !ram_equipment_curhp
+	LDA.l !ram_equipment_maxhp : STA.l !ram_equipment_curhp
 	RTS
 
 cm_equipment_fill_everything:
@@ -152,7 +155,7 @@ cm_equipment_fill_everything:
 cm_equipment_maxhp:
 	dw !CM_ACTION_CHOICE_JSR
 	dw .set_maxhp
-	dl !ram_cm_equipment_maxhp
+	dl SA1RAM.cm_equipment_maxhp
 	%cm_item("Max HP")
 	%cm_item("3")
 	%cm_item("4")
@@ -175,11 +178,11 @@ cm_equipment_maxhp:
 	db !list_end
 
 .set_maxhp
-	LDA !ram_cm_equipment_maxhp
+	LDA.w SA1RAM.cm_equipment_maxhp
 	INC #3
 	ASL #3
 	; Need to fill HP to get immediate effect
-	STA !ram_equipment_maxhp : STA !ram_equipment_curhp
+	STA.l !ram_equipment_maxhp : STA.l !ram_equipment_curhp
 	RTS
 
 cm_equipment_bombs:

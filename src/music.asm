@@ -18,7 +18,7 @@ music_reload:
 	RTL
 
 music_overworld_track:
-	LDA !ram_preset_type : BNE .loadedPreset
+	LDA.w SA1RAM.preset_type : BNE .loadedPreset
 
 	; Let duck music logic run
 	LDA #$10

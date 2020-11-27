@@ -75,8 +75,8 @@ NMI_UpdatePracticeHUD:
 	LDA #$6C00 : STA $2116
 
 	LDA #$1801 : STA $4300
-	LDA.w #!menu_dma_buffer : STA $4302
-	LDX.b #!menu_dma_buffer>>16 : STX $4304
+	LDA.w #SA1RAM.MENU : STA $4302
+	LDX.b #SA1RAM.MENU>>16 : STX $4304
 	LDA #$0800 : STA $4305
 
 	LDX #$01 : STX $420B
@@ -102,6 +102,8 @@ nmi_expand:
 	PHA ; A is 0 from right before the hook
 	PLB ; and that happens to be the bank we want
 
+	STA.w SA1RAM.last_frame_did_saveload ; while A is 0
+
 	LDA !disabled_layers : TRB $AB : TRB $AC
 	REP #$20
 	LDA $AB : STA $212C
@@ -111,7 +113,6 @@ nmi_expand:
 
 	LDA #$10
 	STA.w $2200
-	STZ.w !lowram_last_frame_did_saveload
 	RTL
 
 nmi_hud_update:
@@ -138,8 +139,8 @@ nmi_hud_update:
 	LDA #$6500 : STA $2116
 
 	LDA #$1801 : STA $4300
-	LDA.w #!dg_dma_buffer : STA $4302
-	LDX.b #!dg_dma_buffer>>16 : STX $4304
+	LDA.w #SA1RAM.SW_BUFFER : STA $4302
+	LDX.b #SA1RAM.SW_BUFFER>>16 : STX $4304
 	LDA #$0100 : STA $4305
 
 	LDY #$01 : STY $420B
@@ -163,7 +164,7 @@ nmi_hud_update:
 	LDX #$80 : STX $2115
 	LDY #$01
 	LDA #$1801 : STA $4300
-	LDA.w #!dg_dma_buffer : STA $4302
+	LDA.w #SA1RAM.SW_BUFFER : STA $4302
 	LDX.b #$00 : STX $4304
 
 	LDA #$C202>>1 : STA $2116

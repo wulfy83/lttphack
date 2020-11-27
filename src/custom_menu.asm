@@ -22,7 +22,7 @@ endmacro
 macro set_menu_icon(icon)
 	LDA.w #($3000|<icon>)
 	ORA $0C
-	STA.l !menu_dma_buffer-2, X
+	STA.w SA1RAM.MENU-2, X
 endmacro
 
 ; jsr ($0000,x) equivalent but program bank != data bank
@@ -62,20 +62,25 @@ CM_Local:
 
 
 CM_Init:
-	LDA #$01 : STA !ram_cm_opened_menu_maunally
+
+	LDA #$01 : STA.w SA1RAM.opened_menu_manually
 	; Start with new state when opening the menu.
 	JSR cm_clear_stack
 	STZ $B1
 
-	; Scroll down
 	REP #$20
+	; disable bg1 and bg2
+	LDA.b $1C : STA.w $021B
+	LDA.w #$0404 : STA.b $1C
+
+	; Scroll down
 	LDA #$0100 : STA $E4
 	LDA #$0118 : STA $EA
 	; Put the main menu onto the stack.
-	LDA #$0000 : STA !lowram_cm_stack_index
-	LDA #cm_mainmenu_indices : STA !ram_cm_menu_stack
+	STZ.w SA1RAM.cm_stack_index
+	LDA.w #cm_mainmenu_indices : STA.w SA1RAM.cm_menu_stack
 	SEP #$20
-	LDA.b #cm_mainmenu_indices>>16 : STA !ram_cm_menu_bank_stack
+	LDA.b #cm_mainmenu_indices>>16 : STA.w SA1RAM.cm_menu_bank_stack
 	LDA $9B : AND #$DF : STA $9B
 	JSR cm_init_item_variables
 
@@ -90,14 +95,17 @@ CM_DrawMenu:
 	;JSR cm_cache_buffer
 	
 	PHB
-	LDX !lowram_cm_stack_index
-	LDA !ram_cm_menu_bank_stack,x
+	LDX.w SA1RAM.cm_stack_index
+	LDA.w SA1RAM.cm_menu_bank_stack, X
 	PHA
 	PLB
 
 	%ppu_off()
 	JSR cm_transfer_tileset
 	JSR cm_redraw_clean
+	STZ.w $2121 ; CGRAM 0
+	STZ.w $2122 ; black
+	STZ.w $2122
 	%ppu_on()
 
 	; play sound effect for opening menu
@@ -115,8 +123,8 @@ CM_MenuDown:
 
 CM_Active:
 	PHB
-	LDX !lowram_cm_stack_index
-	LDA !ram_cm_menu_bank_stack, X
+	LDX.w SA1RAM.cm_stack_index
+	LDA.w SA1RAM.cm_menu_bank_stack, X
 	PHA
 	PLB
 
@@ -158,16 +166,20 @@ CM_Active:
 
 .pressed_up
 	REP #$20
-	LDX !lowram_cm_stack_index
-	LDA !lowram_cm_cursor_stack, X : DEC #2 : JSR cm_fix_cursor_wrap : STA !lowram_cm_cursor_stack, X
+	LDX.w SA1RAM.cm_stack_index
+	LDA.w SA1RAM.cm_cursor_stack, X : DEC #2
+	JSR cm_fix_cursor_wrap
+	STA.w SA1RAM.cm_cursor_stack, X
 	SEP #$20
 	%menubeep()
 	BRA .redraw
 
 .pressed_down
 	REP #$20
-	LDX !lowram_cm_stack_index
-	LDA !lowram_cm_cursor_stack, X : INC #2 : JSR cm_fix_cursor_wrap : STA !lowram_cm_cursor_stack, X
+	LDX.w SA1RAM.cm_stack_index
+	LDA.w SA1RAM.cm_cursor_stack, X : INC #2
+	JSR cm_fix_cursor_wrap
+	STA.w SA1RAM.cm_cursor_stack, X
 	SEP #$20
 	%menubeep()
 	BRA .redraw
@@ -209,22 +221,28 @@ CM_MenuUp:
 
 
 CM_Return:
-	LDA !ram_cm_opened_menu_maunally : BEQ .tileset_is_ok
+	REP #$20
+	LDA.w $021B : STA.b $1C
+
+	SEP #$20
+	INC.b $15
+
+	LDA.w SA1RAM.opened_menu_manually : BEQ .tileset_is_ok
 	%ppu_off()
 	JSL load_default_tileset
 	%ppu_on()
 
 .tileset_is_ok
-	LDA #$00 : STA !ram_cm_opened_menu_maunally
+	STZ.w SA1RAM.opened_menu_manually
 
 	SEP #$30
-	LDA !ram_preset_type : BEQ .no_preset
+	LDA.w SA1RAM.preset_type : BEQ .no_preset
 	JSL preset_load_next_frame
 	RTS
 
 .no_preset
-	LDA !ram_cm_old_gamemode : STA $10
-	LDA !ram_cm_old_submode : STA $11
+	LDA.w SA1RAM.cm_old_gamemode : STA.b $10
+	LDA.w SA1RAM.cm_old_submode : STA.b $11
 
 	; Make sure that the item menu doesn't scroll forever by us resettings EA in previous submodule.
 	LDA $10 : CMP.b #$0E : BNE .end
@@ -246,10 +264,10 @@ CM_Return:
 
 cm_init_item_variables:
 	; Crystal Switch state
-	LDA $7EC172 : STA !ram_cm_old_crystal_switch
+	LDA $7EC172 : STA.w SA1RAM.cm_old_crystal_switch
 
 	; Bow
-	LDA !ram_item_bow : BEQ .store_bow
+	LDA.l !ram_item_bow : BEQ .store_bow
 	CMP #$03 : BCC .normal_bow
 
 	LDA.b #$02
@@ -259,32 +277,32 @@ cm_init_item_variables:
 	LDA.b #$01
 
 .store_bow
-	STA !ram_cm_item_bow
+	STA.w SA1RAM.cm_item_bow
 
 	; Bottle
-	LDA !ram_item_bottle : BEQ .store_bottle
+	LDA.l !ram_item_bottle : BEQ .store_bottle
 	LDA.b #$01
 .store_bottle
-	STA !ram_cm_item_bottle
+	STA.w SA1RAM.cm_item_bottle
 
 	; Mirror
-	LDA !ram_item_mirror : LSR : STA !ram_cm_item_mirror
+	LDA.l !ram_item_mirror : LSR : STA.w SA1RAM.cm_item_mirror
 
 	; MaxHP
-	LDA !ram_equipment_maxhp
+	LDA.l !ram_equipment_maxhp
 	LSR #3 : DEC #3
-	STA !ram_cm_equipment_maxhp
+	STA.w SA1RAM.cm_equipment_maxhp
 
-	LDA $7EC172 : AND #$01 : STA !ram_cm_crystal_switch
+	LDA $7EC172 : AND #$01 : STA.l !ram_cm_crystal_switch
 	RTS
 
 cm_get_pressed_button:
 	REP #$30
-	LDA.w SA1IRAM.CONTROLLER_1 : CMP !ram_cm_last_frame_input : BEQ .same_as_last_frame
+	LDA.w SA1IRAM.CONTROLLER_1 : CMP.w SA1RAM.last_frame_input : BEQ .same_as_last_frame
 
-	STA !ram_cm_last_frame_input
+	STA.w SA1RAM.last_frame_input
 	PHA
-	LDA.w #15 : STA !ram_cm_input_timer
+	LDA.w #15 : STA.w SA1RAM.cm_input_timer
 	PLA
 
 	; If we're pressing a new button (e.g. holding down v then pressing A), make sure
@@ -296,9 +314,9 @@ cm_get_pressed_button:
 .same_as_last_frame
 	CMP #$0000 : BEQ .end
 
-	LDA !ram_cm_input_timer : DEC : STA !ram_cm_input_timer : BNE .no_input
+	LDA.w SA1RAM.cm_input_timer : DEC : STA.w SA1RAM.cm_input_timer : BNE .no_input
 
-	LDA.w #4 : STA !ram_cm_input_timer
+	LDA.w #4 : STA.w SA1RAM.cm_input_timer
 
 .do_it
 	LDA.w SA1IRAM.CONTROLLER_1
@@ -323,9 +341,9 @@ cm_clear_stack:
 	LDA #$0000
 
 .loop
-	STA !lowram_cm_cursor_stack, X
-	STA !ram_cm_menu_stack, X
-	STA !ram_cm_menu_bank_stack, X
+	STA.w SA1RAM.cm_cursor_stack, X
+	STA.w SA1RAM.cm_menu_stack, X
+	STA.w SA1RAM.cm_menu_bank_stack, X
 	INX #2
 	CPX.b #$10 : BNE .loop
 	SEP #$20
@@ -337,21 +355,21 @@ cm_clear_buffer:
 	REP #$20
 
 	PHB
-	LDX.b #!menu_dma_buffer>>16 : PHX : PLB
+	LDX.b #SA1RAM.MENU>>16 : PHX : PLB
 	LDX.b #$00
 
 	; value of a transparent tile
 	LDA #$207F
 
 .loop
-	STA.w !menu_dma_buffer+$0000, X : STA.w !menu_dma_buffer+$0080, X
-	STA.w !menu_dma_buffer+$0100, X : STA.w !menu_dma_buffer+$0180, X
-	STA.w !menu_dma_buffer+$0200, X : STA.w !menu_dma_buffer+$0280, X
-	STA.w !menu_dma_buffer+$0300, X : STA.w !menu_dma_buffer+$0380, X
-	STA.w !menu_dma_buffer+$0400, X : STA.w !menu_dma_buffer+$0480, X
-	STA.w !menu_dma_buffer+$0500, X : STA.w !menu_dma_buffer+$0580, X
-	STA.w !menu_dma_buffer+$0600, X : STA.w !menu_dma_buffer+$0680, X
-	STA.w !menu_dma_buffer+$0700, X : STA.w !menu_dma_buffer+$0780, X
+	STA.w SA1RAM.MENU+$0000, X : STA.w SA1RAM.MENU+$0080, X
+	STA.w SA1RAM.MENU+$0100, X : STA.w SA1RAM.MENU+$0180, X
+	STA.w SA1RAM.MENU+$0200, X : STA.w SA1RAM.MENU+$0280, X
+	STA.w SA1RAM.MENU+$0300, X : STA.w SA1RAM.MENU+$0380, X
+	STA.w SA1RAM.MENU+$0400, X : STA.w SA1RAM.MENU+$0480, X
+	STA.w SA1RAM.MENU+$0500, X : STA.w SA1RAM.MENU+$0580, X
+	STA.w SA1RAM.MENU+$0600, X : STA.w SA1RAM.MENU+$0680, X
+	STA.w SA1RAM.MENU+$0700, X : STA.w SA1RAM.MENU+$0780, X
 
 	INX #2
 	CPX.b #$80 : BCC .loop
@@ -397,21 +415,21 @@ cm_redraw:
 cm_draw_background_gfx:
 	SEP #$20
 	PHB
-	LDA.b #!menu_dma_buffer>>16 : PHA : PLB
+	LDA.b #SA1RAM.MENU>>16 : PHA : PLB
 
 	REP #$30
-	LDA #$30FB : STA.w !menu_dma_buffer+$0102
-	ORA #$8000 : STA.w !menu_dma_buffer+$0742
-	ORA #$4000 : STA.w !menu_dma_buffer+$077C
-	EOR #$8000 : STA.w !menu_dma_buffer+$013C
+	LDA #$30FB : STA.w SA1RAM.MENU+$0102
+	ORA #$8000 : STA.w SA1RAM.MENU+$0742
+	ORA #$4000 : STA.w SA1RAM.MENU+$077C
+	EOR #$8000 : STA.w SA1RAM.MENU+$013C
 
 	LDX #$0000
 	LDY #$0017
 
 .drawVerticalEdges
 
-	LDA.w #$30FC : STA.w !menu_dma_buffer+$0142, X
-	ORA.w #$4000 : STA.w !menu_dma_buffer+$017C, X
+	LDA.w #$30FC : STA.w SA1RAM.MENU+$0142, X
+	ORA.w #$4000 : STA.w SA1RAM.MENU+$017C, X
 
 	TXA : CLC : ADC #$0040 : TAX
 
@@ -422,8 +440,8 @@ cm_draw_background_gfx:
 
 .drawHorizontalEdges
 
-	LDA.w #$30F9 : STA.w !menu_dma_buffer+$0104, X
-	ORA.w #$8000 : STA.w !menu_dma_buffer+$0744, X
+	LDA.w #$30F9 : STA.w SA1RAM.MENU+$0104, X
+	ORA.w #$8000 : STA.w SA1RAM.MENU+$0744, X
 
 	INX #2
 
@@ -435,18 +453,18 @@ cm_draw_background_gfx:
 
 .drawBoxInterior
 
-	STA.w !menu_dma_buffer+$0144, X : STA.w !menu_dma_buffer+$0184, X
-	STA.w !menu_dma_buffer+$01C4, X : STA.w !menu_dma_buffer+$0204, X
-	STA.w !menu_dma_buffer+$0244, X : STA.w !menu_dma_buffer+$0284, X
-	STA.w !menu_dma_buffer+$02C4, X : STA.w !menu_dma_buffer+$0304, X
-	STA.w !menu_dma_buffer+$0344, X : STA.w !menu_dma_buffer+$0384, X
-	STA.w !menu_dma_buffer+$03C4, X : STA.w !menu_dma_buffer+$0404, X
-	STA.w !menu_dma_buffer+$0444, X : STA.w !menu_dma_buffer+$0484, X
-	STA.w !menu_dma_buffer+$04C4, X : STA.w !menu_dma_buffer+$0504, X
-	STA.w !menu_dma_buffer+$0544, X : STA.w !menu_dma_buffer+$0584, X
-	STA.w !menu_dma_buffer+$05C4, X : STA.w !menu_dma_buffer+$0604, X
-	STA.w !menu_dma_buffer+$0644, X : STA.w !menu_dma_buffer+$0684, X
-	STA.w !menu_dma_buffer+$06C4, X : STA.w !menu_dma_buffer+$0704, X
+	STA.w SA1RAM.MENU+$0144, X : STA.w SA1RAM.MENU+$0184, X
+	STA.w SA1RAM.MENU+$01C4, X : STA.w SA1RAM.MENU+$0204, X
+	STA.w SA1RAM.MENU+$0244, X : STA.w SA1RAM.MENU+$0284, X
+	STA.w SA1RAM.MENU+$02C4, X : STA.w SA1RAM.MENU+$0304, X
+	STA.w SA1RAM.MENU+$0344, X : STA.w SA1RAM.MENU+$0384, X
+	STA.w SA1RAM.MENU+$03C4, X : STA.w SA1RAM.MENU+$0404, X
+	STA.w SA1RAM.MENU+$0444, X : STA.w SA1RAM.MENU+$0484, X
+	STA.w SA1RAM.MENU+$04C4, X : STA.w SA1RAM.MENU+$0504, X
+	STA.w SA1RAM.MENU+$0544, X : STA.w SA1RAM.MENU+$0584, X
+	STA.w SA1RAM.MENU+$05C4, X : STA.w SA1RAM.MENU+$0604, X
+	STA.w SA1RAM.MENU+$0644, X : STA.w SA1RAM.MENU+$0684, X
+	STA.w SA1RAM.MENU+$06C4, X : STA.w SA1RAM.MENU+$0704, X
 
 	INX #2
 
@@ -465,13 +483,14 @@ cm_draw_active_menu:
 	; $02[0x2] = current menu item index
 	; Then we call the action draw method, which can consume its arguments and draw the text however it wants.
 	REP #$30
-	LDX !lowram_cm_stack_index
-	LDA !ram_cm_menu_stack, X : STA $00
+	LDA.w SA1RAM.cm_stack_index
+	TAX
+	LDA.w SA1RAM.cm_menu_stack, X : STA $00
 	LDY #$0000
 
 .loop
 	; Figure out if this menu item is on the same location as the cursor.
-	TYA : CMP !lowram_cm_cursor_stack, X : BEQ .selected
+	TYA : CMP.w SA1RAM.cm_cursor_stack, X : BEQ .selected
 	LDA #$0000
 	BRA .not_selected
 
@@ -514,8 +533,8 @@ cm_draw_text:
 
 .loop
 	LDA ($02), Y : CMP #$FF : BEQ .end
-	STA.l !menu_dma_buffer, X : INX
-	LDA $0E : STA.l !menu_dma_buffer, X : INX
+	STA.l SA1RAM.MENU, X : INX
+	LDA $0E : STA.l SA1RAM.MENU, X : INX
 	INY : BRA .loop
 
 .end
@@ -532,13 +551,13 @@ cm_draw_text:
 cm_fix_cursor_wrap:
 	; Enters: A=16 I=8
 	; Leave with: AI=8
-	; Assumes: X = !lowram_cm_stack_index
+	; Assumes: X =.w SA1RAM.cm_stack_index
 	;          A = the current cursor position (might be out of bounds)
 	;
 	; Checks if new cursor is out of bounds, and if so, sets it to the appropriate index.
 	REP #$30
 	PHA
-	LDA !ram_cm_menu_stack, X : STA $00
+	LDA.w SA1RAM.cm_menu_stack, X : STA $00
 	LDY #$0000
 
 .loop
@@ -573,9 +592,10 @@ cm_execute_cursor:
 	;
 	; The user selected a menu item.
 	REP #$30
-	LDX !lowram_cm_stack_index
-	LDA !ram_cm_menu_stack, X : STA $00
-	LDY !lowram_cm_cursor_stack, X
+	LDX.w SA1RAM.cm_stack_index
+	LDA.w SA1RAM.cm_menu_stack, X : STA $00
+	LDA.w SA1RAM.cm_cursor_stack, X
+	TAY
 	LDA ($00), Y : STA $00
 
 	; Consume the action index and jump to the appropriate execute subroutine.
@@ -655,10 +675,10 @@ cm_execute_submenu:
 	LDA #$24 : STA $012F
 	; Increments stack index and puts the submenu into the stack.
 	REP #$20
-	LDA !lowram_cm_stack_index : INC #2 : STA !lowram_cm_stack_index : TAX
-	LDA ($00) : INC $00 : INC $00 : STA !ram_cm_menu_stack, X
+	LDA.w SA1RAM.cm_stack_index : INC #2 : STA.w SA1RAM.cm_stack_index : TAX
+	LDA ($00) : INC $00 : INC $00 : STA.w SA1RAM.cm_menu_stack, X
 	SEP #$20
-	LDA ($00) : INC $00 : STA !ram_cm_menu_bank_stack, X
+	LDA ($00) : INC $00 : STA.w SA1RAM.cm_menu_bank_stack, X
 	PHA : PLB
 	REP #$20
 
@@ -675,18 +695,18 @@ cm_execute_back:
 	; Decrements the stack index.
 	REP #$20
 	; make sure next time we go to a submenu, we start on the first line.
-	LDX !lowram_cm_stack_index
-	LDA #$0000 : STA !lowram_cm_cursor_stack, X
+	LDX.w SA1RAM.cm_stack_index
+	STZ.w SA1RAM.cm_cursor_stack, X
 
 	; make sure we dont set a negative number
-	LDA !lowram_cm_stack_index : DEC #2 : BPL .done
+	LDA.w SA1RAM.cm_stack_index : DEC #2 : BPL .done
 	LDA #$0000
 
 .done
-	STA !lowram_cm_stack_index
+	STA.w SA1RAM.cm_stack_index
 	SEP #$20
 	TAX
-	LDA !ram_cm_menu_bank_stack,x
+	LDA.w SA1RAM.cm_menu_bank_stack,x
 	PHA
 	PLB
 	REP #$20
@@ -828,12 +848,16 @@ cm_execute_preset:
 
 	REP #$20
 	LDA ($00) : STA $02
-	INC : STA !ram_preset_destination : STA !ram_previous_preset_destination
+	INC
+	STA.w SA1RAM.preset_destination
+	STA.w SA1RAM.previous_preset_destination
 	SEP #$30
 	PHB
-	LDA !ram_preset_category : TAX
+	LDX.w !ram_preset_category
 	LDA.l cm_preset_data_banks, X : PHA : PLB
-	LDA ($02) : STA !ram_preset_type : STA !ram_previous_preset_type
+	LDA ($02)
+	STA.w SA1RAM.preset_type
+	STA.w SA1RAM.previous_preset_type
 	PLB
 	INC $11
 .end
@@ -901,7 +925,7 @@ cm_execute_submenu_variable:
 
 	; Increments stack index and puts the submenu into the stack.
 	REP #$20
-	LDA !lowram_cm_stack_index : INC #2 : STA !lowram_cm_stack_index : TAX
+	LDA.w SA1RAM.cm_stack_index : INC #2 : STA.w SA1RAM.cm_stack_index : TAX
 
 	LDA ($00) : STA $02 : INC $00 : INC $00
 	LDA ($00) : STA $04 : INC $00
@@ -920,13 +944,13 @@ cm_execute_submenu_variable:
 	ASL
 	ADC $07
 	TAY
-	LDA ($00),y
-	STA !ram_cm_menu_stack,x
+	LDA ($00), Y
+	STA.w SA1RAM.cm_menu_stack,X
 	INY
 	INY
 	SEP #$20
-	LDA ($00),y
-	STA !ram_cm_menu_bank_stack,x
+	LDA ($00), Y
+	STA.w SA1RAM.cm_menu_bank_stack, X
 	PHA
 	PLB
 	REP #$20
@@ -1033,24 +1057,24 @@ cm_draw_toggle:
 	SEP #$20
 	; set palette
 	LDA $0E
-	STA.l !menu_dma_buffer+1, X
-	STA.l !menu_dma_buffer+3, X
-	STA.l !menu_dma_buffer+5, X
+	STA.l SA1RAM.MENU+1, X
+	STA.l SA1RAM.MENU+3, X
+	STA.l SA1RAM.MENU+5, X
 
 	; grab the value at that memory address
 	LDA [$04] : BNE .checked
 
 	; No
-	LDA.b #$0D : STA.l !menu_dma_buffer+0, X
-	LDA.b #$38 : STA.l !menu_dma_buffer+2, X
+	LDA.b #$0D : STA.l SA1RAM.MENU+0, X
+	LDA.b #$38 : STA.l SA1RAM.MENU+2, X
 
 	BRA .end
 
 .checked
 	; Yes
-	LDA.b #$18 : STA.l !menu_dma_buffer+0, X
-	LDA.b #$2E : STA.l !menu_dma_buffer+2, X
-	LDA.b #$3C : STA.l !menu_dma_buffer+4, X
+	LDA.b #$18 : STA.l SA1RAM.MENU+0, X
+	LDA.b #$2E : STA.l SA1RAM.MENU+2, X
+	LDA.b #$3C : STA.l SA1RAM.MENU+4, X
 
 .end
 	REP #$20
@@ -1188,9 +1212,9 @@ cm_draw_numfield:
 
 	; Clear out the area (black tile)
 	LDA #$24F5
-	STA.l !menu_dma_buffer+0, X
-	STA.l !menu_dma_buffer+2, X
-	STA.l !menu_dma_buffer+4, X
+	STA.l SA1RAM.MENU+0, X
+	STA.l SA1RAM.MENU+2, X
+	STA.l SA1RAM.MENU+4, X
 
 	; Set palette
 	SEP #$20
@@ -1199,18 +1223,18 @@ cm_draw_numfield:
 	REP #$20
 
 	; Draw numbers
-	LDA.w !ram_hex2dec_first_digit : BEQ .second_digit
-	CLC : ADC $0E : STA.l !menu_dma_buffer+0, X
+	LDA.w SA1RAM.hex2dec_first_digit : BEQ .second_digit
+	CLC : ADC $0E : STA.l SA1RAM.MENU+0, X
 	INX #2
 
 .second_digit
-	LDA.w !ram_hex2dec_second_digit : BEQ .third_digit
-	CLC : ADC $0E : STA.l !menu_dma_buffer+0, X
+	LDA.w SA1RAM.hex2dec_second_digit : BEQ .third_digit
+	CLC : ADC $0E : STA.l SA1RAM.MENU+0, X
 	INX #2
 
 .third_digit
-	LDA.w !ram_hex2dec_third_digit : CLC : ADC $0E
-	STA.l !menu_dma_buffer+0, X
+	LDA.w SA1RAM.hex2dec_third_digit : CLC : ADC $0E
+	STA.l SA1RAM.MENU+0, X
 
 	RTS
 
@@ -1244,24 +1268,24 @@ cm_draw_toggle_bit:
 	SEP #$20
 	; set palette
 	LDA $0E
-	STA.l !menu_dma_buffer+1, X
-	STA.l !menu_dma_buffer+3, X
-	STA.l !menu_dma_buffer+5, X
+	STA.l SA1RAM.MENU+1, X
+	STA.l SA1RAM.MENU+3, X
+	STA.l SA1RAM.MENU+5, X
 
 	; grab the value at that memory address
 	LDA [$04] : AND $07 : BNE .checked
 
 	; No
-	LDA.b #$0D : STA.l !menu_dma_buffer+0, X
-	LDA.b #$38 : STA.l !menu_dma_buffer+2, X
+	LDA.b #$0D : STA.l SA1RAM.MENU+0, X
+	LDA.b #$38 : STA.l SA1RAM.MENU+2, X
 
 	BRA .end
 
 .checked
 	; Yes
-	LDA.b #$18 : STA.l !menu_dma_buffer+0, X
-	LDA.b #$2E : STA.l !menu_dma_buffer+2, X
-	LDA.b #$3C : STA.l !menu_dma_buffer+4, X
+	LDA.b #$18 : STA.l SA1RAM.MENU+0, X
+	LDA.b #$2E : STA.l SA1RAM.MENU+2, X
+	LDA.b #$3C : STA.l SA1RAM.MENU+4, X
 
 .end
 	REP #$20
@@ -1404,7 +1428,7 @@ cm_ctrl_input_display:
 	AND #$0001 : CMP #$0001 : BNE .no_draw
 
 	TYA : CLC : ADC $0E
-	STA.l !menu_dma_buffer+0, X : INX : INX
+	STA.l SA1RAM.MENU+0, X : INX : INX
 
 .no_draw
 	PLA
@@ -1419,15 +1443,15 @@ cm_ctrl_clear_input_display:
 	; X = pointer to tilemap area
 	PHA
 	LDA #$24F5
-	STA.l !menu_dma_buffer+$00, X
-	STA.l !menu_dma_buffer+$02, X
-	STA.l !menu_dma_buffer+$04, X
-	STA.l !menu_dma_buffer+$06, X
-	STA.l !menu_dma_buffer+$08, X
-	STA.l !menu_dma_buffer+$0A, X
-	STA.l !menu_dma_buffer+$0C, X
-	STA.l !menu_dma_buffer+$0E, X
-	STA.l !menu_dma_buffer+$10, X
+	STA.l SA1RAM.MENU+$00, X
+	STA.l SA1RAM.MENU+$02, X
+	STA.l SA1RAM.MENU+$04, X
+	STA.l SA1RAM.MENU+$06, X
+	STA.l SA1RAM.MENU+$08, X
+	STA.l SA1RAM.MENU+$0A, X
+	STA.l SA1RAM.MENU+$0C, X
+	STA.l SA1RAM.MENU+$0E, X
+	STA.l SA1RAM.MENU+$10, X
 	PLA
 	RTS
 
@@ -1438,7 +1462,7 @@ cm_do_ctrl_config:
 	REP #$20
 	LDA #$2080 : STA $0E
 	LDA.w SA1IRAM.CONTROLLER_1 : BEQ .clear_and_draw
-	CMP !ram_ctrl_last_input : BNE .clear_and_draw
+	CMP.w SA1RAM.ctrl_last_input : BNE .clear_and_draw
 
 	; Holding an input for more than 1f
 	LDA $0200 : INC : STA $0200 : CMP.w #0060 : BNE .next_frame
@@ -1447,17 +1471,18 @@ cm_do_ctrl_config:
 	BRA .exit
 
 .clear_and_draw
-	STA !ram_ctrl_last_input
+	STA.w SA1RAM.ctrl_last_input
 	STZ $0200
 
 .draw
 
 	REP #$30
 	; Put text cursor in X
-	LDX !lowram_cm_stack_index
-	LDY !lowram_cm_cursor_stack, X
+	LDX.w SA1RAM.cm_stack_index
+	LDY.w SA1RAM.cm_cursor_stack, X
+	TYA
 
-	TYA : ASL #5
+	ASL #5
 	CLC : ADC #$022A : TAX
 
 	; Input display
@@ -1472,7 +1497,7 @@ cm_do_ctrl_config:
 	RTS
 
 .exit
-	LDA #$000 : STA !ram_ctrl_last_input
+	STZ.w SA1RAM.ctrl_last_input
 
 	SEP #$30
 	STZ $B1
@@ -1490,7 +1515,7 @@ cm_movie_get_bytes_left:
 	LDX #$00F0
 
 .loop
-	SEC : SBC !sram_movies_length, X
+	SEC : SBC.l !sram_movies_length, X
 	DEX #$10 : BPL .loop
 
 	RTS
@@ -1545,8 +1570,8 @@ cm_movie_save:
 	LDA !ram_movie_rng_length : STA !sram_movies_rng_length, X
 	LDA #$FFFF : STA !sram_movies_next_slot, X
 
-	SEP #$20 : LDA !ram_previous_preset_type : STA !sram_movies_preset_type, X : REP #$20
-	LDA !ram_previous_preset_destination : STA !sram_movies_preset_destination, X
+	SEP #$20 : LDA.w !ram_previous_preset_type : STA !sram_movies_preset_type, X : REP #$20
+	LDA.w !ram_previous_preset_destination : STA !sram_movies_preset_destination, X
 
 	PLA : STA !sram_movies_offset, X
 
@@ -1638,8 +1663,8 @@ cm_movie_load:
 	LDA !sram_movies_rng_length, X : STA !ram_movie_rng_length
 	SEP #$20 : LDA !sram_movies_frame_counter, X : STA !ram_movie_framecounter : REP #$20
 
-	SEP #$20 : LDA !sram_movies_preset_type, X : STA !ram_previous_preset_type : REP #$20
-	LDA !sram_movies_preset_destination, X : STA !ram_previous_preset_destination
+	SEP #$20 : LDA !sram_movies_preset_type, X : STA.w !ram_previous_preset_type : REP #$20
+	LDA !sram_movies_preset_destination, X : STA.w !ram_previous_preset_destination
 
 	LDA.w #!sram_movie_data : CLC : ADC !sram_movies_offset, X : STA $06
 	LDA.w #!sram_movie_data>>16 : STA $08
@@ -1664,9 +1689,9 @@ cm_movie_load:
 	DEY #2 : BPL .rngLoop
 
 	LDA #$0002 : STA !ram_movie_next_mode
-	LDA !ram_previous_preset_destination : STA !ram_preset_destination
+	LDA.w SA1RAM.previous_preset_destination : STA.w SA1RAM.preset_destination
 	SEP #$20
-	LDA !ram_previous_preset_type : STA !ram_preset_type
+	LDA.w SA1RAM.previous_preset_type : STA.w SA1RAM.preset_type
 	LDA #$04 : STA $11
 	REP #$20
 	RTS

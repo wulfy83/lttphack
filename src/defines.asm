@@ -1,5 +1,104 @@
+;==============================================================================
+; Memory map:
+; Bank 40:
+;    $0000..$1FFF - vanilla SRAM
+;    $3000..$30FF - special control stuff
+;    $6000..$7FFF - mirrored to page $60 for SNES
+;    $9000..$97FF - practice hack WRAM/Functionality
+;    $9800..$9EFF - SA-1 mirror for $3000..$36FF
+; Bank 41:
+;    $0000..$FFFF - bank7E mirror
+;
+; Bank 42:
+;    $0000..$FFFF - bank7F mirror
+;
+; Bank 43:
+;    $0000..$FFFF - vram mirror
+;==============================================================================
+org $400000
+struct BWRAM40 $400000
+	; page $00
+	.VSRAML: skip $2000 ; vanilla SRAM
+endstruct
+
+struct SA1RAM $406000
+	; page $01, which
+	.HUD: skip $800 ; bg3 HUD
+	.MENU: skip $800 ; practice menu
+
+	.SETTINGS: skip $400
+
+	.SW_BUFFER:
+	.SW_BUFFER_r0: skip 64
+	.SW_BUFFER_r1: skip 64
+	.SW_BUFFER_r2: skip 64
+	.SW_BUFFER_r3: skip 64
+	.SW_BUFFER_r4: skip 64
+	.SW_BUFFER_r5: skip 64
+
+	; stuff for various RAM
+	.hex2dec_tmp: skip 2
+	.hex2dec_first_digit: skip 2
+	.hex2dec_second_digit: skip 2
+	.hex2dec_third_digit: skip 2
+
+	.last_frame_did_saveload: skip 2
+	.rng_counter: skip 2
+	.pokey_rng: skip 2
+	.agahnim_rng: skip 2
+	.helmasaur_rng: skip 2
+	.ganon_warp_location_rng: skip 2
+	.ganon_warp_rng: skip 2
+	.eyegore_rng: skip 2
+	.arrghus_rng: skip 2
+	.turtles_rng: skip 2
+	.framerule: skip 2
+	.lanmola_rng: skip 2
+	.conveyor_rng: skip 2
+	.drop_rng: skip 2
+	.vitreous_rng: skip 2
+	.ctrl_last_input: skip 2
+
+	.cm_old_gamemode: skip 1
+	.cm_old_submode: skip 1
+
+	.cm_menu_stack: skip $10
+	.cm_menu_bank_stack: skip $10
+	.cm_cursor_stack: skip $20
+	.cm_stack_index: skip $20
+
+	.last_frame_input: skip 2
+	.cm_input_timer: skip 2
+	.opened_menu_manually: skip 2
+
+	.react_counter: skip 2
+	.react_frames: skip 2
+
+	.mash_counter: skip 2
+	.mash_inputs: skip 2
+
+	.preset_type: skip 2
+	.preset_destination: skip 2
+	.previous_preset_type: skip 2
+	.previous_preset_destination: skip 2
+	.preset_end_of_sram_state: skip 2
+	.preset_spotlight_timer: skip 2
+
+	.cm_item_bow: skip 1
+	.cm_item_bottle: skip 1
+	.cm_item_mirror: skip 1
+	.cm_equipment_maxhp: skip 1
+	.cm_old_crystal_switch: skip 2
+	.cm_gamestate_world: skip 2
+
+	.movie_hud: skip $40
+
+	.ss_dma_buffer: skip $80
+	.ss_old_music_bank: skip 2
+	warnpc $407FFF
+endstruct
+
 ; Magic words
-SA1HUD = $003400
 SA1SRAM = $400000
 
 !SRAM_VERSION = $002A
@@ -13,33 +112,20 @@ SA1SRAM = $400000
 !QMARK = $212A
 !BLANK_TILE = $24F5
 
-!menu_dma_buffer = $7F8000 ; [0x800] reserved
-!dg_hdma = $003560 ; [0x800] reserved
-!dg_dma_buffer = $003580 ; [0x800] reserved
-!dg_buffer = !dg_dma_buffer
-!dg_buffer_r0 #= !dg_dma_buffer+(64*0)
-!dg_buffer_r1 #= !dg_dma_buffer+(64*1)
-!dg_buffer_r2 #= !dg_dma_buffer+(64*2)
-!dg_buffer_r3 #= !dg_dma_buffer+(64*3)
-!dg_buffer_r4 #= !dg_dma_buffer+(64*4)
-!dg_buffer_r4 #= !dg_dma_buffer+(64*5)
+!POS_MEM_INPUT_DISPLAY_TOP = $6000+$028
+!POS_MEM_INPUT_DISPLAY_BOT = $6000+$068
 
-!NUMBER_OF_COUNTERS = 6
-!HUD_EXTRAS_BUFFER = SA1HUD
-!POS_MEM_INPUT_DISPLAY_TOP = !HUD_EXTRAS_BUFFER+((!NUMBER_OF_COUNTERS+1)*16)
-!POS_MEM_INPUT_DISPLAY_BOT = !POS_MEM_INPUT_DISPLAY_TOP+12
 
-!EXTRAS_SIZE #= 12+(!NUMBER_OF_COUNTERS*16)
+; special stuff
+!offsetS = $403000
+!offsetincS = 0
 
-!POS_MEM_INPUT_DISPLAY_TOP = SA1HUD+$028
-!POS_MEM_INPUT_DISPLAY_BOT = SA1HUD+$068
-
-!offsetWA = $7F7680
-!offsetincWA = 0
-macro def_wramA(name, size)
-	!ram_<name> #= !offsetWA+!offsetincWA
-	!offsetincWA #= !offsetincWA+<size>
+macro def_SA1_control(name, size)
+	!SAC_<name> #= !offsetS+!offsetincS
+	!offsetincS #= !offsetincS+<size>
 endmacro
+
+%def_SA1_control("stating", 1)
 
 ; ==== RAM usage ====
 ;
@@ -55,38 +141,11 @@ endmacro
 ;  * 7ED000 - 7ED780 = VRAM buffer backup in custom_menu.asm
 
 ; old stuff
-!lowram_last_frame_did_saveload = $04DA
-
 !ram_extra_sa1_required = $6F
-
-%def_wramA("hex2dec_tmp", 2)
-%def_wramA("hex2dec_first_digit", 2)
-%def_wramA("hex2dec_second_digit", 2)
-%def_wramA("hex2dec_third_digit", 2)
-
-%def_wramA("qw_last_scroll", 2)
-%def_wramA("lanmola_cycles", 2) ; 3 bytes
-%def_wramA("lanmola_cycles3", 2)
-%def_wramA("rng_counter", 2)
-%def_wramA("pokey_rng", 2)
-%def_wramA("agahnim_rng", 2)
-%def_wramA("helmasaur_rng", 2)
-%def_wramA("ganon_warp_location_rng", 2)
-%def_wramA("ganon_warp_rng", 2)
-%def_wramA("eyegore_rng", 2)
-%def_wramA("arrghus_rng", 2)
-%def_wramA("turtles_rng", 2)
-%def_wramA("framerule", 2)
-%def_wramA("lanmola_rng", 2)
-%def_wramA("conveyor_rng", 2)
-%def_wramA("drop_rng", 2)
-%def_wramA("vitreous_rng", 2)
-
-%def_wramA("ctrl_last_input", 2)
 
 ; Account for different SRAM layouts
 
-!offset = $402000
+!offset = $407000
 !offsetinc = 0
 !OFF = 0
 !ON = 1
@@ -212,21 +271,9 @@ endmacro
 
 !lowram_oob_toggle = $037F
 
-%def_wramA("cm_old_gamemode", 1)
-%def_wramA("cm_old_submode", 1)
 
-%def_wramA("cm_menu_stack", $10) ; 0x10
-%def_wramA("cm_menu_bank_stack", $10) ; 0x10
-!lowram_cm_cursor_stack = $0648 ; 0x10
-!lowram_cm_stack_index = $0658
-%def_wramA("cm_last_frame_input", 2)
-%def_wramA("cm_input_timer", 2)
-%def_wramA("cm_opened_menu_maunally", 2)
 
-%def_wramA("cm_old_crystal_switch", 2)
 
-!sram_ss_dma_buffer = $420000
-!sram_old_music_bank = $420080
 
 ;-------------------------
 ; Transition detection
@@ -264,11 +311,7 @@ endmacro
 !CM_ACTION_MOVIE = #$18
 !CM_ACTION_TOGGLE_BIT_TEXT = #$1A
 
-%def_wramA("react_counter", 2)
-%def_wramA("react_frames", 2)
 
-%def_wramA("mash_counter", 2)
-%def_wramA("mash_inputs", 2)
 
 
 ;-------------------------
@@ -277,10 +320,7 @@ endmacro
 !PRESET_OVERWORLD = #$01
 !PRESET_DUNGEON = #$02
 
-!ram_preset_type = $04E2
-%def_wramA("preset_destination", 2)
-%def_wramA("preset_end_of_sram_state", 2)
-%def_wramA("preset_spotlight_timer", 2)
+
 
 ;-------------------------
 ; MOVIE
@@ -296,12 +336,10 @@ endmacro
 !ram_movie_framecounter = $7F8002
 !ram_movie_next_mode = $7F8004
 !ram_movie = $7F8020
-%def_wramA("movie_hud", $40) ; [0x40]
 
 !sram_movies = $771000
 !sram_movie_data = $771100
 !sram_movie_data_size = $6F00
-
 
 !sram_movies_length = !sram_movies+0
 !sram_movies_input_length = !sram_movies+2
@@ -340,7 +378,6 @@ LoadGearPalettes_bunny = $02FD8A
 ; ITEM MENU
 
 !ram_item_bow = $7EF340
-	%def_wramA("cm_item_bow", 1)
 !ram_item_boom = $7EF341
 !ram_item_hook = $7EF342
 !ram_item_bombs = $7EF343
@@ -349,20 +386,18 @@ LoadGearPalettes_bunny = $02FD8A
 !ram_item_ice_rod = $7EF346
 !ram_item_bombos = $7EF347
 !ram_item_ether = $7EF348
-!ram_item_2quake = $7EF349
+!ram_item_quake = $7EF349
 !ram_item_lantern = $7EF34A
 !ram_item_hammer = $7EF34B
 !ram_item_flute = $7EF34C
 !ram_item_net = $7EF34D
 !ram_item_book = $7EF34E
 !ram_item_bottle = $7EF34F
-	%def_wramA("cm_item_bottle", 1)
 	!ram_item_bottle_array = $7EF35C
 !ram_item_somaria = $7EF350
 !ram_item_byrna = $7EF351
 !ram_item_cape = $7EF352
 !ram_item_mirror = $7EF353
-	%def_wramA("cm_item_mirror", 1)
 
 ; EQUIPMENT MENU
 
@@ -374,7 +409,6 @@ LoadGearPalettes_bunny = $02FD8A
 !ram_equipment_shield = $7EF35A
 !ram_equipment_armor = $7EF35B
 !ram_equipment_maxhp = $7EF36C
-	%def_wramA("cm_equipment_maxhp", 1)
 !ram_equipment_curhp = $7EF36D
 !ram_equipment_arrows_filler = $7EF377
 !ram_equipment_arrows = $7EF377
@@ -384,7 +418,7 @@ LoadGearPalettes_bunny = $02FD8A
 
 ; OTHER
 
-!ram_cm_gamestate_world = $7EF3CA
+!ram_gamestate_world = $7EF3CA
 
 !ram_cm_crystal_switch = $7EF384
 
@@ -413,12 +447,4 @@ macro ppu_on()
 	LDA #$81 : STA $4200
 	LDA #$0F : STA $13 : STA $2100
 	PLA : STA $9B : STA $420C
-endmacro
-
-; 13 cycles
-; next opcode takes 1 cycle to fetch
-; that makes 14
-macro wait_14_cycles()
-	NOP : PHD : PLD : NOP
-	NOP ; I think it needs to be 15+1 for 16?
 endmacro

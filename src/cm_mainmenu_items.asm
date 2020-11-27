@@ -30,7 +30,7 @@ cm_submenu_items:
 cm_items_bow:
 	dw !CM_ACTION_CHOICE_JSR
 	dw .set_ram_value
-	dl !ram_cm_item_bow
+	dl SA1RAM.cm_item_bow
 	%cm_item("Bow")
 	%cm_item("No")
 	%cm_item("Normal")
@@ -43,10 +43,10 @@ cm_items_bow:
 	; 3/4 = Silver bow without/with arrows
 	ASL : TAX : BEQ .end
 
-	LDA !ram_equipment_arrows : BNE .end
+	LDA.l !ram_equipment_arrows : BNE .end
 	DEX
 .end
-	TXA : STA !ram_item_bow
+	TXA : STA.l !ram_item_bow
 	RTS
 
 cm_items_boom:
@@ -83,7 +83,7 @@ cm_items_ether:
 	%cm_toggle("Ether", !ram_item_ether)
 
 cm_items_quake:
-	%cm_toggle("Quake", !ram_item_2quake)
+	%cm_toggle("Quake", !ram_item_quake)
 
 cm_items_lantern:
 	%cm_toggle("Lantern", !ram_item_lantern)
@@ -117,11 +117,11 @@ cm_items_cape:
 	%cm_toggle("Cape", !ram_item_cape)
 
 cm_items_mirror:
-	%cm_toggle_jsr("Mirror", !ram_cm_item_mirror)
+	%cm_toggle_jsr("Mirror", SA1RAM.cm_item_mirror)
 
 .toggle
 	; 0 -> 2
-	ASL : STA !ram_item_mirror
+	ASL : STA.l !ram_item_mirror
 	RTS
 
 ; Bottles submenu

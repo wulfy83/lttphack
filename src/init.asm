@@ -9,33 +9,10 @@ org $00802F
 
 pullpc
 
-ClearWatchBuffer:
-	PHX
-	PHA
-	PHP
-	REP #$20
-	SEP #$10
-	LDA #$207F
-	LDX #$3E
-
---	STA.w !dg_buffer_r0, X
-	STA.w !dg_buffer_r1, X
-	STA.w !dg_buffer_r2, X
-	STA.w !dg_buffer_r3, X
-	STA.w !dg_buffer_r4, X
-	DEX : DEX : BPL --
-
-	PLP
-	PLA
-	PLX
-	RTL
-
-.pre
-	STA.b $CA ; vanilla code
-	SEP #$30
-	BRA ClearWatchBuffer
-
 init_hook:
+	SEP #$20
+	LDA.b #$03 : STA.l $002224 ; image 3 for page $60
+
 	JSL init_expand
 	JSL InitSA1
 
@@ -60,14 +37,14 @@ init_expand:
 	REP #$20
 	LDA $00
 	AND #$FF00 : CMP #$3000 : BEQ .forcereset
-	LDA !ram_ctrl_prachack_menu : CMP #$1010 : BEQ .noforcereset
+	LDA.w !ram_ctrl_prachack_menu : CMP #$1010 : BEQ .noforcereset
 
 .forcereset
 	JSR init_initialize_all
 	BRA .sram_initialized
 
 .noforcereset
-	LDA !ram_sram_initialized : CMP #!SRAM_VERSION : BEQ .sram_initialized
+	LDA.w !ram_sram_initialized : CMP #!SRAM_VERSION : BEQ .sram_initialized
 
 .reinitialize
 	JSR init_initialize
@@ -77,8 +54,8 @@ init_expand:
 	SEP #$20
 	STZ !lowram_oob_toggle
 	LDA #$00
-	STA.l !ram_superwatch
-	STA.l !ram_superwatch+1
+	STA.w !ram_superwatch
+	STA.w !ram_superwatch+1
 .done
 	RTL
 
@@ -88,7 +65,7 @@ init_initialize_all:
 init_initialize:
 	!INIT_ASSEMBLY
 
-	LDA #!SRAM_VERSION : STA !ram_sram_initialized
+	LDA #!SRAM_VERSION : STA.l !ram_sram_initialized
 
 	REP #$10
 	LDA #$0000

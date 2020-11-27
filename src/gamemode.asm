@@ -26,14 +26,14 @@ gamemode_hook:
 	JML $0080B5 ; GameMode
 
 
-	;LDA !ram_lagometer_toggle : BEQ .done
+	;LDA.l !ram_lagometer_toggle : BEQ .done
 	;JSR gamemode_lagometer
 .done
 	RTL
 
 ; Custom Menu
 gamemode_custom_menu:
-	LDA $10 : STA !ram_cm_old_gamemode
+	LDA $10 : STA.w SA1RAM.cm_old_gamemode
 
 	LDA #$000C : STA $10
 
@@ -48,7 +48,7 @@ gamemode_load_previous_preset:
 	; Loading during text mode make the text stay or the item menu to bug
 	LDA $10 : CMP #$0E : BEQ .no_load_preset
 	REP #$20
-	LDA !ram_previous_preset_destination
+	LDA.w SA1RAM.previous_preset_destination
 	SEP #$20
 	BEQ .no_load_preset
 
@@ -85,11 +85,11 @@ gamemode_savestate:
 	REP #$10
 	; Remember which song bank was loaded before load stating
 	; I put it here too, since `end` code runs both on save and load state..
-	LDA $0136 : STA !sram_old_music_bank
+	LDA $0136 : STA.w SA1RAM.ss_old_music_bank
 
 	; store DMA to SRAM
 	LDY #$0000 : LDX #$0000
--	LDA $4300, X : STA !sram_ss_dma_buffer, X
+-	LDA $4300, X : STA.w SA1RAM.ss_dma_buffer, X
 	INX
 	INY : CPY #$000B : BNE -
 	CPX #$007B : BEQ +
@@ -99,24 +99,26 @@ gamemode_savestate:
 	; end of DMA to SRAM
 
 +	JSR ppuoff
-	LDA #$80 : STA $4310
-	JSR func_dma2
+	LDA #$80 : STA $4310 ; B to A
+	JSR DMA_BWRAMSRAM
+
 
 	LDA #$81 : STA $4310
 	LDA #$39 : STA $4311
+
 	JMP gamemode_end
 
 .load
 	SEP #$20
 	REP #$10
 	; Remember which song bank was loaded before load stating (so we can change if needed)
-	LDA $0136 : STA !sram_old_music_bank
+	LDA $0136 : STA.w SA1RAM.ss_old_music_bank
 
-	LDA !ram_rerandomize_toggle : BEQ .dont_rerandomize_1
+	LDA.w !ram_rerandomize_toggle : BEQ .dont_rerandomize_1
 
 	; Save the current framecounter & rng accumulator
-	LDA $1A : STA !ram_rerandomize_framecount
-	LDA $0FA1 : STA !ram_rerandomize_rng
+	LDA $1A : STA.w !ram_rerandomize_framecount
+	LDA $0FA1 : STA.w !ram_rerandomize_rng
 
 .dont_rerandomize_1
 ;if !FEATURE_SD2SNES
@@ -131,7 +133,8 @@ gamemode_savestate:
 	STZ $420C
 	JSR ppuoff
 	STZ $4310
-	JSR func_dma2
+	LDA.b #$00 : STA.w $4310
+	JSR DMA_BWRAMSRAM
 
 	LDX $1C : STX $212C
 	LDX $1E : STX $212E
@@ -157,13 +160,13 @@ gamemode_savestate:
 	LDA #$01 : STA $4310
 	LDA #$18 : STA $4311
 
-	LDA !ram_rerandomize_toggle : BEQ .dont_rerandomize_2
+	LDA.w !ram_rerandomize_toggle : BEQ .dont_rerandomize_2
 
-	LDA !ram_rerandomize_framecount : STA $1A
-	LDA !ram_rerandomize_rng : STA $0FA1
+	LDA.w !ram_rerandomize_framecount : STA $1A
+	LDA.w !ram_rerandomize_rng : STA $0FA1
 
 .dont_rerandomize_2
-	LDA.l !ram_framerule
+	LDA.w SA1RAM.framerule
 	DEC
 	BMI .nofixedframerule
 	STA $1A
@@ -177,9 +180,39 @@ ppuoff:
 	STZ $4200
 	RTS
 
+DMA_BWRAMSRAM:
+	PLX : STX.w $4318
+
+	STA.w $4310 ; direction
+	LDA.b #$80 : STA.w $4311 ; wram
+
+	STZ.w $2183 ; wram bank 7E
+	LDX.w #$0000 : STX.w $2181 ; wram address 0
+	STX.w $4312 ; bottom of bank
+	LDA.b #$41 : STA.w $4314 ; this bank for WRAM 7E
+	STX.w $4315 ; 0 = 64kb
+
+	LDA.b #$02 : STA.w $420B
+
+	LDA.b #$01 : STA.w $2183 ; wram bank 7F
+	LDX.w #$0000 : STX.w $2181 ; wram address 0
+	STX.w $4312 ; bottom of bank
+	LDA.b #$42 : STA.w $4314 ; this bank for WRAM 7F
+	STX.w $4315 ; 0 = 64kb
+
+	LDA.b #$02 : STA.w $420B
+
+	LDX.w $4318 : PHX
+	RTS
+
 func_dma1:
-	LDX #$7500 : LDY #$0000 : LDA #$80 : JSR func_dma1b
-	LDX #$7600 : LDY #$4000 : LDA #$80 : JSR func_dma1b
+	LDX #$4500
+	LDY #$0000
+	LDA #$80 : JSR func_dma1b
+
+	LDX #$4600
+	LDY #$4000
+	LDA #$80 : JSR func_dma1b
 	RTS
 
 func_dma1b:
@@ -191,26 +224,6 @@ func_dma1b:
 +	LDA #$02 : STA $420B
 	RTS
 
-func_dma2:
-	PLX : STX $4318
-
-	STZ $2181 : STZ $4312
-
-	LDY #$0071 : LDX #$0000 : JSR func_dma2b
-	INY : LDX #$0080 : JSR func_dma2b
-	INY : LDX #$0100 : JSR func_dma2b
-	INY : LDX #$0180 : JSR func_dma2b
-
-	LDX $4318 : PHX
-
-	RTS
-
-func_dma2b:
-	STZ $4313 : STY $4314 : STX $2182
-	LDA #$80 : STA $4311 : STA $4316
-	LDA #$02 : STA $420B
-	RTS
-
 gamemode_end:
 	JSR func_dma1
 
@@ -218,7 +231,7 @@ gamemode_end:
 	LDY #$0000 : LDX #$0000
 	SEP #$20
 	REP #$10
--	LDA !sram_ss_dma_buffer, X : STA $4300, X
+-	LDA.w SA1RAM.ss_dma_buffer, X : STA $4300, X
 	INX
 	INY : CPY #$000B : BNE -
 	CPX #$007B : BEQ +
@@ -227,7 +240,7 @@ gamemode_end:
 	BRA -
 	; end of DMA from SRAM
 
-+	LDA !sram_old_music_bank : CMP $0136 : BEQ .songBankNotChanged
++	LDA.w SA1RAM.ss_old_music_bank : CMP $0136 : BEQ .songBankNotChanged
 	JSL music_reload
 
 .songBankNotChanged
@@ -235,7 +248,7 @@ gamemode_end:
 	LDA #$81 : STA $4200
 	LDA $13 : STA $2100
 	SEP #$30
-	LDA #$01 : STA !lowram_last_frame_did_saveload
+	LDA #$01 : STA.w SA1RAM.last_frame_did_saveload
 	SEC
 	RTS
 
@@ -244,10 +257,9 @@ after_save_state:
 	CLC
 	RTS
 
-
 gamemode_oob:
 	SEP #$20
-	LDA !lowram_oob_toggle : EOR #$01 : STA !lowram_oob_toggle
+	LDA.w !lowram_oob_toggle : EOR #$01 : STA.w !lowram_oob_toggle
 	RTS
 
 
@@ -256,12 +268,10 @@ gamemode_skip_text:
 	LDA #$04 : STA $1CD4
 	RTS
 
-
 gamemode_disable_sprites:
 	SEP #$20
 	JSL Sprite_DisableAll
 	RTS
-
 
 ; TODO make this a table instead of a bunch of STA?
 gamemode_fill_everything_long:
@@ -272,63 +282,55 @@ gamemode_fill_everything_long:
 
 gamemode_fill_everything:
 	SEP #$20
-	LDA #$01
-	STA !ram_item_book
-	STA !ram_item_hook
-	STA !ram_item_fire_rod
-	STA !ram_item_ice_rod
-	STA !ram_item_bombos
-	STA !ram_item_ether
-	STA !ram_item_2quake
-	STA !ram_item_lantern
-	STA !ram_item_hammer
-	STA !ram_item_net
-	STA !ram_item_somaria
-	STA !ram_item_byrna
-	STA !ram_item_cape
-	STA !ram_equipment_boots
-	STA !ram_equipment_flippers
-	STA !ram_equipment_moon_pearl
-	STA !ram_equipment_half_magic
+	REP #$10
+	PHB
+	PHK
+	PLB
 
-	LDA #$02
-	STA !ram_item_boom
-	STA !ram_item_mirror
-	STA !ram_item_powder
-	STA !ram_equipment_gloves
-	STA !ram_equipment_shield
-	STA !ram_equipment_armor
+	LDA.b #$7E ; bank of SRAM mirror
+	STA.b $0C
 
-	LDA #$03
-	STA !ram_item_bow
-	STA !ram_item_bottle_array+0
-	STA !ram_item_flute
+	LDY.w #0
 
-	LDA #$04
-	STA !ram_item_bottle_array+1
-	STA !ram_equipment_sword
+.next_item
+	LDX.w .table+0, Y
+	BEQ .itemsover
 
-	LDA #$05
-	STA !ram_item_bottle_array+2
+	STX.w $0A ; SRAM address we're writing to
 
-	LDA #$06 : STA !ram_item_bottle_array+3
+	LDA.w .table+2, Y ; value we're writing
+	STA.b [$0A]
 
-	LDA #$09 : STA !ram_equipment_keys
-	LDA #20<<3 : STA !ram_equipment_maxhp
-	LDA #19<<3 : STA !ram_equipment_curhp
+	INY
+	INY
+	INY
+	BRA .next_item
 
-	; rupees
-	REP #$20 : LDA #$03E7 : STA $7EF360 : STA $7EF362 : SEP #$20
+.itemsover
 
-	LDA #$78
-	STA !ram_equipment_magic_meter
+	; do keys
+	LDA.b $1B ; are we indoors?
+	BEQ .outdoors
 
-	LDA #30
-	STA !ram_item_bombs
-	STA !ram_equipment_arrows_filler
+	LDA.w $040C ; are we in a dungeon?
+	BMI .cavestate
 
-	LDA #$FF
-	STA !ram_capabilities
+	LDA.b #$09
+	BRA .write_keys
+
+.cavestate
+	LDA.b #$FF ; -1 for cavestate
+
+.write_keys
+	STA.l !ram_equipment_keys
+
+.outdoors
+	LDA.l !ram_game_progress : BNE .ignoreprogress
+	LDA #$01 : STA.l !ram_game_progress
+
+.ignoreprogress
+
+	PLB
 
 	SEP #$30
 	JSL DecompSwordGfx
@@ -337,11 +339,89 @@ gamemode_fill_everything:
 	JSL Palette_Shield
 	JSL Palette_Armor
 
-	LDA !ram_game_progress : BNE .exit
-	LDA #$01 : STA !ram_game_progress
+	LDA.b $10
+	CMP.b #$0C
+	BEQ .nopal
+	STZ.w $15 ; prevent palettes from redrawing if we're in the practice menu
 
-.exit
+.nopal
 	RTS
+
+.table
+	dw $F340 : db 4   ; bow: silvers w/ arrows
+	dw $F341 : db 2   ; red boomerang
+	dw $F342 : db 1   ; hookshot
+	dw $F343 : db 30  ; max bombs
+	dw $F344 : db 2   ; powder
+
+	dw $F345 : db 1   ; fire rod
+	dw $F346 : db 1   ; ice rod
+	dw $F347 : db 1   ; bombos
+	dw $F348 : db 1   ; ether
+	dw $F349 : db 1   ; quake
+
+	dw $F34A : db 1   ; lamp
+	dw $F34B : db 1   ; hammer
+	dw $F34C : db 3   ; active flute
+	dw $F34D : db 1   ; bug net
+	dw $F34E : db 1   ; book
+
+	dw $F34F : db 1   ; bottles: slot 1 selected
+	dw $F350 : db 1   ; somaria
+	dw $F351 : db 1   ; byrna
+	dw $F352 : db 1   ; cape
+	dw $F353 : db 2   ; mirror
+
+	dw $F354 : db 2   ; titan's mitt
+	dw $F355 : db 1   ; boots
+	dw $F356 : db 1   ; flippers
+	dw $F357 : db 1   ; pearl
+
+	dw $F359 : db 4   ; gold sword
+	dw $F35A : db 3   ; mirror shield
+	dw $F35B : db 2   ; red mail
+
+	dw $F35C : db 4   ; green potion
+	dw $F35D : db 3   ; red potion
+	dw $F35E : db 5   ; blue potion
+	dw $F35F : db 6   ; fairy
+
+	dw $F360 : db $E7 ; rupees
+	dw $F361 : db $03 ; high byte
+	dw $F362 : db $E7 ; rupees
+	dw $F363 : db $03 ; high byte
+
+	dw $F364 : db $FF ; every compass
+	dw $F365 : db $FF ; more compasses
+	dw $F366 : db $FF ; every big key
+	dw $F367 : db $FF ; more big keys
+	dw $F368 : db $FF ; every map
+	dw $F369 : db $FF ; more maps
+
+	dw $F36D : db $A0 ; 20 hearts
+	dw $F36C : db $98 ; 1 less than max health
+
+	dw $F36E : db $7C ; full magic - 4
+
+	dw $F370 : db 7   ; max bomb upgrades
+	dw $F371 : db 7   ; max arrow upgrades
+
+	dw $F372 : db 0   ; prevent filling of hp
+	dw $F373 : db 0   ; prevent filling of magic
+
+	dw $F374 : db $07 ; every pendant
+
+	dw $F375 : db 0   ; prevent filling of bombs
+	dw $F376 : db 0   ; prevent filling of arrows
+	dw $F377 : db 50  ; max arrows
+
+	dw $F379 : db $FF ; every ability
+	dw $F37A : db $FF ; every crystal
+
+	dw $F37B : db 1   ; half magic
+
+	dl 0 ; end
+
 
 gamemode_reset_segment_timer:
 	REP #$20
@@ -479,10 +559,10 @@ gamemode_somaria_pits:
 ;
 ;	AND #$00FF : LSR : CLC : ADC #$0007 : AND #$FFF8 : TAX
 ;
-;	LDA.l .mp_tilemap+0, X : ORA !lowram_draw_tmp : STA.w SA1HUD+$42
-;	LDA.l .mp_tilemap+2, X : ORA !lowram_draw_tmp : STA.w SA1HUD+$82
-;	LDA.l .mp_tilemap+4, X : ORA !lowram_draw_tmp : STA.w SA1HUD+$C2
-;	LDA.l .mp_tilemap+6, X : ORA !lowram_draw_tmp : STA.w SA1HUD+$102
+;	LDA.l .mp_tilemap+0, X : ORA !lowram_draw_tmp : STA.w SA1RAM.HUD+$42
+;	LDA.l .mp_tilemap+2, X : ORA !lowram_draw_tmp : STA.w SA1RAM.HUD+$82
+;	LDA.l .mp_tilemap+4, X : ORA !lowram_draw_tmp : STA.w SA1RAM.HUD+$C2
+;	LDA.l .mp_tilemap+6, X : ORA !lowram_draw_tmp : STA.w SA1RAM.HUD+$102
 ;
 ;	SEP #$30
 ;	RTS

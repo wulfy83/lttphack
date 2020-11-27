@@ -165,8 +165,8 @@ SA1NMI00:
 SA1IRQ00:
 	JML SA1IRQ
 
-incsrc sa1hud.asm
-incsrc sa1sram.asm
+incsrc SA1HUD.asm
+incsrc SA1SRAM.asm
 
 pullpc
 CacheSA1Stuff:
@@ -320,6 +320,8 @@ SA1Reset:
 
 	LDA #$0000
 	TCD
+	STA.l !SAC_stating
+
 	LDA #$37FF
 	TCS
 
@@ -329,12 +331,15 @@ SA1Reset:
 	SEP #$30
 	STZ.w $2230
 	STZ.w $2231
-	STZ.w $2225
+
 	STZ.w $2209
 	STZ.w $2210
 
 	LDA #$80
 	STA.w $2227
+
+	LDA.b #$03
+	STA.w $2224 ; image 3 for page $60
 
 	LDA #$FF
 	STA.w $222A
@@ -362,7 +367,7 @@ SA1NMI:
 	LDA.b #$10
 	STA.w $220B
 
-	;LDA !lowram_last_frame_did_saveload : BEQ .update_counters
+	;LDA.w SA1RAM.last_frame_did_saveload : BEQ .update_counters
 	;JMP .dont_update_counters
 
 .update_counters
@@ -473,7 +478,7 @@ SA1IRQ:
 	PLB
 
 	LDA.w $2301 ; get IRQ type
-	AND.b #$03
+	AND.b #$07
 	ASL
 	TAX
 
@@ -495,6 +500,11 @@ SA1IRQ:
 	dw .irq_shortcuts
 	dw .irq_nothing
 	dw .irq_hud
+
+	dw .irq_nothing
+	dw .irq_nothing
+	dw .irq_nothing
+	dw .irq_nothing
 
 .irq_hud
 	JSL draw_hud_extras

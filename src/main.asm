@@ -36,7 +36,7 @@ org $288000
 incsrc music.asm
 
 org $298000
-incsrc movie.asm
+;incsrc movie.asm
 
 ; ---- data ----
 

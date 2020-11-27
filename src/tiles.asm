@@ -34,14 +34,14 @@ LoadHudFont:
 	; since the offset is a multiple of 256,
 	; we can just swap the bytes and
 	; add them in as the offset
-	LDA !ram_hud_font : XBA : CLC : ADC.w #hud_font : STA $4302
+	LDA.w !ram_hud_font : XBA : CLC : ADC.w #hud_font : STA $4302
 	LDX.b #hud_font>>16 : STX $4304
 	LDA #$0100 : STA $4305
 
 	STY $420B
 
 LoadHudInputDisplay:
-	LDA !ram_input_display : AND #$0002 : BEQ CustomCharsDone
+	LDA.w !ram_input_display : AND #$0002 : BEQ CustomCharsDone
 	LDA #$7000 : STA $2116
 	LDA #$1801 : STA $4300
 	LDA #hud_inputchars : STA $4302

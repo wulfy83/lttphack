@@ -34,7 +34,7 @@ cm_gameplay_bonk_items:
 cm_gameplay_lit_rooms:
 	%cm_toggle_jsr("Lit rooms", !ram_lit_rooms_toggle)
 .toggle
-	LDA !ram_lit_rooms_toggle : ORA $1B : BEQ .leaveon
+	LDA.w !ram_lit_rooms_toggle : ORA $1B : BEQ .leaveon
 	LDA #$10 : STA $99
 .leaveon
 	RTS

@@ -22,7 +22,7 @@ cm_submenu_rng_control:
 
 cm_rng_pokey:
 	dw !CM_ACTION_CHOICE
-	dl !ram_pokey_rng
+	dl SA1RAM.pokey_rng
 	%cm_item("Pokeys")
 	%cm_item("Random")
 	%cm_item("ul ul")
@@ -45,7 +45,7 @@ cm_rng_pokey:
 
 cm_rng_agahnim:
 	dw !CM_ACTION_CHOICE
-	dl !ram_agahnim_rng
+	dl SA1RAM.agahnim_rng
 	%cm_item("Agahnim")
 	%cm_item("Random")
 	%cm_item("Yellow")
@@ -54,7 +54,7 @@ cm_rng_agahnim:
 
 cm_rng_helmasaur:
 	dw !CM_ACTION_CHOICE
-	dl !ram_helmasaur_rng
+	dl SA1RAM.helmasaur_rng
 	%cm_item("Helmasaur")
 	%cm_item("Random")
 	%cm_item("No fireball")
@@ -63,7 +63,7 @@ cm_rng_helmasaur:
 
 cm_rng_ganon_warp:
 	dw !CM_ACTION_CHOICE
-	dl !ram_ganon_warp_rng
+	dl SA1RAM.ganon_warp_rng
 	%cm_item("Ganon warps")
 	%cm_item("Random")
 	%cm_item("No warp")
@@ -72,7 +72,7 @@ cm_rng_ganon_warp:
 
 cm_rng_ganon_warp_location:
 	dw !CM_ACTION_CHOICE
-	dl !ram_ganon_warp_location_rng
+	dl SA1RAM.ganon_warp_location_rng
 	%cm_item("Ganon warp to")
 	%cm_item("Random")
 	%cm_item("Far left")
@@ -83,7 +83,7 @@ cm_rng_ganon_warp_location:
 
 cm_rng_eyegore:
 	dw !CM_ACTION_CHOICE
-	dl !ram_eyegore_rng
+	dl SA1RAM.eyegore_rng
 	%cm_item("Eyegore walk")
 	%cm_item("Random")
 	%cm_item("Short")
@@ -93,7 +93,7 @@ cm_rng_eyegore:
 
 cm_rng_arrghus:
 	dw !CM_ACTION_CHOICE
-	dl !ram_arrghus_rng
+	dl SA1RAM.arrghus_rng
 	%cm_item("Arrghus walk")
 	%cm_item("Random")
 	%cm_item("Shortest")
@@ -105,7 +105,7 @@ cm_rng_arrghus:
 
 cm_rng_turtles:
 	dw !CM_ACTION_CHOICE
-	dl !ram_turtles_rng
+	dl SA1RAM.turtles_rng
 	%cm_item("Turtles walk")
 	%cm_item("Random")
 	%cm_item("Shortest")
@@ -144,7 +144,7 @@ cm_rng_turtles:
 
 cm_rng_framerule:
 	dw !CM_ACTION_CHOICE
-	dl !ram_framerule
+	dl SA1RAM.framerule
 	%cm_item("Frame rule")
 	%cm_item("Random")
 	%cm_item("00")
@@ -215,7 +215,7 @@ cm_rng_framerule:
 
 cm_rng_lanmola:
 	dw !CM_ACTION_CHOICE
-	dl !ram_lanmola_rng
+	dl SA1RAM.lanmola_rng
 	%cm_item("Lanmola exit")
 	%cm_item("Random")
 	%cm_item("0,0")
@@ -286,7 +286,7 @@ cm_rng_lanmola:
 
 cm_rng_conveyor:
 	dw !CM_ACTION_CHOICE
-	dl !ram_conveyor_rng
+	dl SA1RAM.conveyor_rng
 	%cm_item("Conveyor belt")
 	%cm_item("Random")
 	%cm_item("Right")
@@ -297,7 +297,7 @@ cm_rng_conveyor:
 
 cm_rng_drops:
 	dw !CM_ACTION_CHOICE
-	dl !ram_drop_rng
+	dl SA1RAM.drop_rng
 	%cm_item("Prize packs")
 	%cm_item("Vanilla")
 	%cm_item("Always")
@@ -306,7 +306,7 @@ cm_rng_drops:
 
 cm_rng_vitreous:
 	dw !CM_ACTION_CHOICE
-	dl !ram_vitreous_rng
+	dl SA1RAM.vitreous_rng
 	%cm_item("First Vitty")
 	%cm_item("Random")
 	%cm_item("Slot 5")

@@ -103,10 +103,10 @@ movie_record:
 
 .save_input
 	LDA !ram_movie_timer : STA !ram_movie, X
-	LDA !ram_prev_ctrl : STA !ram_movie+2, X
+	LDA.l !ram_prev_ctrl : STA !ram_movie+2, X
 
 	INX #4 : STX !ram_movie_index : STX !ram_movie_length
-	LDA.w SA1IRAM.CONTROLLER_1 : STA !ram_prev_ctrl
+	LDA.w SA1IRAM.CONTROLLER_1 : STA.l !ram_prev_ctrl
 	STZ !ram_movie_timer
 
 	SEP #$30
@@ -170,7 +170,7 @@ movie_preset_loaded:
 	PHP
 	JSL movie_clear_hud
 
-	LDA #$0000 : STA !ram_movie_index : STA !ram_prev_ctrl
+	LDA #$0000 : STA !ram_movie_index : STA.l !ram_prev_ctrl
 	LDA #$5CE0 : STA !ram_movie_rng_index ; 7FDD00 is the upper limit
 	LDA #$FFFF : STA !ram_movie_timer
 

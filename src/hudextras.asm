@@ -27,6 +27,9 @@ fire_hud_irq:
 	RTS
 
 ; for lanmo counters
+org $05A39F
+	JML ResetLanmoCycles
+
 org $05A40E
 	JSL UpdateLanmoCycles
 	NOP
@@ -42,6 +45,11 @@ UpdateLanmoCycles:
 	INC.w $0D80, X
 	INC.w SA1IRAM.LanmoCycles, X
 	LDA.b #$18
+	RTL
+
+ResetLanmoCycles:
+	STA.l $7FF81E, X
+	STZ.w SA1IRAM.LanmoCycles, X
 	RTL
 
 ;==============================================================================
@@ -122,7 +130,7 @@ Draw:
 	AND.w #$000F
 	ORA.b SA1IRAM.SCRATCH+12
 ..draw
-	STA.w SA1HUD+10, X
+	STA.w SA1RAM.HUD+10, X
 
 .digit10
 	LDA.w #$207F
@@ -135,13 +143,13 @@ Draw:
 	LSR
 	ORA.b SA1IRAM.SCRATCH+12
 ..draw
-	STA.w SA1HUD+12, X
+	STA.w SA1RAM.HUD+12, X
 
 .digit1
 	LDA.b (SA1IRAM.SCRATCH+10)
 	AND.w #$000F
 	ORA.b SA1IRAM.SCRATCH+12
-	STA.w SA1HUD+14, X
+	STA.w SA1RAM.HUD+14, X
 
 .done
 	RTS
@@ -168,21 +176,20 @@ hex_to_dec_snes:
 	ASL : TAX
 	LDA.l hex_to_dec_fast_table, X
 	SEP #$20 ; slightly faster overall to use this
-	TAY : AND #$0F : STA.w !ram_hex2dec_third_digit
-	TYA : AND #$F0 : LSR #4 : STA.w !ram_hex2dec_second_digit
-	XBA : AND #$0F : STA.w !ram_hex2dec_first_digit
+	TAY : AND #$0F : STA.w SA1RAM.hex2dec_third_digit
+	TYA : AND #$F0 : LSR #4 : STA.w SA1RAM.hex2dec_second_digit
+	XBA : AND #$0F : STA.w SA1RAM.hex2dec_first_digit
 	REP #$20 : TYA
 	RTL
 
 hex_to_dec_fast:
 	PHP
-	REP #$10
+	REP #$30
 	ASL : TAX
 	LDA.w hex_to_dec_fast_table, X
-	SEP #$20 ; slightly faster overall to use this
-	TAY : AND #$0F : STA.b SA1IRAM.SCRATCH+4
-	TYA : AND #$F0 : LSR #4 : STA.b SA1IRAM.SCRATCH+2
-	XBA : AND #$0F : STA.b SA1IRAM.SCRATCH+0
+	TAY : AND.w #$000F : STA.b SA1IRAM.SCRATCH+4
+	TYA : AND.w #$00F0 : LSR #4 : STA.b SA1IRAM.SCRATCH+2
+	XBA : AND.w #$000F : STA.b SA1IRAM.SCRATCH+0
 	PLP
 	RTS
 
@@ -306,7 +313,7 @@ draw_hud_extras:
 	REP #$30
 	LDA.w #$24A0
 	ADC.w #$0000
-	STA.w SA1HUD+$90
+	STA.w SA1RAM.HUD+$90
 
 	LDA.w SA1IRAM.CopyOf_7EF36D
 	AND.w #$00FF
@@ -317,18 +324,18 @@ draw_hud_extras:
 
 	LDA.b SA1IRAM.SCRATCH+2
 	ORA #$3C90
-	STA.w SA1HUD+$92
+	STA.w SA1RAM.HUD+$92
 
 	LDA.b SA1IRAM.SCRATCH+4
 	ORA #$3C90
-	STA.w SA1HUD+$94
+	STA.w SA1RAM.HUD+$94
 
 	LDA.w SA1IRAM.CopyOf_7EF36D
 	AND.w #$0007
 	ORA.w #$3490
-	STA.w SA1HUD+$96
+	STA.w SA1RAM.HUD+$96
 
-	LDA.l !ram_heartlag_spinner
+	LDA.w !ram_heartlag_spinner
 	BNE .doheartlag
 
 	LDA.w #$207F
@@ -359,11 +366,11 @@ draw_hud_extras:
 	ORA.w #$253F
 
 .drawheartlag
-	STA.w SA1HUD+$98
+	STA.w SA1RAM.HUD+$98
 
 	; containers
 	LDA.w #$24A2
-	STA.w SA1HUD+$9A
+	STA.w SA1RAM.HUD+$9A
 
 	LDA.w SA1IRAM.CopyOf_7EF36C
 	AND.w #$00FF
@@ -374,22 +381,22 @@ draw_hud_extras:
 
 	LDA.b SA1IRAM.SCRATCH+2
 	ORA #$3C90
-	STA.w SA1HUD+$9C
+	STA.w SA1RAM.HUD+$9C
 
 	LDA.b SA1IRAM.SCRATCH+4
 	ORA #$3C90
-	STA.w SA1HUD+$9E
+	STA.w SA1RAM.HUD+$9E
 
 	; clear up counters
 	REP #$20
 	SEP #$10
 	LDA.w #$207F
 	LDX.b #$14
---	STA.w SA1HUD+$28+($40*0), X
-	STA.w SA1HUD+$28+($40*1), X
-	STA.w SA1HUD+$28+($40*2), X
-	STA.w SA1HUD+$28+($40*3), X
-	STA.w SA1HUD+$28+($40*4), X
+--	STA.w SA1RAM.HUD+$28+($40*0), X
+	STA.w SA1RAM.HUD+$28+($40*1), X
+	STA.w SA1RAM.HUD+$28+($40*2), X
+	STA.w SA1RAM.HUD+$28+($40*3), X
+	STA.w SA1RAM.HUD+$28+($40*4), X
 
 	DEX
 	DEX
@@ -405,7 +412,7 @@ draw_hud_extras:
 
 .roomtime
 
-	LDA.l !ram_counters_real
+	LDA.w !ram_counters_real
 	JSR UpdateCounterLine
 	BCC ..skip
 
@@ -423,7 +430,7 @@ draw_hud_extras:
 
 ..skip
 .lagtime
-	LDA.l !ram_counters_lag
+	LDA.w !ram_counters_lag
 	JSR UpdateCounterLine
 	BCC ..skip
 
@@ -433,7 +440,7 @@ draw_hud_extras:
 
 ..skip
 .idletime
-	LDA.l !ram_counters_idle
+	LDA.w !ram_counters_idle
 	JSR UpdateCounterLine
 	BCC ..skip
 
@@ -443,7 +450,7 @@ draw_hud_extras:
 
 ..skip
 .segmenttime
-	LDA.l !ram_counters_segment
+	LDA.w !ram_counters_segment
 	JSR UpdateCounterLine
 	BCC ..skip
 
@@ -473,14 +480,14 @@ draw_hud_extras:
 .calccoordposition
 	CLC
 	LDA.w #$0001
-	ADC.l !ram_counters_real
-	ADC.l !ram_counters_lag
-	ADC.l !ram_counters_idle
-	ADC.l !ram_counters_segment
+	ADC.w !ram_counters_real
+	ADC.w !ram_counters_lag
+	ADC.w !ram_counters_idle
+	ADC.w !ram_counters_segment
 	STA.b SA1IRAM.SCRATCH+8
 
 .coordinates
-	LDA.l !ram_xy_toggle
+	LDA.w !ram_xy_toggle
 	BEQ ..skip
 
 	INC ; +2 for number of digits
@@ -496,7 +503,7 @@ draw_hud_extras:
 ..skip
 ;==============================================================================
 hud_draw_input_display:
-	LDA.l !ram_input_display
+	LDA.w !ram_input_display
 	AND #$0003
 	ASL : TAX
 	LDA.w SA1IRAM.CONTROLLER_1
@@ -507,16 +514,16 @@ hud_draw_input_display:
 ; clean up the stuff right under items
 	REP #$30
 	LDA.w #$207F
-	STA.w SA1HUD+$10A
-	STA.w SA1HUD+$10C
-	STA.w SA1HUD+$10E
+	STA.w SA1RAM.HUD+$10A
+	STA.w SA1RAM.HUD+$10C
+	STA.w SA1RAM.HUD+$10E
 
 	LDA.b SA1IRAM.CopyOf_1B
 	LSR
 	BCC draw_quickwarp
 
 draw_lanmo_cycles:
-	LDA.l !ram_toggle_lanmola_cycles
+	LDA.w !ram_toggle_lanmola_cycles
 	LSR
 	BCC extra_ram
 
@@ -531,7 +538,7 @@ draw_lanmo_cycles:
 	LDA.w SA1IRAM.LanmoCycles, X
 	AND.w #$00FF
 	ORA.w #$2010
-	STA.w SA1HUD+$10A, Y
+	STA.w SA1RAM.HUD+$10A, Y
 	DEY
 	DEY
 	DEX
@@ -542,7 +549,7 @@ draw_lanmo_cycles:
 ;==============================================================================
 draw_quickwarp:
 	SEP #$30 ; M=8 for just this is few cycles faster
-	LDA.l !ram_qw_toggle : LSR ; shift toggle into carry
+	LDA.w !ram_qw_toggle : LSR ; shift toggle into carry
 	LDA.w SA1IRAM.CopyOf_E2 : AND #$06 ; this tests the bits for camera
 	ORA.w SA1IRAM.CopyOf_1B ; make QW only display in overworld, where $1B = 0
 	ROL ; roll carry flag into bottom bit
@@ -555,19 +562,19 @@ draw_quickwarp:
 	BNE .skip
 
 	LDA #$340C ; 3
-	STA.w SA1HUD+$10A
+	STA.w SA1RAM.HUD+$10A
 	INC
-	STA.w SA1HUD+$10C
+	STA.w SA1RAM.HUD+$10C
 
 .skip
 ;==============================================================================
 extra_ram:
-	LDA.l !ram_extra_ram_watch : BEQ .nowatch
+	LDA.w !ram_extra_ram_watch : BEQ .nowatch
 	LDA #$0001
 	JSR UpdateCounterLine
 	BCC .nowatch
 
-	LDA.l !ram_extra_ram_watch : ASL : TAY
+	LDA.w !ram_extra_ram_watch : ASL : TAY
 	LDA.w extra_ram_watch_routines, Y
 	PEA.w .return-1 ; so we can RTS back
 	PHA ; push the location of the routine
@@ -699,7 +706,7 @@ extra_ram_watch_routines:
 ..nodoor
 	LDA.w #!EMPTY
 
-++	STA.w SA1HUD+06, X
+++	STA.w SA1RAM.HUD+06, X
 
 .subpixels
 	LDA.w #!yellow
@@ -755,7 +762,7 @@ DrawCoordinates:
 	PHA ; remember coordinates
 	AND.w #$000F ; get digit
 	ORA.b SA1IRAM.SCRATCH+10 ; add in color
-	STA.w SA1HUD+14, X
+	STA.w SA1RAM.HUD+14, X
 	PLA ; recover value
 	DEX
 	DEX
@@ -768,7 +775,7 @@ DrawCoordinates:
 ;==============================================================================
 UpdateGlitchedWindow:
 	SEP #$30
-	LDA.l !ram_superwatch
+	LDA.w !ram_superwatch
 	AND.b #$03
 	ASL : TAX
 	JMP (.routines, X)
@@ -812,7 +819,7 @@ ClearSWBuffer:
 	REP #$30
 	LDA.w #$207F
 	LDX.w #$013C
---	STA.w !dg_buffer, X
+--	STA.w SA1RAM.SW_BUFFER, X
 	DEX
 	DEX
 	BPL --

@@ -53,19 +53,19 @@ UpdateAncillaWindow:
 
 	; do search index
 	LDA.w SA1IRAM.CopyOf_03C4 : LSR #4
-	ORA #$10 : TAX : STX.w !dg_buffer+0
+	ORA #$10 : TAX : STX.w SA1RAM.SW_BUFFER+0
 
 	LDA.w SA1IRAM.CopyOf_03C4 : AND #$0F
-	ORA #$10 : TAX : STX.w !dg_buffer+2
+	ORA #$10 : TAX : STX.w SA1RAM.SW_BUFFER+2
 
 	LDA #$38 : XBA
 
 	; do eg thing
 	LDA.w SA1IRAM.CopyOf_03A4  : LSR #4
-	ORA #$10 : TAX : STX.w !dg_buffer+6
+	ORA #$10 : TAX : STX.w SA1RAM.SW_BUFFER+6
 
 	LDA.w SA1IRAM.CopyOf_03A4  : AND #$0F
-	ORA #$10 : TAX : STX.w !dg_buffer+8
+	ORA #$10 : TAX : STX.w SA1RAM.SW_BUFFER+8
 
 	; do each ancilla
 	LDY.w #$0009
@@ -82,7 +82,7 @@ UpdateAncillaWindow:
 	ASL
 	ASL
 
-	ADC.w #!dg_buffer
+	ADC.w #SA1RAM.SW_BUFFER
 	STA.b SA1IRAM.SCRATCH+10
 
 	; get ID color in top byte of A

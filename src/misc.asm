@@ -48,7 +48,7 @@ absorbexit_continue:
 pullpc
 
 triforce_transition:
-	LDA !ram_skip_triforce_toggle : BNE .skip_triforce
+	LDA.w !ram_skip_triforce_toggle : BNE .skip_triforce
 	JSL $02A0BE ; Dungeon_SaveRoomData_justKeys
 	JML $02B797
 
@@ -61,8 +61,8 @@ dropluck:
 	; use this value when it isn't 0 or "random"
 	; use vanilla value when this is 0 so that it can be used
 	; by people who want to test fairy stuff I guess
-	LDA !ram_drop_rng : BEQ .vanilla
-	TAY : JML afterdropluck ; was hoping this coulda been simpler but luck needs to be in Y
+	LDY.w SA1RAM.drop_rng : BEQ .vanilla
+	JML afterdropluck ; was hoping this coulda been simpler but luck needs to be in Y
 
 .vanilla
 	LDY $0CF9
@@ -94,7 +94,7 @@ set_probe_gfx:
 probe_draw:
 	LDA $01 : ORA $03 : PHP ; storing the Z flag since we'll RTL to a BEQ
 
-	LDA !ram_probe_toggle : BEQ .skip
+	LDA.w !ram_probe_toggle : BEQ .skip
 
 	LDA $00 : STA ($90), Y
 	LDA $01 : CMP #$01
@@ -106,7 +106,7 @@ probe_draw:
 
 	SBC #$0F : STA ($90), Y
 	INY
-	LDA !sparks_gfx : STA ($90), Y
+	LDA.l !sparks_gfx : STA ($90), Y
 	INY
 	LDA $05 : STA ($90), Y
 
@@ -115,7 +115,7 @@ probe_draw:
 	RTL
 
 absorbable_check:
-	LDA !ram_bonk_items_toggle : BNE .alwaysdraw ; always draw, if on
+	LDA.w !ram_bonk_items_toggle : BNE .alwaysdraw ; always draw, if on
 
 .vanilla
 	LDA $0E90, X : BNE ++
@@ -131,7 +131,7 @@ absorbable_check:
 ++	JML absorbexit_continue
 
 set_moving_wall_speed:
-	LDA !ram_fast_moving_walls : BEQ .normal
+	LDA.w !ram_fast_moving_walls : BEQ .normal
 	LDA #$0008
 	RTL
 .normal

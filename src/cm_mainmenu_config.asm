@@ -18,7 +18,7 @@ cm_config_music:
 	%cm_toggle_jsr("Music", !ram_feature_music)
 
 .toggle
-	LDA.l !ram_feature_music : BNE ++
+	LDA.w !ram_feature_music : BNE ++
 	JSL mute_music
 	RTS
 

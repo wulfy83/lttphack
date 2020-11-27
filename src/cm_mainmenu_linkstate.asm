@@ -54,7 +54,7 @@ cm_link_state_finish_mirrordoor:
 	%cm_jsr("Finish mirror door")
 .routine
 	REP #$20
-	LDA.l !ram_cm_old_gamemode : CMP #$0007 : BEQ .allow
+	LDA.w SA1RAM.cm_old_gamemode : CMP #$0007 : BEQ .allow
 	CMP #$010E : BNE nothappening
 	LDA $010C : CMP #$1A07 : BNE nothappening
 .allow

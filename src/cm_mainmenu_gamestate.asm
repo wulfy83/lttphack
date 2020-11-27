@@ -21,7 +21,7 @@ cm_submenu_game_state:
 
 cm_game_state_world:
 	dw !CM_ACTION_TOGGLE_BIT_TEXT
-	dl !ram_cm_gamestate_world
+	dl SA1RAM.cm_gamestate_world
 	db $40
 	%cm_item("World")
 	%cm_item("Light World")
@@ -39,17 +39,17 @@ cm_game_state_crystal_switch:
 
 .update_tilemap
 	STA $7EC172
-	CMP !ram_cm_old_crystal_switch : BEQ .skip
+	CMP.w SA1RAM.cm_old_crystal_switch : BEQ .skip
 
-	LDA !ram_cm_old_gamemode : CMP #$07 : BNE .done
-	LDA !ram_cm_old_submode : BNE .done
+	LDA.w SA1RAM.cm_old_gamemode : CMP #$07 : BNE .done
+	LDA.w SA1RAM.cm_old_submode : BNE .done
 
-	LDA #$16 : STA !ram_cm_old_submode
+	LDA #$16 : STA.w SA1RAM.cm_old_submode
 
 	RTS
 
 .skip
-	LDA #$00 : STA !ram_cm_old_submode
+	STZ.w SA1RAM.cm_old_submode
 
 .done
 	RTS

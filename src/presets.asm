@@ -60,14 +60,14 @@ org $02C240
 load_entrance_local:
 	; Enters AI=8
 	; This is called without using presets too, so need to redirect to the correct code.
-	LDA !ram_preset_type : BNE .custom
+	LDA.w SA1RAM.preset_type : BNE .custom
 
 	JSR Dungeon_LoadEntrance
 	SEP #$30
 	RTS
 
 .custom
-	LDA #$00 : STA !ram_preset_type
+	LDA #$00 : STA.w SA1RAM.preset_type
 	JSR Dungeon_LoadEntrance
 	JSL preset_load_dungeon
 	SEP #$30
@@ -110,7 +110,7 @@ preset_load_next_frame:
 	LDA #$F0 : STA $012C
 	LDA #$05 : STA $012D
 
-	LDA !ram_preset_type : CMP #$02 : BEQ .dungeon
+	LDA.w SA1RAM.preset_type : CMP #$02 : BEQ .dungeon
 
 	; "Moving floor" flag that needs to be reset to prevent overworld bugs
 	; when loading preset from Mothula, Conveyor rooms etc.
@@ -129,7 +129,7 @@ preset_load_next_frame:
 	RTL
 
 .dungeon
-	LDA #$08 : STA !ram_preset_spotlight_timer
+	LDA #$08 : STA.w SA1RAM.preset_spotlight_timer
 
 	; Makes PreDungeon not use a smaller "entrance only" table for data.
 	STZ $04AA
@@ -165,8 +165,8 @@ preset_deinit_current_state:
 
 	LDA #$81 : STA $4200 ; disable IRQ
 
-	LDA !ram_cm_old_gamemode : CMP #$0E : BNE .not_message_module
-	LDA !ram_cm_old_submode : CMP #$02 : BNE .not_message_module
+	LDA.w SA1RAM.cm_old_gamemode : CMP #$0E : BNE .not_message_module
+	LDA.w SA1RAM.cm_old_submode : CMP #$02 : BNE .not_message_module
 
 	JSR preset_deinit_dialog_mode
 
@@ -201,7 +201,7 @@ preset_deinit_dialog_mode:
 
 preset_load_overworld:
 	; Enters: AI=8
-	LDA !ram_preset_type : BNE .preset
+	LDA.w SA1RAM.preset_type : BNE .preset
 
 	; This means we got here from the actual Bird menu (how boring),
 	; so let's just jump to the original function.
@@ -212,11 +212,11 @@ preset_load_overworld:
 	; Set link to be in the Overworld
 	STZ $1B
 
-	LDA !ram_preset_category : TAX
+	LDA.w !ram_preset_category : TAX
 	LDA.l cm_preset_data_banks, X : STA $02
 
 	REP #$30
-	LDA !ram_preset_destination : STA $00
+	LDA.w SA1RAM.preset_destination : STA $00
 	LDY #$0000
 
 	STZ $04AC
@@ -248,7 +248,7 @@ preset_load_overworld:
 	LDA [$00], Y : INY #2 : STA $0628
 	LDA #$0000 : SEC : SBC $0628 : STA $062A
 
-	LDA [$00], Y : INY #2 : STA !ram_preset_end_of_sram_state
+	LDA [$00], Y : INY #2 : STA.w SA1RAM.preset_end_of_sram_state
 
 	SEP #$30
 	; LW/DW
@@ -286,10 +286,10 @@ preset_load_dungeon:
 	; Can leave with anything.
 	PHB
 
-	LDA !ram_preset_category : TAX
+	LDA.w !ram_preset_category : TAX
 	LDA.l cm_preset_data_banks, X : STA $02
 	REP #$30
-	LDA !ram_preset_destination : STA $00
+	LDA.w SA1RAM.preset_destination : STA $00
 	LDY #$0000
 
 	; Room index
@@ -384,7 +384,7 @@ preset_load_dungeon:
 
 	REP #$30
 	PLY
-	LDA [$00], Y : INY #2 : STA !ram_preset_end_of_sram_state
+	LDA [$00], Y : INY #2 : STA.w SA1RAM.preset_end_of_sram_state
 	JSR preset_load_state
 	SEP #$30
 	PLB
@@ -398,10 +398,10 @@ preset_sprite_reset_all:
 
 	; Check if we want to load our own state.
 	REP #$30
-	LDA !ram_preset_end_of_sram_state : BEQ .end
+	LDA.w SA1RAM.preset_end_of_sram_state : BEQ .end
 
 	JSR preset_load_state
-	LDA #$0000 : STA !ram_preset_end_of_sram_state
+	LDA #$0000 : STA.w SA1RAM.preset_end_of_sram_state
 	;JSL movie_preset_loaded
 .end
 	SEP #$30
@@ -414,11 +414,11 @@ preset_load_state:
 	JSR preset_clear_for_initial_preset
 
 	SEP #$20
-	LDA !ram_preset_category : TAX
+	LDA.w !ram_preset_category : TAX
 	PHB : LDA.l cm_preset_data_banks, X : PHA : PLB
 	REP #$20
-	LDA !ram_preset_end_of_sram_state : STA $06
-	LDA !ram_preset_category : AND #$00FF : ASL : TAX
+	LDA.w SA1RAM.preset_end_of_sram_state : STA $06
+	LDA.w !ram_preset_category : AND #$00FF : ASL : TAX
 	LDA.l preset_start_ptrs, X : STA $00
 
 .next_item
@@ -470,11 +470,11 @@ preset_load_state:
 	JSL Tagalong_LoadGfx
 
 .no_tagalong
-	LDA !ram_game_progress : CMP #$02 : BMI .done
+	LDA.l !ram_game_progress : CMP #$02 : BMI .done
 
-	LDA !ram_sanctuary_heart : BEQ .done
-	LDA !ram_equipment_maxhp : CLC : ADC #$08 : STA !ram_equipment_maxhp
-	LDA !ram_equipment_curhp : CLC : ADC #$08 : STA !ram_equipment_curhp
+	LDA.w !ram_sanctuary_heart : BEQ .done
+	LDA.l !ram_equipment_maxhp : CLC : ADC #$08 : STA.l !ram_equipment_maxhp
+	LDA.l !ram_equipment_curhp : CLC : ADC #$08 : STA.l !ram_equipment_curhp
 
 .done
 	REP #$30
@@ -553,19 +553,18 @@ preset_reset_state_after_loading:
 
 preset_reset_counters:
 	SEP #$20
-	LDA #$00
-	STA !ram_lanmola_cycles+0
-	STA !ram_lanmola_cycles+1
-	STA !ram_lanmola_cycles+2
+	STZ.w SA1IRAM.LanmoCycles+0
+	STZ.w SA1IRAM.LanmoCycles+1
+	STZ.w SA1IRAM.LanmoCycles+2
 	LDA #$41 : STA SA1IRAM.TIMER_FLAG
 	RTS
 
 
 preset_load_last_preset:
 	REP #$20
-	LDA !ram_previous_preset_destination : STA !ram_preset_destination
+	LDA.w SA1RAM.previous_preset_destination : STA.w SA1RAM.preset_destination
 	SEP #$20
-	LDA !ram_previous_preset_type : STA !ram_preset_type
+	LDA.w SA1RAM.previous_preset_type : STA.w SA1RAM.preset_type
 	LDA #12 : STA $10
 	LDA #05 : STA $11
 	RTL
@@ -573,13 +572,13 @@ preset_load_last_preset:
 
 preset_duck_dropoff_hook:
 	PHA
-	LDA !ram_preset_type : BNE .custom
+	LDA.w SA1RAM.preset_type : BNE .custom
 
 	PLA
 	JML $099509
 
 .custom
-	LDA #$00 : STA !ram_preset_type
+	LDA #$00 : STA.w SA1RAM.preset_type
 
 	LDA $02E0 : ORA $56 : BEQ .notBunny
 
@@ -592,7 +591,7 @@ preset_duck_dropoff_hook:
 
 
 preset_autoload_preset:
-	LDA !ram_autoload_preset : BEQ .die
+	LDA.w !ram_autoload_preset : BEQ .die
 
 	JML preset_load_last_preset
 
@@ -604,8 +603,8 @@ preset_autoload_preset:
 
 
 preset_did_we_load_preset:
-	LDA !ram_preset_spotlight_timer : BEQ .not_preset
-	DEC : STA !ram_preset_spotlight_timer : BEQ .done
+	LDA.w SA1RAM.preset_spotlight_timer : BEQ .not_preset
+	DEC : STA.w SA1RAM.preset_spotlight_timer : BEQ .done
 	STA $2100 : STA $13
 	SEC
 	RTL
@@ -616,7 +615,7 @@ preset_did_we_load_preset:
 	LDA $010C : STA $10
 	STZ $11
 	LDA #$80 : STA $2100 : STA $13
-	LDA #$08 : STA !ram_preset_spotlight_timer
+	LDA #$08 : STA.w SA1RAM.preset_spotlight_timer
 	SEC
 	RTL
 
@@ -627,9 +626,9 @@ preset_did_we_load_preset:
 
 
 preset_spotlight_open_hook:
-	LDA !ram_preset_spotlight_timer : BEQ .not_preset
-	DEC : STA !ram_preset_spotlight_timer : BEQ .done
-	LDA #$0F : SEC : SBC !ram_preset_spotlight_timer : STA $2100 : STA $13
+	LDA.w SA1RAM.preset_spotlight_timer : BEQ .not_preset
+	DEC : STA.w SA1RAM.preset_spotlight_timer : BEQ .done
+	LDA #$0F : SEC : SBC.w SA1RAM.preset_spotlight_timer : STA $2100 : STA $13
 	RTL
 
 .done

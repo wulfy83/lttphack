@@ -558,7 +558,7 @@ db $18 ;Agahnim teleporting Zelda to dark world
 db $C2 ;Boulders / Rocks from Lanmolas erupting from the ground
 db $18 ;Gibo (vulnerable part)
 db $C4 ;Thief
-db $18 ;Evil Fireball Spitters (THE FACES!!!)
+db $18 ;Evil Fireball Spitters (THE FACES!!)
 db $C6 ;Four Way Fireball Spitters (spit when you use your sword)
 db $18 ;Hokbok (HM calls it Fuzzy Stack, I think?)
 db $C8 ;Big Healing Faeries / Faerie Dust
