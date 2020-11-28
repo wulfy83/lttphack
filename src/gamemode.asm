@@ -181,25 +181,47 @@ DMA_BWRAMSRAM:
 
 	STA.w $4310 ; direction
 	LDA.b #$80 : STA.w $4311 ; wram
+	LDA.b #$41 : STA.w $4314
 
-	STZ.w $2183 ; wram bank 7E
-	LDX.w #$0000 : STX.w $2181 ; wram address 0
+	LDX.w #$0000
+	TXA : XBA ; top byte 0
 	STX.w $4312 ; bottom of bank
-	LDA.b #$41 : STA.w $4314 ; this bank for WRAM 7E
-	STX.w $4315 ; 0 = 64kb
+
+
+.next
+	LDA.w .address_size+2, X ; get bank
+	BEQ .done
+
+	STA.w $2183
+	LDY.w .address_size+0, X
+	STY.w $2181
+
+	LDY.w .address_size+3, X
+	STY.w $4315
 
 	LDA.b #$02 : STA.w $420B
 
-	LDA.b #$01 : STA.w $2183 ; wram bank 7F
-	LDX.w #$0000 : STX.w $2181 ; wram address 0
-	STX.w $4312 ; bottom of bank
-	LDA.b #$42 : STA.w $4314 ; this bank for WRAM 7F
-	STX.w $4315 ; 0 = 64kb
+	TXA
+	CLC
+	ADC.b #$05
+	TAX
+	BRA .next
 
-	LDA.b #$02 : STA.w $420B
-
+.done
 	LDX.w $4328 : PHX
 	RTS
+
+.address_size
+	dl $7E0000 : dw $6000
+	dl $7EC000 : dw $0900
+	dl $7EE800 : dw $1800
+
+	dl $7F0000 : dw $6000
+	dl $7FDD80 : dw $1200
+	dl $7FF800 : dw $7FFF
+
+	dl 0
+
 
 gamemode_end:
 	LDA.b $4310
@@ -219,7 +241,7 @@ gamemode_end:
 
 	LDX.w #$0000
 	STX.w $4312
-	LDA.b #$43
+	LDA.b #$42
 	STA.w $4314
 
 	STX.w $4315

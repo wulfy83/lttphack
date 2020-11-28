@@ -12,32 +12,27 @@ db "                     " ; empty this
 
 org $00FFC0
 db "ALTTPRAC !VERSIONTEXT"
+warnpc $00FFD5
 pulltable
 
 ; SA-1
-org $00FFD5 : db $23, $35
+org $00FFD5 : db $23, $36
 
 ; ROM Size
 org $00FFD7 : db 11 ; 2mb
 
 ; SRAM Size
-org $00FFD8 : db 5 ; 256k
-org $00FFBD : db 7 ; 256k
+org $00FFD8 : db 11 ; 256k
 
-
-macro file_select_text(n)
 pushtable
 table ../resources/fileselecttop.tbl
 	org $0CDDF0 : fillword $0188 : fill 52
-	org $0CDDF0 : dw "<n>"
+	org $0CDDF0 : dw "PRACTICE HACK !VERSIONTEXT"
 
 table ../resources/fileselectbot.tbl
 	org $0CDE2C : fillword $0188 : fill 52
-	org $0CDE2C : dw "<n>"
+	org $0CDE2C : dw "PRACTICE HACK !VERSIONTEXT"
 pulltable
-endmacro
-
-%file_select_text("PRACTICE HACK !VERSIONTEXT")
 
 ; == CTRL 2 ==
 ;
