@@ -295,8 +295,8 @@ InitSA1:
 	LDA #$80
 	STA.w $2226
 
-	STZ.w $2224
-	STZ.w $2225
+	LDA.b #$03
+	STA.w $2224
 
 	LDA #$FF
 	STA.w $2202
@@ -339,7 +339,7 @@ SA1Reset:
 	STA.w $2227
 
 	LDA.b #$03
-	STA.w $2224 ; image 3 for page $60
+	STA.w $2225 ; image 3 for page $60
 
 	LDA #$FF
 	STA.w $222A
@@ -478,7 +478,7 @@ SA1IRQ:
 	PLB
 
 	LDA.w $2301 ; get IRQ type
-	AND.b #$07
+	AND.b #$03
 	ASL
 	TAX
 

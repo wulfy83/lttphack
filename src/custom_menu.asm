@@ -353,9 +353,6 @@ cm_clear_stack:
 cm_clear_buffer:
 	; Assumes I=8
 	REP #$20
-
-	PHB
-	LDX.b #SA1RAM.MENU>>16 : PHX : PLB
 	LDX.b #$00
 
 	; value of a transparent tile
@@ -375,7 +372,6 @@ cm_clear_buffer:
 	CPX.b #$80 : BCC .loop
 
 	SEP #$20
-	PLB
 	RTS
 
 cm_transfer_tileset:
@@ -414,8 +410,6 @@ cm_redraw:
 
 cm_draw_background_gfx:
 	SEP #$20
-	PHB
-	LDA.b #SA1RAM.MENU>>16 : PHA : PLB
 
 	REP #$30
 	LDA #$30FB : STA.w SA1RAM.MENU+$0102
@@ -471,7 +465,6 @@ cm_draw_background_gfx:
 	DEY : BPL .drawBoxInterior
 
 	SEP #$30
-	PLB
 	RTS
 
 cm_draw_active_menu:
@@ -533,8 +526,8 @@ cm_draw_text:
 
 .loop
 	LDA ($02), Y : CMP #$FF : BEQ .end
-	STA.l SA1RAM.MENU, X : INX
-	LDA $0E : STA.l SA1RAM.MENU, X : INX
+	STA.w SA1RAM.MENU, X : INX
+	LDA $0E : STA.w SA1RAM.MENU, X : INX
 	INY : BRA .loop
 
 .end
@@ -1057,24 +1050,24 @@ cm_draw_toggle:
 	SEP #$20
 	; set palette
 	LDA $0E
-	STA.l SA1RAM.MENU+1, X
-	STA.l SA1RAM.MENU+3, X
-	STA.l SA1RAM.MENU+5, X
+	STA.w SA1RAM.MENU+1, X
+	STA.w SA1RAM.MENU+3, X
+	STA.w SA1RAM.MENU+5, X
 
 	; grab the value at that memory address
 	LDA [$04] : BNE .checked
 
 	; No
-	LDA.b #$0D : STA.l SA1RAM.MENU+0, X
-	LDA.b #$38 : STA.l SA1RAM.MENU+2, X
+	LDA.b #$0D : STA.w SA1RAM.MENU+0, X
+	LDA.b #$38 : STA.w SA1RAM.MENU+2, X
 
 	BRA .end
 
 .checked
 	; Yes
-	LDA.b #$18 : STA.l SA1RAM.MENU+0, X
-	LDA.b #$2E : STA.l SA1RAM.MENU+2, X
-	LDA.b #$3C : STA.l SA1RAM.MENU+4, X
+	LDA.b #$18 : STA.w SA1RAM.MENU+0, X
+	LDA.b #$2E : STA.w SA1RAM.MENU+2, X
+	LDA.b #$3C : STA.w SA1RAM.MENU+4, X
 
 .end
 	REP #$20
@@ -1212,9 +1205,9 @@ cm_draw_numfield:
 
 	; Clear out the area (black tile)
 	LDA #$24F5
-	STA.l SA1RAM.MENU+0, X
-	STA.l SA1RAM.MENU+2, X
-	STA.l SA1RAM.MENU+4, X
+	STA.w SA1RAM.MENU+0, X
+	STA.w SA1RAM.MENU+2, X
+	STA.w SA1RAM.MENU+4, X
 
 	; Set palette
 	SEP #$20
@@ -1224,17 +1217,17 @@ cm_draw_numfield:
 
 	; Draw numbers
 	LDA.w SA1RAM.hex2dec_first_digit : BEQ .second_digit
-	CLC : ADC $0E : STA.l SA1RAM.MENU+0, X
+	CLC : ADC $0E : STA.w SA1RAM.MENU+0, X
 	INX #2
 
 .second_digit
 	LDA.w SA1RAM.hex2dec_second_digit : BEQ .third_digit
-	CLC : ADC $0E : STA.l SA1RAM.MENU+0, X
+	CLC : ADC $0E : STA.w SA1RAM.MENU+0, X
 	INX #2
 
 .third_digit
 	LDA.w SA1RAM.hex2dec_third_digit : CLC : ADC $0E
-	STA.l SA1RAM.MENU+0, X
+	STA.w SA1RAM.MENU+0, X
 
 	RTS
 
@@ -1268,24 +1261,24 @@ cm_draw_toggle_bit:
 	SEP #$20
 	; set palette
 	LDA $0E
-	STA.l SA1RAM.MENU+1, X
-	STA.l SA1RAM.MENU+3, X
-	STA.l SA1RAM.MENU+5, X
+	STA.w SA1RAM.MENU+1, X
+	STA.w SA1RAM.MENU+3, X
+	STA.w SA1RAM.MENU+5, X
 
 	; grab the value at that memory address
 	LDA [$04] : AND $07 : BNE .checked
 
 	; No
-	LDA.b #$0D : STA.l SA1RAM.MENU+0, X
-	LDA.b #$38 : STA.l SA1RAM.MENU+2, X
+	LDA.b #$0D : STA.w SA1RAM.MENU+0, X
+	LDA.b #$38 : STA.w SA1RAM.MENU+2, X
 
 	BRA .end
 
 .checked
 	; Yes
-	LDA.b #$18 : STA.l SA1RAM.MENU+0, X
-	LDA.b #$2E : STA.l SA1RAM.MENU+2, X
-	LDA.b #$3C : STA.l SA1RAM.MENU+4, X
+	LDA.b #$18 : STA.w SA1RAM.MENU+0, X
+	LDA.b #$2E : STA.w SA1RAM.MENU+2, X
+	LDA.b #$3C : STA.w SA1RAM.MENU+4, X
 
 .end
 	REP #$20
@@ -1428,7 +1421,7 @@ cm_ctrl_input_display:
 	AND #$0001 : CMP #$0001 : BNE .no_draw
 
 	TYA : CLC : ADC $0E
-	STA.l SA1RAM.MENU+0, X : INX : INX
+	STA.w SA1RAM.MENU+0, X : INX : INX
 
 .no_draw
 	PLA
@@ -1443,15 +1436,15 @@ cm_ctrl_clear_input_display:
 	; X = pointer to tilemap area
 	PHA
 	LDA #$24F5
-	STA.l SA1RAM.MENU+$00, X
-	STA.l SA1RAM.MENU+$02, X
-	STA.l SA1RAM.MENU+$04, X
-	STA.l SA1RAM.MENU+$06, X
-	STA.l SA1RAM.MENU+$08, X
-	STA.l SA1RAM.MENU+$0A, X
-	STA.l SA1RAM.MENU+$0C, X
-	STA.l SA1RAM.MENU+$0E, X
-	STA.l SA1RAM.MENU+$10, X
+	STA.w SA1RAM.MENU+$00, X
+	STA.w SA1RAM.MENU+$02, X
+	STA.w SA1RAM.MENU+$04, X
+	STA.w SA1RAM.MENU+$06, X
+	STA.w SA1RAM.MENU+$08, X
+	STA.w SA1RAM.MENU+$0A, X
+	STA.w SA1RAM.MENU+$0C, X
+	STA.w SA1RAM.MENU+$0E, X
+	STA.w SA1RAM.MENU+$10, X
 	PLA
 	RTS
 

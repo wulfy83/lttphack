@@ -1,3 +1,19 @@
+!VERSIONTEXT = "v"
+if stringsequal("!VERSION", "DEBUG")
+	!VERSIONTEXT = ""
+endif
+
+!VERSIONTEXT += !VERSION
+
+pushtable
+cleartable
+org $00FFC0
+db "                     " ; empty this
+
+org $00FFC0
+db "ALTTPRAC !VERSIONTEXT"
+pulltable
+
 ; SA-1
 org $00FFD5 : db $23, $35
 
@@ -6,6 +22,22 @@ org $00FFD7 : db 11 ; 2mb
 
 ; SRAM Size
 org $00FFD8 : db 5 ; 256k
+org $00FFBD : db 7 ; 256k
+
+
+macro file_select_text(n)
+pushtable
+table ../resources/fileselecttop.tbl
+	org $0CDDF0 : fillword $0188 : fill 52
+	org $0CDDF0 : dw "<n>"
+
+table ../resources/fileselectbot.tbl
+	org $0CDE2C : fillword $0188 : fill 52
+	org $0CDE2C : dw "<n>"
+pulltable
+endmacro
+
+%file_select_text("PRACTICE HACK !VERSIONTEXT")
 
 ; == CTRL 2 ==
 ;
@@ -53,31 +85,6 @@ org $0CDB79
 	NOP : NOP : NOP : NOP   ; AF D9 03 70   LDA $7003D9
 	NOP : NOP : NOP         ; C9 01 00      CMP #$0001
 	NOP : NOP               ; D0 18         BNE $0CDC49
-
-macro file_select_text(n)
-pushtable
-table ../resources/fileselecttop.tbl
-	org $0CDDF0 : fillword $0188 : fill 52
-	org $0CDDF0 : dw "<n>"
-
-table ../resources/fileselectbot.tbl
-	org $0CDE2C : fillword $0188 : fill 52
-	org $0CDE2C : dw "<n>"
-pulltable
-endmacro
-
-!VERSIONTEXT = "v"
-if stringsequal("!VERSION", "DEBUG")
-	!VERSIONTEXT = ""
-endif
-!VERSIONTEXT += !VERSION
-%file_select_text("PRACTICE HACK !VERSIONTEXT")
-
-org $00FFC0
-db "                     " ; empty this
-
-org $00FFC0
-db "ALTTPRAC !VERSIONTEXT"
 
 macro what_item_is_this()
 	fillword !BLANK_TILE : fill 16

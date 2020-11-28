@@ -102,10 +102,6 @@ gamemode_savestate:
 	LDA #$80 : STA $4310 ; B to A
 	JSR DMA_BWRAMSRAM
 
-
-	LDA #$81 : STA $4310
-	LDA #$39 : STA $4311
-
 	JMP gamemode_end
 
 .load
@@ -181,7 +177,7 @@ ppuoff:
 	RTS
 
 DMA_BWRAMSRAM:
-	PLX : STX.w $4318
+	PLX : STX.w $4328
 
 	STA.w $4310 ; direction
 	LDA.b #$80 : STA.w $4311 ; wram
@@ -202,30 +198,36 @@ DMA_BWRAMSRAM:
 
 	LDA.b #$02 : STA.w $420B
 
-	LDX.w $4318 : PHX
-	RTS
-
-func_dma1:
-	LDX #$4500
-	LDY #$0000
-	LDA #$80 : JSR func_dma1b
-
-	LDX #$4600
-	LDY #$4000
-	LDA #$80 : JSR func_dma1b
-	RTS
-
-func_dma1b:
-	STY $2116 : STZ $4312 : STX $4313 : STZ $4315 : STA $4316 : STZ $2115
-
-	LDA $4311 : CMP #$39 : BNE +
-	LDA $2139
-
-+	LDA #$02 : STA $420B
+	LDX.w $4328 : PHX
 	RTS
 
 gamemode_end:
-	JSR func_dma1
+	LDA.b $4310
+	ORA.b #$01
+	STA.b $4310
+	BMI .loading
+
+.saving
+	LDA.b #$18
+	BRA .continue
+
+.loading
+	LDA.b #$39
+
+.continue
+	STA.b $4311
+
+	LDX.w #$0000
+	STX.w $4312
+	LDA.b #$43
+	STA.w $4314
+
+	STX.w $4315
+	STX.w $2116
+	LDA.w $4311 : CMP.b #$39 : BNE ++
+	LDA.w $2139
+
+++	LDA.b #$02 : STA.w $420B
 
 	; load DMA from SRAM
 	LDY #$0000 : LDX #$0000

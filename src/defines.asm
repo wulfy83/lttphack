@@ -22,11 +22,8 @@ struct BWRAM40 $400000
 endstruct
 
 struct SA1RAM $406000
-	; page $01, which
 	.HUD: skip $800 ; bg3 HUD
 	.MENU: skip $800 ; practice menu
-
-	.SETTINGS: skip $400
 
 	.SW_BUFFER:
 	.SW_BUFFER_r0: skip 64
@@ -35,6 +32,9 @@ struct SA1RAM $406000
 	.SW_BUFFER_r3: skip 64
 	.SW_BUFFER_r4: skip 64
 	.SW_BUFFER_r5: skip 64
+
+
+	.SETTINGS: skip $400
 
 	; stuff for various RAM
 	.hex2dec_tmp: skip 2
@@ -112,8 +112,8 @@ SA1SRAM = $400000
 !QMARK = $212A
 !BLANK_TILE = $24F5
 
-!POS_MEM_INPUT_DISPLAY_TOP = $6000+$028
-!POS_MEM_INPUT_DISPLAY_BOT = $6000+$068
+!POS_MEM_INPUT_DISPLAY_TOP #= $6000+$028
+!POS_MEM_INPUT_DISPLAY_BOT #= !POS_MEM_INPUT_DISPLAY_TOP+$40
 
 
 ; special stuff

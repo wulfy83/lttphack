@@ -342,7 +342,7 @@ draw_hud_extras:
 	BRA .drawheartlag
 
 .doheartlag
-	LDA.w SA1IRAM.CopyOf_1A
+	LDA.b SA1IRAM.CopyOf_1A
 	AND.w #$000C
 	LSR
 	LSR
@@ -630,7 +630,7 @@ hud_draw_input_display_options:
 
 .cool
 	STA.b SA1IRAM.SCRATCH ; dpad
-	AND #$000F : ORA #$2D70 : STA !POS_MEM_INPUT_DISPLAY_BOT+2
+	AND #$000F : ORA #$2D70 : STA.w !POS_MEM_INPUT_DISPLAY_BOT+2
 
 	; need buttons in this order: xbya
 	SEP #$30
@@ -642,26 +642,25 @@ hud_draw_input_display_options:
 	; #$70 is the character offset we want
 	; top byte contains $29 from doing dpad, which is what we want
 	REP #$20
-	STA !POS_MEM_INPUT_DISPLAY_BOT+6
+	STA.w !POS_MEM_INPUT_DISPLAY_BOT+6
 
 	; start and select
 	LDA.b SA1IRAM.SCRATCH : AND #$0030 : LSR #4 : ORA #$2C00
-	STA !POS_MEM_INPUT_DISPLAY_BOT+4
+	STA.w !POS_MEM_INPUT_DISPLAY_BOT+4
 
 	; L and R
 	ASL.b SA1IRAM.SCRATCH : ASL.b SA1IRAM.SCRATCH ; L into carry and remember where R is
-	LDA #$2C04 : ADC #$0000 : STA !POS_MEM_INPUT_DISPLAY_TOP+2
+	LDA #$2C04 : ADC #$0000 : STA.w !POS_MEM_INPUT_DISPLAY_TOP+2
 
 	ASL.b SA1IRAM.SCRATCH ; R into carry
-	LDA #$6C04 : ADC #$0000 : STA !POS_MEM_INPUT_DISPLAY_TOP+6
+	LDA #$6C04 : ADC #$0000 : STA.w !POS_MEM_INPUT_DISPLAY_TOP+6
 
-	LDA #$2C06 : STA  !POS_MEM_INPUT_DISPLAY_TOP+4
+	LDA #$2C06 : STA.w !POS_MEM_INPUT_DISPLAY_TOP+4
 	RTS
 
 .old
 	SEP #$20
 	REP #$10
-	; basically: this bank | bank $7E
 	; Y will hold the current input character
 	LDY.w #$2400
 
