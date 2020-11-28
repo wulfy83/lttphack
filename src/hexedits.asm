@@ -22,7 +22,7 @@ org $00FFD5 : db $23, $36
 org $00FFD7 : db 11 ; 2mb
 
 ; SRAM Size
-org $00FFD8 : db 11 ; 256k
+org $00FFD8 : db 7 ; 256k
 
 pushtable
 table ../resources/fileselecttop.tbl
