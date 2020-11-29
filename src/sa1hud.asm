@@ -6,21 +6,15 @@ org $0DFEC3
 org $008B71 : LDX.w #SA1RAM.HUD>>0
 org $008B77 : LDA.b #SA1RAM.HUD>>16
 
-;org $0AFDB5 : STA.l SA1RAM.HUD+$0F2
-;org $0AFDB9 : STA.l SA1RAM.HUD+$132
-;org $0AFDBD : STA.l SA1RAM.HUD+$0F4
-;org $0AFDC1 : STA.l SA1RAM.HUD+$134
+; move floor indicators (not just to iram, but also a different location)
+;org $0AFDB5 : STA.l SA1RAM.HUD+$0AA
+;org $0AFDB9 : STA.l SA1RAM.HUD+$0AC
+;org $0AFDBD : STA.l SA1RAM.HUD+$0EA
+;org $0AFDC1 : STA.l SA1RAM.HUD+$0EC
+
+; move timer locations (not just to iram, but also a different location)
 ;org $0AFE25 : STA.l SA1RAM.HUD+$0F2, X
 ;org $0AFE2C : STA.l SA1RAM.HUD+$132, X
-
-; move floor indicators (not just to iram, but also a different location)
-org $0AFDB5 : STA.l SA1RAM.HUD+$0AA
-org $0AFDB9 : STA.l SA1RAM.HUD+$0AC
-org $0AFDBD : STA.l SA1RAM.HUD+$0EA
-org $0AFDC1 : STA.l SA1RAM.HUD+$0EC
-; move timer locations (not just to iram, but also a different location)
-org $0AFE25 : STA.l SA1RAM.HUD+$0F2, X
-org $0AFE2C : STA.l SA1RAM.HUD+$132, X
 
 ; vanilla stuff to leave alone, so it writes nowhere useful
 ;org $0AFD9F : STA.l SA1RAM.HUD+$0F2, X

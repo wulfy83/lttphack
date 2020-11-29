@@ -34,7 +34,6 @@ struct SA1IRAM $003000
 	.CopyOf_F6: skip 1
 	.CopyOf_F4: skip 1
 
-
 	.CopyOf_10: skip 1
 	.CopyOf_11: skip 1
 	.CopyOf_12: skip 1
@@ -44,11 +43,6 @@ struct SA1IRAM $003000
 	.CopyOf_21: skip 1
 	.CopyOf_22: skip 1
 	.CopyOf_23: skip 1
-	.CopyOf_24: skip 1
-	.CopyOf_25: skip 1
-	.CopyOf_27: skip 1
-	.CopyOf_28: skip 1
-	.CopyOf_29: skip 1
 	.CopyOf_2A: skip 1
 	.CopyOf_2B: skip 1
 	.CopyOf_30: skip 1
@@ -56,12 +50,21 @@ struct SA1IRAM $003000
 	.CopyOf_6C: skip 1
 	.CopyOf_A0: skip 1
 	.CopyOf_A1: skip 1
+	.CopyOf_A4: skip 1
+	.CopyOf_A5: skip 1
 	.CopyOf_B0: skip 1
 	.CopyOf_E2: skip 1
 	.CopyOf_E3: skip 1
 	.CopyOf_E8: skip 1
 	.CopyOf_E9: skip 1
 	.CopyOf_EE: skip 1
+
+	.CopyOf_04A0: skip 1
+	.CopyOf_04B4: skip 1
+
+	.CopyOf_7EC011: skip 1
+	.CopyOf_7EF36C: skip 1
+	.CopyOf_7EF36D: skip 1
 
 	print "SA1 dp: ", pc
 
@@ -73,10 +76,6 @@ struct SA1IRAM $003000
 
 	.CopyOf_0B08: skip 1
 	.CopyOf_0B09: skip 1
-
-	.CopyOf_7EC011: skip 1
-	.CopyOf_7EF36C: skip 1
-	.CopyOf_7EF36D: skip 1
 
 	.CopyOf_0BFA: skip 10
 	.CopyOf_0C04: skip 10
@@ -175,13 +174,11 @@ CacheSA1Stuff:
 	LDX.b $1A : STX.w SA1IRAM.CopyOf_1A
 	LDX.b $20 : STX.w SA1IRAM.CopyOf_20
 	LDX.b $22 : STX.w SA1IRAM.CopyOf_22
-	LDX.b $24 : STX.w SA1IRAM.CopyOf_24
-	LDX.b $27 : STX.w SA1IRAM.CopyOf_27
-	LDA.b $29 : STA.w SA1IRAM.CopyOf_29
 	LDX.b $2A : STX.w SA1IRAM.CopyOf_2A
 	LDX.b $30 : STX.w SA1IRAM.CopyOf_30
 	LDA.b $6C : STA.w SA1IRAM.CopyOf_6C
 	LDX.b $A0 : STX.w SA1IRAM.CopyOf_A0
+	LDX.b $A4 : STX.w SA1IRAM.CopyOf_A4
 
 	LDA.b $B0 : STA.w SA1IRAM.CopyOf_B0
 	LDX.b $E2 : STX.w SA1IRAM.CopyOf_E2
@@ -195,12 +192,9 @@ CacheSA1Stuff:
 	LDA.w $020A : STA.w SA1IRAM.CopyOf_020A
 	LDA.w $02A2 : STA.w SA1IRAM.CopyOf_02A2
 	LDA.w $02FA : STA.w SA1IRAM.CopyOf_02FA
-	LDX.w $0400 : STX.w SA1IRAM.CopyOf_0400
-	LDX.w $0402 : STX.w SA1IRAM.CopyOf_0402
-	LDA.w $0408 : STA.w SA1IRAM.CopyOf_0408
-	LDA.w $040A : STA.w SA1IRAM.CopyOf_040A
-	LDA.w $040C : STA.w SA1IRAM.CopyOf_040C
+	LDA.w $04A0 : STA.w SA1IRAM.CopyOf_04A0
 	LDX.w $0B08 : STX.w SA1IRAM.CopyOf_0B08
+	LDA.w $04B4 : STA.w SA1IRAM.CopyOf_04B4
 
 	LDA.l $7EC011 : STA.w SA1IRAM.CopyOf_7EC011
 	LDA.l $7EF36C : STA.w SA1IRAM.CopyOf_7EF36C
@@ -352,9 +346,16 @@ SA1Reset:
 	LDA.b #$90
 	STA.w $220A
 
-	CLI
+	REP #$34
+	LDX.w #(SA1RAM.end_of_clearable_sa1ram-SA1RAM.clearable_sa1ram)-1
 
---	BRA --
+--	STZ.w SA1RAM.clearable_sa1ram, X
+	DEX
+	DEX
+	BPL --
+
+--	;WAI
+	BRA --
 
 ; For timers
 SA1NMI:

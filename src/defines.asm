@@ -47,16 +47,18 @@ struct SA1RAM $406000
 	.SW_BUFFER_r4: skip 64
 	.SW_BUFFER_r5: skip 64
 
-
 	.SETTINGS: skip $400
 
+	.last_frame_did_saveload: skip 2
+
 	; stuff for various RAM
+	.clearable_sa1ram:
+
 	.hex2dec_tmp: skip 2
 	.hex2dec_first_digit: skip 2
 	.hex2dec_second_digit: skip 2
 	.hex2dec_third_digit: skip 2
 
-	.last_frame_did_saveload: skip 2
 	.rng_counter: skip 2
 	.pokey_rng: skip 2
 	.agahnim_rng: skip 2
@@ -71,19 +73,6 @@ struct SA1RAM $406000
 	.conveyor_rng: skip 2
 	.drop_rng: skip 2
 	.vitreous_rng: skip 2
-	.ctrl_last_input: skip 2
-
-	.cm_old_gamemode: skip 1
-	.cm_old_submode: skip 1
-
-	.cm_menu_stack: skip $10
-	.cm_menu_bank_stack: skip $10
-	.cm_cursor_stack: skip $20
-	.cm_stack_index: skip $20
-
-	.last_frame_input: skip 2
-	.cm_input_timer: skip 2
-	.opened_menu_manually: skip 2
 
 	.react_counter: skip 2
 	.react_frames: skip 2
@@ -98,6 +87,21 @@ struct SA1RAM $406000
 	.preset_end_of_sram_state: skip 2
 	.preset_spotlight_timer: skip 2
 
+	.end_of_clearable_sa1ram:
+
+	.cm_old_gamemode: skip 1
+	.cm_old_submode: skip 1
+	.ctrl_last_input: skip 2
+
+	.cm_menu_stack: skip $10
+	.cm_menu_bank_stack: skip $10
+	.cm_cursor_stack: skip $20
+	.cm_stack_index: skip $20
+
+	.last_frame_input: skip 2
+	.cm_input_timer: skip 2
+	.opened_menu_manually: skip 2
+
 	.cm_item_bow: skip 1
 	.cm_item_bottle: skip 1
 	.cm_item_mirror: skip 1
@@ -109,6 +113,8 @@ struct SA1RAM $406000
 
 	.ss_dma_buffer: skip $80
 	.ss_old_music_bank: skip 2
+
+	
 	warnpc $407FFF
 endstruct
 

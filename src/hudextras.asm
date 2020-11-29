@@ -64,7 +64,7 @@ UpdateCounterLine:
 
 	TAY
 	INC.b SA1IRAM.SCRATCH+8
-	CMP.b #$05
+	CMP.b #$05*2
 	BCS .nothing
 
 	REP #$B3 ; reset N, Z, and C just for fun
@@ -305,8 +305,8 @@ draw_hud_extras:
 
 	; Draw hearts
 	SEP #$21
-	LDA.w SA1IRAM.CopyOf_7EF36C
-	SBC.w SA1IRAM.CopyOf_7EF36D
+	LDA.b SA1IRAM.CopyOf_7EF36C
+	SBC.b SA1IRAM.CopyOf_7EF36D
 	CMP.b #$04
 
 	REP #$30
@@ -314,7 +314,7 @@ draw_hud_extras:
 	ADC.w #$0000
 	STA.w SA1RAM.HUD+$90
 
-	LDA.w SA1IRAM.CopyOf_7EF36D
+	LDA.b SA1IRAM.CopyOf_7EF36D
 	AND.w #$00FF
 	LSR
 	LSR
@@ -329,7 +329,7 @@ draw_hud_extras:
 	ORA #$3C90
 	STA.w SA1RAM.HUD+$94
 
-	LDA.w SA1IRAM.CopyOf_7EF36D
+	LDA.b SA1IRAM.CopyOf_7EF36D
 	AND.w #$0007
 	ORA.w #$3490
 	STA.w SA1RAM.HUD+$96
@@ -391,12 +391,12 @@ draw_hud_extras:
 	SEP #$10
 
 	LDA.w #$207F
-	LDX.b #$14
---	STA.w SA1RAM.HUD+$28+($40*0), X
-	STA.w SA1RAM.HUD+$28+($40*1), X
-	STA.w SA1RAM.HUD+$28+($40*2), X
-	STA.w SA1RAM.HUD+$28+($40*3), X
-	STA.w SA1RAM.HUD+$28+($40*4), X
+	LDX.b #$16
+--	STA.w SA1RAM.HUD+$26+($40*0), X
+	STA.w SA1RAM.HUD+$26+($40*1), X
+	STA.w SA1RAM.HUD+$26+($40*2), X
+	STA.w SA1RAM.HUD+$26+($40*3), X
+	STA.w SA1RAM.HUD+$26+($40*4), X
 
 	DEX
 	DEX
@@ -524,11 +524,11 @@ hud_draw_input_display:
 draw_lanmo_cycles:
 	LDA.w !ram_toggle_lanmola_cycles
 	LSR
-	BCC extra_ram
+	BCC .skip
 
 	LDA.b SA1IRAM.CopyOf_A0
 	CMP.w #$0033
-	BNE extra_ram
+	BNE .skip
 
 	LDX.w #$0002
 	LDY.w #$0004
@@ -543,10 +543,10 @@ draw_lanmo_cycles:
 	DEX
 	BPL .nextlanmo
 
-	BRA extra_ram
+	BRA .skip
 
 ;==============================================================================
-draw_quickwarp:
+#draw_quickwarp:
 	SEP #$30 ; M=8 for just this is few cycles faster
 	LDA.w !ram_qw_toggle : LSR ; shift toggle into carry
 	LDA.w SA1IRAM.CopyOf_E2 : AND #$06 ; this tests the bits for camera
@@ -564,6 +564,73 @@ draw_quickwarp:
 	STA.w SA1RAM.HUD+$10A
 	INC
 	STA.w SA1RAM.HUD+$10C
+
+.skip
+draw_floor:
+	LDA.b SA1IRAM.CopyOf_04A0
+	AND.w #$00FF
+	BEQ .skip
+
+	LDA.w #$251E
+	STA.w SA1RAM.HUD+$A8
+	INC
+	STA.w SA1RAM.HUD+$EA
+	INC
+	STA.w SA1RAM.HUD+$E8
+	LDA.w #$250F
+	STA.w SA1RAM.HUD+$AA
+
+	LDY.w #0
+	LDA.b SA1IRAM.CopyOf_A4
+	BIT.w #$0080
+	BNE .drawem_flip
+
+	AND.w #$00FF
+	BRA .drawem
+
+.drawem_flip
+	INY
+	INY
+	ORA.w #$FF00
+	EOR.w #$FFFF
+
+.drawem
+	ASL
+	TAX
+	LDA.l $0AFD00, X
+	STA.w SA1RAM.HUD+$A8, Y
+	LDA.l $0AFD16, X
+	STA.w SA1RAM.HUD+$E8, Y
+
+.skip
+draw_timer:
+	LDA.b SA1IRAM.CopyOf_04B4
+	AND.w #$00FF
+	BIT.w #$0080
+	BNE .skip
+
+	JSR hex_to_dec_fast
+
+	LDA.b SA1IRAM.SCRATCH+4
+	BNE ++
+	LDA.w #10
+
+++	ASL
+	TAX
+	LDA.l $0AFD00-2, X
+	STA.w SA1RAM.HUD+$AA
+	LDA.l $0AFD16-2, X
+	STA.w SA1RAM.HUD+$EA
+
+
+	LDA.b SA1IRAM.SCRATCH+2
+	BEQ .skip
+	ASL
+	TAX
+	LDA.l $0AFD00-2, X
+	STA.w SA1RAM.HUD+$E8
+	LDA.l $0AFD16-3, X
+	STA.w SA1RAM.HUD+$E8
 
 .skip
 ;==============================================================================
@@ -621,15 +688,15 @@ endmacro
 hud_draw_input_display_options:
 	dw .off
 	dw .cool
-	dw .old
-	dw .off
+	dw .classic
+	dw .classicgray
 
 .off
 	RTS
 
 .cool
 	STA.b SA1IRAM.SCRATCH ; dpad
-	AND #$000F : ORA #$2D70 : STA.w !POS_MEM_INPUT_DISPLAY_BOT+2
+	AND #$000F : ORA #$2D70 : STA.w SA1RAM.HUD+$66+2
 
 	; need buttons in this order: xbya
 	SEP #$30
@@ -641,51 +708,112 @@ hud_draw_input_display_options:
 	; #$70 is the character offset we want
 	; top byte contains $29 from doing dpad, which is what we want
 	REP #$20
-	STA.w !POS_MEM_INPUT_DISPLAY_BOT+6
+	STA.w SA1RAM.HUD+$66+6
 
 	; start and select
 	LDA.b SA1IRAM.SCRATCH : AND #$0030 : LSR #4 : ORA #$2C00
-	STA.w !POS_MEM_INPUT_DISPLAY_BOT+4
+	STA.w SA1RAM.HUD+$66+4
 
 	; L and R
 	ASL.b SA1IRAM.SCRATCH : ASL.b SA1IRAM.SCRATCH ; L into carry and remember where R is
-	LDA #$2C04 : ADC #$0000 : STA.w !POS_MEM_INPUT_DISPLAY_TOP+2
+	LDA #$2C04 : ADC #$0000 : STA.w SA1RAM.HUD+$26+2
 
 	ASL.b SA1IRAM.SCRATCH ; R into carry
-	LDA #$6C04 : ADC #$0000 : STA.w !POS_MEM_INPUT_DISPLAY_TOP+6
+	LDA #$6C04 : ADC #$0000 : STA.w SA1RAM.HUD+$26+6
 
-	LDA #$2C06 : STA.w !POS_MEM_INPUT_DISPLAY_TOP+4
+	LDA #$2C06 : STA.w SA1RAM.HUD+$26+4
 	RTS
 
-.old
-	SEP #$20
-	REP #$10
+.classic
+	REP #$30
 	; Y will hold the current input character
-	LDY.w #$2400
+	STA.b SA1IRAM.SCRATCH+0
+	XBA
+	LSR
+	LSR
+	LSR
+	LSR
+	STA.b SA1IRAM.SCRATCH+1 ; for high byte
 
-	LDX.w #!EMPTY ; X will hold the empty character always
+	LDX.w #$0000
 
-	; order: rlduSsYB....RLXA
-	; Starting with the low byte
+..next_button
+	LDY.w .classic_locations, X
+	LSR.b SA1IRAM.SCRATCH
+	BCC ..nopress
 
-	; special macro to not increment Y
-	%add_input_character_afirst(4, "BOT") ; dpad right
-	%add_input_character_a(0, "BOT") ; dpad left
-	%add_input_character_a(2, "BOT") ; dpad down
-	%add_input_character_a(2, "TOP") ; dpad up
+..press
+	TXA
+	LSR
+	ORA.w #$2400
+	BRA ..addchr
 
-	%add_input_character_a(10, "BOT") ; start
-	%add_input_character_a(10, "TOP") ; select
-	%add_input_character_a(6, "TOP") ; Y
-	%add_input_character_a(6, "BOT") ; B
+..nopress
+	LDA.w #$207F
 
-++	XBA ; switch to high byte
-	%add_input_character_b(8, "BOT") ; A
-	%add_input_character_b(8, "TOP") ; X
-	%add_input_character_b(0, "TOP") ; L shoulder
-	%add_input_character_b(4, "TOP") ; R shoulder
+..addchr
+	STA.w SA1RAM.HUD, Y
+	INX
+	INX
+	CPX.w #23
+	BCC ..next_button
 
-++	RTS
+	RTS
+
+
+.classicgray
+	REP #$30
+	; Y will hold the current input character
+	STA.b SA1IRAM.SCRATCH+0
+	XBA
+	LSR
+	LSR
+	LSR
+	LSR
+	STA.b SA1IRAM.SCRATCH+1 ; for high byte
+
+	LDX.w #$0000
+
+..next_button
+	LDY.w .classic_locations, X
+	TXA
+	LSR
+
+	LSR.b SA1IRAM.SCRATCH
+	BCC ..nopress
+
+..press
+	ORA.w #$2400
+	BRA ..addchr
+
+..nopress
+	ORA.w #$3000
+
+..addchr
+	STA.w SA1RAM.HUD, Y
+	INX
+	INX
+	CPX.w #23
+	BCC ..next_button
+
+	RTS
+
+
+.classic_locations
+	dw $68+4  ; dpad right
+	dw $68+0  ; dpad left
+	dw $68+2  ; dpad down
+	dw $28+2  ; dpad up
+
+	dw $68+10 ; start
+	dw $28+10 ; select
+	dw $28+6  ; Y
+	dw $68+6  ; B
+
+	dw $28+4  ; R shoulder
+	dw $28+0  ; L shoulder
+	dw $28+8  ; X
+	dw $68+8  ; A
 
 extra_ram_watch_routines:
 	dw .nothing-1

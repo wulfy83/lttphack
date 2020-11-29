@@ -140,17 +140,16 @@ em.SD2SNES {
 	display:inline-block;
 }
 
-sup.cc-badge {
+sup.sa1-badge {
 	font-weight:bold;
 	font-family:consolas;
-	color:red;
-	display: inline-block;
-	text-shadow: 0px 0px 1px black;
+	color:white;
+	background-color:#0089FF;
+	border-radius:6px;
+	padding: 0 2px;
+	border:1px solid #562AB3;
 }
 
-sup.cc-badge::first-letter {
-	color: blue;
-}
 
 p.warped {
 	transform: skewX(45deg) rotate(-3deg) translateY(-19px);
@@ -205,7 +204,7 @@ section {
 }
 
 .dl-tbl th {
-	background-color: #fafafa;
+	background-color: #FAFAFA;
 }
 
 header {

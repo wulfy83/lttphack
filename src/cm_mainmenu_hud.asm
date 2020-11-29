@@ -59,6 +59,7 @@ cm_hud_input_display:
 	%cm_item("Off")
 	%cm_item("Graphical")
 	%cm_item("Classic")
+	%cm_item("Classic Gray")
 	db !list_end
 
 cm_hud_enemy_hp:

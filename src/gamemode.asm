@@ -102,7 +102,7 @@ gamemode_savestate:
 	LDA #$80 : STA $4310 ; B to A
 	JSR DMA_BWRAMSRAM
 
-	JMP gamemode_end
+	JMP savestate_end
 
 .load
 	SEP #$20
@@ -170,7 +170,7 @@ gamemode_savestate:
 .nofixedframerule
 +	SEP #$20
 
-	JMP gamemode_end
+	JMP savestate_end
 
 ppuoff:
 	LDA #$80 : STA $2100
@@ -219,26 +219,26 @@ DMA_BWRAMSRAM:
 
 	dl $7F0000 : dw $6000
 	dl $7FDD80 : dw $1200
-	dl $7FF800 : dw $7FFF
+	dl $7FF800 : dw $0800
 
 	dl 0
 
 
-gamemode_end:
-	LDA.b $4310
+savestate_end:
+	LDA.w $4310
 	ORA.b #$01
-	STA.b $4310
-	BMI .loading
+	STA.w $4310
+	BMI .saving
 
-.saving
+.loading
 	LDA.b #$18
 	BRA .continue
 
-.loading
+.saving
 	LDA.b #$39
 
 .continue
-	STA.b $4311
+	STA.w $4311
 
 	LDX.w #$0000
 	STX.w $4312
@@ -248,7 +248,7 @@ gamemode_end:
 	STX.w $4315
 	STX.w $2116
 	LDA.w $4311 : CMP.b #$39 : BNE ++
-	LDA.w $2139
+	LDY.w $2139
 
 ++	LDA.b #$02 : STA.w $420B
 
@@ -256,7 +256,7 @@ gamemode_end:
 	LDY #$0000 : LDX #$0000
 	SEP #$20
 	REP #$10
--	LDA.w SA1RAM.ss_dma_buffer, X : STA $4300, X
+-	LDA.w SA1RAM.ss_dma_buffer, X : STA.w $4300, X
 	INX
 	INY : CPY #$000B : BNE -
 	CPX #$007B : BEQ +
@@ -270,13 +270,16 @@ gamemode_end:
 
 .songBankNotChanged
 	SEP #$31
-	LDA.b #$81 : STA.w $4200
-	LDA.b $13 : STA.w $2100
 	LDA.b #$01 : STA.w SA1RAM.last_frame_did_saveload
 
 	; i hope this works
 	; now we just reset to the main game loop
 	REP #$20
+	LDA.w #$0000
+	TCD
+	PHA
+	PLB
+
 	STZ.w SA1IRAM.SHORTCUT_USED
 
 	LDA.w #$1FFF
@@ -284,6 +287,8 @@ gamemode_end:
 
 	SEP #$30
 	STZ.b $12
+	;LDA.b $13 : STA.w $2100
+	LDA.b #$81 : STA.w $4200
 	JML.l $008034
 
 gamemode_oob:
