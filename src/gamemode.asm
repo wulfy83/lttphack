@@ -169,6 +169,7 @@ gamemode_savestate:
 
 .nofixedframerule
 +	SEP #$20
+
 	JMP gamemode_end
 
 ppuoff:
@@ -268,24 +269,30 @@ gamemode_end:
 	JSL music_reload
 
 .songBankNotChanged
+	SEP #$31
+	LDA.b #$81 : STA.w $4200
+	LDA.b $13 : STA.w $2100
+	LDA.b #$01 : STA.w SA1RAM.last_frame_did_saveload
 
-	LDA #$81 : STA $4200
-	LDA $13 : STA $2100
-	SEP #$30
-	LDA #$01 : STA.w SA1RAM.last_frame_did_saveload
-	SEC
-	RTS
+	; i hope this works
+	; now we just reset to the main game loop
+	REP #$20
+	STZ.w SA1IRAM.SHORTCUT_USED
 
-after_save_state:
+	LDA.w #$1FFF
+	TCS
+
 	SEP #$30
-	CLC
-	RTS
+	STZ.b $12
+	JML.l $008034
 
 gamemode_oob:
 	SEP #$20
-	LDA.w !lowram_oob_toggle : EOR #$01 : STA.w !lowram_oob_toggle
+	LDA.w !lowram_oob_toggle
+	AND.b #$01 ; just in case
+	EOR.b #$01
+	STA.w !lowram_oob_toggle
 	RTS
-
 
 gamemode_skip_text:
 	SEP #$20

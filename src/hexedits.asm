@@ -16,7 +16,7 @@ warnpc $00FFD5
 pulltable
 
 ; SA-1
-org $00FFD5 : db $23, $36
+org $00FFD5 : db $23, $35
 
 ; ROM Size
 org $00FFD7 : db 11 ; 2mb

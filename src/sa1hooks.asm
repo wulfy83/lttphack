@@ -1,16 +1,43 @@
-math pri on
-
-sa1rom
-
 pushpc
 org $008000
 struct SA1IRAM $003000
 	.SCRATCH: skip 16
+
 	.HDMA_ASK: skip 1
+	.SHORTCUT_USED: skip 2
+
+	.TIMER_FLAG: skip 2
+
+	.ROOM_TIME_F: skip 2
+	.ROOM_TIME_S: skip 2
+	.ROOM_TIME_LAG: skip 2
+	.ROOM_TIME_IDLE: skip 2
+
+	.SEG_TIME_F: skip 2
+	.SEG_TIME_S: skip 2
+	.SEG_TIME_M: skip 2
+
+	.ROOM_TIME_F_DISPLAY: skip 2
+	.ROOM_TIME_S_DISPLAY: skip 2
+	.ROOM_TIME_LAG_DISPLAY: skip 2
+	.ROOM_TIME_IDLE_DISPLAY: skip 2
+
+	.SEG_TIME_F_DISPLAY: skip 2
+	.SEG_TIME_S_DISPLAY: skip 2
+	.SEG_TIME_M_DISPLAY: skip 2
+
+	.CONTROLLER_1:
+	.CopyOf_F2: skip 1
+	.CopyOf_F0: skip 1
+
+	.CONTROLLER_1_FILTERED:
+	.CopyOf_F6: skip 1
+	.CopyOf_F4: skip 1
+
+
 	.CopyOf_10: skip 1
 	.CopyOf_11: skip 1
 	.CopyOf_12: skip 1
-	.CopyOf_12_B: skip 1
 	.CopyOf_1A: skip 1
 	.CopyOf_1B: skip 1
 	.CopyOf_20: skip 1
@@ -36,13 +63,7 @@ struct SA1IRAM $003000
 	.CopyOf_E9: skip 1
 	.CopyOf_EE: skip 1
 
-	.CONTROLLER_1:
-	.CopyOf_F2: skip 1
-	.CopyOf_F0: skip 1
-
-	.CONTROLLER_1_FILTERED:
-	.CopyOf_F6: skip 1
-	.CopyOf_F4: skip 1
+	print "SA1 dp: ", pc
 
 	.CopyOf_0208: skip 1
 	.CopyOf_0209: skip 1
@@ -62,30 +83,10 @@ struct SA1IRAM $003000
 	.CopyOf_0C0E: skip 10
 	.CopyOf_0C18: skip 10
 
-	.ROOM_TIME_F: skip 2
-	.ROOM_TIME_S: skip 2
-	.ROOM_TIME_LAG: skip 2
-	.ROOM_TIME_IDLE: skip 2
-
-	.SEG_TIME_F: skip 2
-	.SEG_TIME_S: skip 2
-	.SEG_TIME_M: skip 2
-
-	.ROOM_TIME_F_DISPLAY: skip 2
-	.ROOM_TIME_S_DISPLAY: skip 2
-	.ROOM_TIME_LAG_DISPLAY: skip 2
-	.ROOM_TIME_IDLE_DISPLAY: skip 2
-
-	.SEG_TIME_F_DISPLAY: skip 2
-	.SEG_TIME_S_DISPLAY: skip 2
-	.SEG_TIME_M_DISPLAY: skip 2
-
-	.TIMER_FLAG: skip 2
-	.SHORTCUT_USED: skip 2
-
-	.LanmoCycles: skip 3
 
 	; extra stuff
+	.LanmoCycles: skip 16 ; 16 to be safe
+
 	; ancilla watch
 	.CopyOf_03C4: skip 1
 	.CopyOf_03A4: skip 1
@@ -165,8 +166,8 @@ SA1NMI00:
 SA1IRQ00:
 	JML SA1IRQ
 
-incsrc SA1HUD.asm
-incsrc SA1SRAM.asm
+incsrc sa1hud.asm
+incsrc sa1sram.asm
 
 pullpc
 CacheSA1Stuff:
@@ -232,6 +233,7 @@ Extra_SA1_Transfers:
 	dw ..off
 	dw ..ancillae
 	dw ..uw
+	dw ..off
 
 ..ancillae
 	LDA.w $03C4 : STA.w SA1IRAM.CopyOf_03C4
@@ -308,7 +310,7 @@ InitSA1:
 	STZ.w SA1IRAM.SHORTCUT_USED
 	SEP #$30
 	LDA.b #$81
-	STA.w NMITIMEN
+	STA.w $4200
 	RTL
 
 SA1Reset:
@@ -373,8 +375,8 @@ SA1NMI:
 .update_counters
 	; if $12 = 1, then we weren't done with game code
 	; that means we're in a lag frame
-	LDA.w SA1IRAM.CopyOf_12 : STA.w SA1IRAM.CopyOf_12_B : LSR
-
+	LDA.w SA1IRAM.CopyOf_12 ; STA.w SA1IRAM.CopyOf_12_B
+	LSR
 	REP #$20
 	LDA.w SA1IRAM.ROOM_TIME_LAG : ADC.w #$0000 ; carry set from $12 being 1
 	STA.w SA1IRAM.ROOM_TIME_LAG

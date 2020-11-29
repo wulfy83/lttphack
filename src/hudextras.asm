@@ -64,12 +64,11 @@ UpdateCounterLine:
 
 	TAY
 	INC.b SA1IRAM.SCRATCH+8
-
-	REP #$30
-	LDX.w .line, Y
-
-	CPX.w #(5<<6+$2E) ; line 6 is too much
+	CMP.b #$05
 	BCS .nothing
+
+	REP #$B3 ; reset N, Z, and C just for fun
+	LDX.w .line, Y
 
 	SEC
 	RTS
@@ -390,6 +389,7 @@ draw_hud_extras:
 	; clear up counters
 	REP #$20
 	SEP #$10
+
 	LDA.w #$207F
 	LDX.b #$14
 --	STA.w SA1RAM.HUD+$28+($40*0), X
@@ -411,7 +411,6 @@ draw_hud_extras:
 	STA.w SA1IRAM.TIMER_FLAG
 
 .roomtime
-
 	LDA.w !ram_counters_real
 	JSR UpdateCounterLine
 	BCC ..skip

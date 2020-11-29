@@ -6,7 +6,6 @@ sa1rom
 
 incsrc defines.asm
 incsrc hexedits.asm
-incsrc registers.asm
 
 org $208000
 incsrc sa1hooks.asm
@@ -27,7 +26,6 @@ incsrc misc.asm
 
 org $248000
 incsrc custom_menu.asm
-print "Custom menu size: ", pc
 
 org $268000
 incsrc presets.asm
@@ -58,13 +56,6 @@ incsrc preset_data_ad2020.asm
 
 org $358000
 incsrc preset_data_lownmg.asm
-
-;========================================================================
-; LEAVE THIS HERE
-; it's needed for calculating when certain data comes from a possibly
-; non-vanilla source, which requires knowing the last bank we write to
-;========================================================================
-EndOfPracticeROM:
 
 ; pad rom to 2mb
 org $3FFFFF
