@@ -388,9 +388,9 @@ DrawHexSW:
 	BRA ..set
 
 ..set
-	STY.w SA1IRAM.SCRATCH+11
+	STY.b SA1IRAM.SCRATCH+11
 	LDY.b #$10
-	STY.w SA1IRAM.SCRATCH+10
+	STY.b SA1IRAM.SCRATCH+10
 	LDY.b #4
 	BRA .draw_n_digits
 
@@ -412,9 +412,9 @@ DrawHexSW:
 	BRA ..set
 
 ..set
-	STY.w SA1IRAM.SCRATCH+11
+	STY.b SA1IRAM.SCRATCH+11
 	LDY.b #$10
-	STY.w SA1IRAM.SCRATCH+10
+	STY.b SA1IRAM.SCRATCH+10
 	LDY.b #3
 	BRA .draw_n_digits
 
@@ -436,9 +436,9 @@ DrawHexSW:
 	BRA ..set
 
 ..set
-	STY.w SA1IRAM.SCRATCH+11
+	STY.b SA1IRAM.SCRATCH+11
 	LDY.b #$10
-	STY.w SA1IRAM.SCRATCH+10
+	STY.b SA1IRAM.SCRATCH+10
 	LDY.b #2
 	BRA .draw_n_digits
 

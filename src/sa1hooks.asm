@@ -358,18 +358,25 @@ SA1Reset:
 --	;WAI
 	BRA --
 
-; For timers
+; SA1IRAM.TIMER_FLAG bitfield:
+; 7 - timers have been set and are awaiing a hud update
+; 6 - reset timer
+; 5
+; 4
+; 3
+; 2 - Update without blocking further updates
+; 1 - One update then no more
+; 0 - 
 SA1NMI:
 	REP #$30
 	PHA
 	PHX
 	PHY
 	PHD
-	PHB
 
 	SEP #$2C ; a=8, BCD=on, SEI
 	LDA.b #$10
-	STA.w $220B
+	STA.l $00220B
 
 	;LDA.w SA1RAM.last_frame_did_saveload : BEQ .update_counters
 	;JMP .dont_update_counters
@@ -377,15 +384,15 @@ SA1NMI:
 .update_counters
 	; if $12 = 1, then we weren't done with game code
 	; that means we're in a lag frame
-	LDA.w SA1IRAM.CopyOf_12 ; STA.w SA1IRAM.CopyOf_12_B
+	LDA.b SA1IRAM.CopyOf_12 ; STA.b SA1IRAM.CopyOf_12_B
 	LSR
 	REP #$20
-	LDA.w SA1IRAM.ROOM_TIME_LAG : ADC.w #$0000 ; carry set from $12 being 1
-	STA.w SA1IRAM.ROOM_TIME_LAG
+	LDA.b SA1IRAM.ROOM_TIME_LAG : ADC.w #$0000 ; carry set from $12 being 1
+	STA.b SA1IRAM.ROOM_TIME_LAG
 
 	; cycle controlled room time
 	SEP #$21 ; include carry
-	LDA.w SA1IRAM.ROOM_TIME_F : ADC.b #$00
+	LDA.b SA1IRAM.ROOM_TIME_F : ADC.b #$00
 	CMP.b #$60
 	BCC .rtFOK
 
@@ -393,14 +400,14 @@ SA1NMI:
 	LDA.b #$00
 
 .rtFOK
-	STA.w SA1IRAM.ROOM_TIME_F
+	STA.b SA1IRAM.ROOM_TIME_F
 
 	REP #$20 ; seconds have 3 digits
-	LDA.w SA1IRAM.ROOM_TIME_S : ADC.w #$0000 ; increments by 1 if F>=60
-	STA.w SA1IRAM.ROOM_TIME_S
+	LDA.b SA1IRAM.ROOM_TIME_S : ADC.w #$0000 ; increments by 1 if F>=60
+	STA.b SA1IRAM.ROOM_TIME_S
 
 	SEP #$21 ; include carry
-	LDA.w SA1IRAM.SEG_TIME_F : ADC.b #$00
+	LDA.b SA1IRAM.SEG_TIME_F : ADC.b #$00
 	CMP.b #$60
 	BCC .stFOK
 
@@ -408,9 +415,9 @@ SA1NMI:
 	LDA.b #$00
 
 .stFOK
-	STA SA1IRAM.SEG_TIME_F
+	STA.b SA1IRAM.SEG_TIME_F
 
-	LDA SA1IRAM.SEG_TIME_S : ADC.b #$00 ; increments by 1 if F>=60
+	LDA.b SA1IRAM.SEG_TIME_S : ADC.b #$00 ; increments by 1 if F>=60
 	CMP.b #$60
 	BCC .stSOK
 
@@ -418,21 +425,21 @@ SA1NMI:
 	LDA.b #$00
 
 .stSOK
-	STA SA1IRAM.SEG_TIME_S
+	STA.b SA1IRAM.SEG_TIME_S
 
 	REP #$20
-	LDA SA1IRAM.SEG_TIME_M : ADC #$0000 ; increments by 1 if S>=60
-	STA SA1IRAM.SEG_TIME_M
+	LDA.b SA1IRAM.SEG_TIME_M : ADC #$0000 ; increments by 1 if S>=60
+	STA.b SA1IRAM.SEG_TIME_M
 
 .dont_update_counters
 	CLD
 
 	SEP #$20
-	LDA.w SA1IRAM.TIMER_FLAG 
+	LDA.b SA1IRAM.TIMER_FLAG 
 	BMI .donothing
 	BEQ .donothing
 
-	BIT.w SA1IRAM.TIMER_FLAG
+	BIT.b SA1IRAM.TIMER_FLAG
 	REP #$30
 
 	LDA #$000F ; transferring 16 bytes
@@ -443,18 +450,18 @@ SA1NMI:
 
 	BVC .dontreset
 
-	STZ.w SA1IRAM.ROOM_TIME_F+0
-	STZ.w SA1IRAM.ROOM_TIME_F+2
-	STZ.w SA1IRAM.ROOM_TIME_F+4
-	STZ.w SA1IRAM.ROOM_TIME_F+6
+	STZ.b SA1IRAM.ROOM_TIME_F+0
+	STZ.b SA1IRAM.ROOM_TIME_F+2
+	STZ.b SA1IRAM.ROOM_TIME_F+4
+	STZ.b SA1IRAM.ROOM_TIME_F+6
 
 .dontreset
 	SEP #$30
-	LDA #$80 : STA.w SA1IRAM.TIMER_FLAG
+	LDA #$80
+	STA.b SA1IRAM.TIMER_FLAG
 
 .donothing
 ++	REP #$30
-	PLB
 	PLD
 	PLY
 	PLX
@@ -517,85 +524,87 @@ SA1IRQ:
 .irq_shortcuts
 	JSR check_mode_safety
 
-	BEQ .safeForNone
-	BVS .safeForAll
-	BMI .safeForSome
-
-.pracMenu
-	JSR gamemode_shortcuts_practiceMenu
-	BRA ++
-
-.safeForSome
-.safeForAll
-	JSR gamemode_shortcuts_everything ; overflow flag checks the presets in here
-	BCS .skip
-
-.safeForNone
-
-; SA1IRAM.TIMER_FLAG bitfield:
-; 7 - timers have been set and are awaiing a hud update
-; 6 - reset timer
-; 5
-; 4
-; 3
-; 2 - Update without blocking further updates
-; 1 - One update then no more
-; 0 - 
-.skip
-++	RTS
-
-
-macro test_shortcut(shortcut, func, leavecarry, dofunc)
-+	LDA.w SA1IRAM.CONTROLLER_1 : AND.l <shortcut> : CMP.l <shortcut> : BNE +
-	AND.w SA1IRAM.CONTROLLER_1_FILTERED : BEQ +
-	if equal(<leavecarry>, 0)
-		CLC
-	endif
-
-	if equal(<dofunc>, 1)
-		JSR <func>
-	else
-		LDA.w #<func>
-		STA.w SA1IRAM.SHORTCUT_USED
-	endif
-	RTS
-endmacro
+	BEQ gamemode_shortcuts_nothing    ; safeForNone
+	BVS gamemode_shortcuts_everything ; safeForAll
+	BMI gamemode_shortcuts_everything ; safeForSome
 
 gamemode_shortcuts:
 .practiceMenu
-	LDA.w SA1IRAM.CopyOf_B0
+	LDA.b SA1IRAM.CopyOf_B0
 	REP #$20 ; this code is copyright Lui 2020
-	BEQ .SD2SNESBranch
--	CLC : RTS
+	BEQ .pracmenu_allowed
+.nothing
+	RTS
 
 .everything
 	TAY
-	LDA.w SA1IRAM.CONTROLLER_1_FILTERED : ORA.w SA1IRAM.CONTROLLER_1_FILTERED+1 : BEQ -
+	LDA.b SA1IRAM.CONTROLLER_1_FILTERED
+	ORA.b SA1IRAM.CONTROLLER_1_FILTERED+1 : BEQ .nothing
+
+	REP #$10
+	LDX.w #0
 	TYA
+	BPL .pracmenu_allowed
+
+	LDX.w #4
+
+.pracmenu_allowed
 	REP #$20
-	BMI .SD2SNESBranch
 
-	%test_shortcut(!pracmenu_shortcut, gamemode_custom_menu, 1, 0)
+.nextcheck
+	LDA.w .shortcut_routine, X
+	CMP.w #$FFFF
+	BEQ ..nothingused
 
-.SD2SNESBranch
-	;------------------------------
-	%test_shortcut(!ram_ctrl_load_last_preset, gamemode_load_previous_preset, 1, 0)
-	%test_shortcut(!ram_ctrl_save_state, gamemode_savestate_save, 1, 0)
-	%test_shortcut(!ram_ctrl_load_state, gamemode_savestate_load, 1, 0)
+	STA.b SA1IRAM.SCRATCH+0
+	LDA.b (SA1IRAM.SCRATCH+0)
 
-.OtherBranch
-	;------------------------------
-	%test_shortcut(!ram_ctrl_reset_segment_timer, gamemode_reset_segment_timer, 0, 1)
-	%test_shortcut(!ram_ctrl_somaria_pits, gamemode_somaria_pits_wrapper, 0, 0)
-	%test_shortcut(!ram_ctrl_fix_vram, gamemode_fix_vram, 0, 0)
-	%test_shortcut(!ram_ctrl_fill_everything, gamemode_fill_everything, 0, 0)
-	%test_shortcut(!ram_ctrl_toggle_oob, gamemode_oob, 0, 0)
-	%test_shortcut(!ram_ctrl_skip_text, gamemode_skip_text, 0, 0)
-	%test_shortcut(!ram_ctrl_disable_sprites, gamemode_disable_sprites, 0, 0)
-;	%test_shortcut(!ram_ctrl_replay_last_movie, gamemode_replay_last_movie, 1)
+	AND.b SA1IRAM.CONTROLLER_1
+	CMP.b (SA1IRAM.SCRATCH+0)
+	BNE ..fail
 
-+	CLC
---	RTS
+	AND.b SA1IRAM.CONTROLLER_1_FILTERED
+	BEQ ..fail
+
+	LDA.w .shortcut_routine+2, X
+	BPL ..forsnes
+
+	RTS
+
+..forsnes
+	ORA.w #$8000 ; add in bit 7 that was used as a flag in rom table
+	STA.b SA1IRAM.SHORTCUT_USED
+
+..nothingused
+	RTS
+
+..fail
+	INX
+	INX
+	INX
+	INX
+	BRA .nextcheck
+
+!CPU_SIDE = $7FFF ; for routines to be done by the SNES CPU
+!SA1_SIDE = $FFFF ; for routines to be done by the SA1 instead of the CPU
+
+.shortcut_routine
+	dw ..pracmenushortcut, gamemode_custom_menu&!CPU_SIDE
+	dw !ram_ctrl_load_last_preset, gamemode_load_previous_preset&!CPU_SIDE
+	dw !ram_ctrl_save_state, gamemode_savestate_save&!CPU_SIDE
+	dw !ram_ctrl_load_state, gamemode_savestate_load&!CPU_SIDE
+	dw !ram_ctrl_reset_segment_timer, gamemode_reset_segment_timer&!SA1_SIDE
+	dw !ram_ctrl_somaria_pits, gamemode_somaria_pits_wrapper&!CPU_SIDE
+	dw !ram_ctrl_fix_vram, gamemode_fix_vram&!CPU_SIDE
+	dw !ram_ctrl_fill_everything, gamemode_fill_everything&!CPU_SIDE
+	dw !ram_ctrl_toggle_oob, gamemode_oob&!CPU_SIDE
+	dw !ram_ctrl_skip_text, gamemode_skip_text&!CPU_SIDE
+	dw !ram_ctrl_disable_sprites, gamemode_disable_sprites&!CPU_SIDE
+	dw $FFFF, $FFFF
+
+..pracmenushortcut
+	dw !pracmenu_shortcut
+
 
 ; return values in P
 !SOME_SAFE = $8080 ; some options are not always safe = negative flag
@@ -603,9 +612,8 @@ gamemode_shortcuts:
 !NONE_SAFE = $0000 ; all modes unsafe = zero flag
 ; zero flag off = practice menu special
 
-
 check_mode_safety:
-	LDA.w SA1IRAM.CopyOf_10 : CMP #$0C : BNE .notCustomMenu
+	LDA.b SA1IRAM.CopyOf_10 : CMP.b #$0C : BNE .notCustomMenu
 	REP #%11000010 ; clear NVZ
 .neverSafe
 	RTS
@@ -613,16 +621,16 @@ check_mode_safety:
 .notCustomMenu
 	ASL : TAX ; get index
 	REP #%01100000 ; clear V for checks and M for 16 bit accum
-	LDA Module_safety, X
+	LDA.w Module_safety, X
 	BEQ .neverSafe ; staying in 16 bit A is fine here
 
 	STA.b SA1IRAM.SCRATCH
-	LDY.w SA1IRAM.CopyOf_11 ; get submodule
+	LDY.b SA1IRAM.CopyOf_11 ; get submodule
 
 	SEP #$20
 	LDA.b (SA1IRAM.SCRATCH), Y ; get safety level of submodule
 	STA.b SA1IRAM.SCRATCH ; put it in $00
-	LDA.w SA1IRAM.CopyOf_7EC011 : BEQ .safe ; check mosaics
+	LDA.b SA1IRAM.CopyOf_7EC011 : BEQ .safe ; check mosaics
 
 	LDA.b #!SOME_SAFE ; not safe
 	RTS

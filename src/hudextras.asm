@@ -308,11 +308,11 @@ draw_hud_extras:
 	REP #$20
 
 	LDA.w #$0001 ; start at 1 so that 0 can be a dummy write
-	STA.w SA1IRAM.SCRATCH+8
+	STA.b SA1IRAM.SCRATCH+8
 
-	LDA.w SA1IRAM.TIMER_FLAG
+	LDA.b SA1IRAM.TIMER_FLAG
 	AND.w #$FF7F
-	STA.w SA1IRAM.TIMER_FLAG
+	STA.b SA1IRAM.TIMER_FLAG
 
 	SEP #$10
 
@@ -430,7 +430,7 @@ hud_draw_input_display:
 	LDA.w !ram_input_display
 	AND #$0003
 	ASL : TAX
-	LDA.w SA1IRAM.CONTROLLER_1
+	LDA.b SA1IRAM.CONTROLLER_1
 	XBA
 	JSR (.options, X)
 
@@ -459,7 +459,7 @@ draw_lanmo_cycles:
 	LDY.w #$0004
 
 .nextlanmo
-	LDA.w SA1IRAM.LanmoCycles, X
+	LDA.b SA1IRAM.LanmoCycles, X
 	AND.w #$00FF
 	ORA.w #$2010
 	STA.w SA1RAM.HUD+$10A, Y
@@ -474,8 +474,8 @@ draw_lanmo_cycles:
 #draw_quickwarp:
 	SEP #$30 ; M=8 for just this is few cycles faster
 	LDA.w !ram_qw_toggle : LSR ; shift toggle into carry
-	LDA.w SA1IRAM.CopyOf_E2 : AND #$06 ; this tests the bits for camera
-	ORA.w SA1IRAM.CopyOf_1B ; make QW only display in overworld, where $1B = 0
+	LDA.b SA1IRAM.CopyOf_E2 : AND #$06 ; this tests the bits for camera
+	ORA.b SA1IRAM.CopyOf_1B ; make QW only display in overworld, where $1B = 0
 	ROL ; roll carry flag into bottom bit
 	; if we're on a quick warp on the overworld
 	; then we'll have $0D
@@ -622,7 +622,7 @@ draw_hearts_options:
 	LDA.w #$24A2
 	STA.w SA1RAM.HUD+$9A
 
-	LDA.w SA1IRAM.CopyOf_7EF36C
+	LDA.b SA1IRAM.CopyOf_7EF36C
 	AND.w #$00FF
 	LSR
 	LSR
@@ -735,7 +735,7 @@ draw_hearts_options:
 	BEQ ..done
 
 	; heart refill animation
-	LDA.w SA1IRAM.Moved_0209
+	LDA.b SA1IRAM.Moved_0209
 	ASL
 	TAX
 	REP #$20
@@ -888,7 +888,6 @@ hud_draw_input_display_options:
 
 	RTS
 
-
 .classic_locations
 	dw $68+4  ; dpad right
 	dw $68+0  ; dpad left
@@ -916,7 +915,7 @@ extra_ram_watch_routines:
 	RTS
 
 .icebreaker
-	LDA.w SA1IRAM.CopyOf_6C : AND #$00FF : BEQ ..nodoor
+	LDA.b SA1IRAM.CopyOf_6C : AND #$00FF : BEQ ..nodoor
 	LDA.w #$216A : BRA ++
 
 ..nodoor

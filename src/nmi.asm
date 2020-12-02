@@ -128,7 +128,7 @@ nmi_hud_update:
 	SEP #$10
 
 	LDX.w SA1IRAM.CopyOf_12 : BNE .dontbreakthings
-	LDA.l !ram_superwatch
+	LDA.w !ram_superwatch
 	AND #$0003
 	ASL
 	TAX

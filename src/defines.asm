@@ -74,8 +74,6 @@ struct SA1RAM $406000
 	.preset_end_of_sram_state: skip 2
 	.preset_spotlight_timer: skip 2
 
-	.end_of_clearable_sa1ram:
-
 	.cm_old_gamemode: skip 1
 	.cm_old_submode: skip 1
 	.ctrl_last_input: skip 2
@@ -84,6 +82,8 @@ struct SA1RAM $406000
 	.cm_menu_bank_stack: skip $10
 	.cm_cursor_stack: skip $20
 	.cm_stack_index: skip $20
+
+.end_of_clearable_sa1ram:
 
 	.last_frame_input: skip 2
 	.cm_input_timer: skip 2

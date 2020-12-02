@@ -149,7 +149,7 @@ cm_equipment_fill_everything:
 	%cm_jsr("Fill Everything")
 
 .routine
-	JSL gamemode_fill_everything_long
+	JSL gamemode_fill_everything
 	RTS
 
 cm_equipment_maxhp:

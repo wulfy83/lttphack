@@ -4,13 +4,12 @@ org $008056 ; Game Mode Hijack
 pullpc
 
 gamemode_hook:
-	LDA.l SA1IRAM.SHORTCUT_USED
+	LDA.w SA1IRAM.SHORTCUT_USED
 	BEQ .askforshortcut
 
 	REP #$20
-	PHB
+
 	PHK
-	PLB
 	PEA.w .ret-1
 
 	JMP.w (SA1IRAM.SHORTCUT_USED)
@@ -18,11 +17,10 @@ gamemode_hook:
 .ret
 	REP #$20
 	STZ.w SA1IRAM.SHORTCUT_USED+0
-	PLB
 	RTL
 
 .askforshortcut
-	LDA #$81 : STA.l $002200 ; SA-1 NMI, bit 1 for preparing shortcut checks
+	LDA #$81 : STA.l $002200 ; SA-1 IRQ, bit 1 for preparing shortcut checks
 	JML $0080B5 ; GameMode
 
 
@@ -37,28 +35,24 @@ gamemode_custom_menu:
 
 	LDA #$000C : STA $10
 
-	SEC
-	RTS
+	RTL
 
 
 ; Load previous preset
 gamemode_load_previous_preset:
 	SEP #$30
 
-	; Loading during text mode make the text stay or the item menu to bug
+	; Loading during text mode makes the text stay or the item menu bug
 	LDA $10 : CMP #$0E : BEQ .no_load_preset
 	REP #$20
 	LDA.w SA1RAM.previous_preset_destination
 	SEP #$20
 	BEQ .no_load_preset
 
-	JSL preset_load_last_preset
-	SEC
-	RTS
+	JML preset_load_last_preset
 
 .no_load_preset
-	CLC
-	RTS
+	RTL
 
 ; Replay last movie
 gamemode_replay_last_movie:
@@ -69,18 +63,12 @@ gamemode_replay_last_movie:
 	JSR gamemode_load_previous_preset : BCC .no_replay
 	LDA #$02 : STA !ram_movie_next_mode
 
-	SEC
-	RTS
-
 .no_replay
-	SEP #$20
-	CLC
-	RTS
+	RTL
 
 ; Save state
 gamemode_savestate:
 .save
-;if !FEATURE_SD2SNES
 	SEP #$20
 	REP #$10
 	; Remember which song bank was loaded before load stating
@@ -117,8 +105,6 @@ gamemode_savestate:
 	LDA $0FA1 : STA.w !ram_rerandomize_rng
 
 .dont_rerandomize_1
-;if !FEATURE_SD2SNES
-
 	SEP #$20
 	; Mute music
 	LDA #$F0 : STA $2140
@@ -208,8 +194,10 @@ DMA_BWRAMSRAM:
 	BRA .next
 
 .sa1stuff
+	LDA.b #$00
+	XBA
 	LDA.b #(SA1IRAM.savethis_end-SA1IRAM.savethis_start)-1
-	BIT.b $4310 ; which way to transfer?
+	BIT.w $4310 ; which way to transfer?
 	BPL ..loading
 
 ..saving
@@ -237,7 +225,6 @@ DMA_BWRAMSRAM:
 	dl $7FF800 : dw $0800
 
 	dl 0
-
 
 savestate_end:
 	LDA.w $4310
@@ -312,24 +299,16 @@ gamemode_oob:
 	AND.b #$01 ; just in case
 	EOR.b #$01
 	STA.w !lowram_oob_toggle
-	RTS
+	RTL
 
 gamemode_skip_text:
 	SEP #$20
 	LDA #$04 : STA $1CD4
-	RTS
+	RTL
 
 gamemode_disable_sprites:
 	SEP #$20
-	JSL Sprite_DisableAll
-	RTS
-
-; TODO make this a table instead of a bunch of STA?
-gamemode_fill_everything_long:
-	PHP
-	JSR gamemode_fill_everything
-	PLP
-	RTL
+	JML Sprite_DisableAll
 
 gamemode_fill_everything:
 	SEP #$20
@@ -396,7 +375,7 @@ gamemode_fill_everything:
 	STZ.w $15 ; prevent palettes from redrawing if we're in the practice menu
 
 .nopal
-	RTS
+	RTL
 
 .table
 	dw $F340 : db 4   ; bow: silvers w/ arrows
@@ -501,7 +480,7 @@ gamemode_fix_vram:
 	JSR fixpegs ; quick and dirty pegs reset
 
 ++	LDA #$0F : STA $13
-	RTS
+	RTL
 
 fixpegs:
 
@@ -544,7 +523,7 @@ fix_vram_uw: ; mostly copied from PalaceMap_RestoreGraphics - pc: $56F19
 
 	PLA : STA $9B
 	PLB
-	RTS
+	RTL
 
 ; wrapper because of push and pull logic
 ; need this to make it safe and ultimately fix INIDISP ($13)
@@ -556,7 +535,7 @@ gamemode_somaria_pits_wrapper:
 	JSR gamemode_somaria_pits
 	LDA #$0F : STA $13
 
-++	RTS
+++	RTL
 
 gamemode_somaria_pits:
 	PHB ; rebalanced in redraw
@@ -587,7 +566,7 @@ gamemode_somaria_pits:
 	LDA $9B : PHA ; rebalanced in redraw
 	STZ $9B : STZ $420C
 
-	JMP fix_vram_uw_just_redraw ; jmp to have 1 less rts and because of stack
+	JMP fix_vram_uw_just_redraw ; jmp because of stack
 
 ;gamemode_lagometer:
 ;	REP #$30
