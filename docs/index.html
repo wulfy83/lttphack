@@ -57,12 +57,25 @@
 						</div>
 					</div>
 					<p>
-						<strong>Latest (SA-1)</strong> should be used by any system that can properly emulate SA-1 
+						<strong>Latest (SA-1)</strong> should be used by any system that can properly emulate SA-1 with 256kb of BWRAM.
 					</p>
+					<ul>Compatible systems:
+						<li>SD2SNES</li>
+						<li>SNES Classic</li>
+						<li>SuperNT jailbreak</li>
+						<li>Mesen-s</li>
+						<li>higan/bsnes v115+</li>
+						<li>snes9x 1.6+</li>
+						<li>faust</li>
+					</ul>
 
 					<p>
-						<strong>v13.5</strong> is a snapshot of the pre-SA-1 practice hack. It will no longer be updated, as it only serves as a compatibility fallback for Everdrive users. It will also be necessary for those who use Bizhawk with the bsnes core. Using snes9x or faust in Bizhawk will work fine.
+						<strong>v13.5</strong> is a snapshot of the pre-SA-1 practice hack. It will no longer be updated, as it only serves as a fallback for incompatible systems.
 					</p>
+					<ul>List of shame:
+						<li>Everdrive</li>
+						<li>BizHawk's bsnes core (v85)</li>
+					</ul>
 
 					<!--<p>
 						The <strong>Debug</strong> version is the most recently compiled version of the practice hack while I code new features/fixes. It may not even reflect the version of the code live on Github. There is no guarantee that this version will even run properly, but it is available for people to poke around with uncoming stuff. This version is custom HUD without SD2SNES features. Please do not report bugs that are specific to the debug version.-->
@@ -704,6 +717,15 @@
 
 					<h3 id="menuHUD">HUD extras</h3>
 					<dl>
+						<dt>Health display<sup class="sa1-badge">SA1</sup></dt>
+						<dd>How to show Link's current and max health:
+							<dl class="subDefinition">
+								<dt>Numerical</dt>
+								<dd>Classic practice hack display under rupee counter</dd>
+								<dt>Vanilla</dt>
+								<dd>Vanilla graphical display <strong class="lag"><b>NOTICE:</b> vanilla hearts will be drawn to the HUD first, and additional HUD features may be drawn over them.</strong></dd>
+							</dl>
+						</dd>
 						<dt>Input display<sup class="sa1-badge">SA1</sup></dt>
 						<dd>Visual indication of every button registered each frame.
 							<dl class="subDefinition">
@@ -740,6 +762,8 @@
 						</dd>
 						<dt>QW indicator<sup class="sa1-badge">SA1</sup></dt>
 						<dd>Displays an icon on the HUD when the current camera will produce a quickwarp.</dd>
+						<dt>Lanmola cycs<sup class="sa1-badge">SA1</sup></dt>
+						<dd>Displays a counter for the cycle count of the three Lanmolas individually.</dd>
 						<dt>RAM watch<sup class="sa1-badge">SA1</sup></dt>
 						<dd>
 							<dl class="subDefinition">
@@ -762,15 +786,11 @@
 								<dd>RAM watch geared towards underworld glitches (see <a href="doorwatch.html">this page</a>).</dd>
 							</dl>
 						</dd>
-						<dt>Lanmola cycs<sup class="sa1-badge">SA1</sup></dt>
-						<dd>Displays a counter for the cycle count of the three Lanmolas individually.</dd>
 <!----
 						<dt>Lagometer</dt>
 						<dd>Shows a rough calculation of the amount of lag a frame has. The more the bar is filled, the closer a frame was to producing a lag frame. Lag from one frame does not affect the next, but trends in the lagometer can be used to gauge how laggy an area is.</dd>
 						<dt>Enemy HP</dt>
 						<dd>Shows the exact health of a single enemy. Attempts to find the most relevant enemy as you play. <strong class="lag"><b>WARNING:</b> this feature can be laggy.</strong></dd>
-						<dt>Vanilla HUD<sup class="sa1-badge">SA1</sup></dt>
-						<dd>Draws the vanilla heart pieces to screen before drawing counters.</dd>
 ---->
 					</dl>
 
@@ -837,8 +857,10 @@
 						</li>
 						<li>HUD extras:
 							<ul>
+								<li>Vanilla hearts for those who want it for whatever reason. I don't understand you guys, honestly. But, if you want it, this is where it is now.</li>
 								<li>Added "Classic Gray" input display</li>
 								<li>Support for 4 digit coordinates.</li>
+								<li>Removed overlay corruption for wrong warp stuff in UW Glitches superwatch.</li>
 							</ul>
 						</li>
 						<li>Bug fixes:

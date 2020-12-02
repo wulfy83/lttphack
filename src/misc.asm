@@ -45,7 +45,25 @@ absorbexit_stop: RTS
 
 absorbexit_continue:
 
+
+
+
+
+; safety net for Somaria corruption
+;org $01B840
+;	JML SomariaJukeSafety
+
 pullpc
+
+;SomariaJukeSafety:
+;	LDA.b $BA
+;	BNE .uhoh
+;
+;	JML $01B844
+;
+;.uhoh
+
+
 
 triforce_transition:
 	LDA.w !ram_skip_triforce_toggle : BNE .skip_triforce

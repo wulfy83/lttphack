@@ -17,6 +17,11 @@ org $0DDD24
 	PLB
 	RTL
 
+org $0DDD14
+	JSR fire_hud_irq
+	PLB
+	RTL
+
 ; some nice free rom here
 org $0DDB07
 fire_hud_irq:
@@ -122,18 +127,15 @@ Draw:
 	BRA .digit100
 
 .digit100
-	LDA.w #$207F
-	BVC ..draw
+	BVC .digit10
 	LDA.b (SA1IRAM.SCRATCH+10)
 	XBA
 	AND.w #$000F
 	ORA.b SA1IRAM.SCRATCH+12
-..draw
 	STA.w SA1RAM.HUD+10, X
 
 .digit10
-	LDA.w #$207F
-	BCC ..draw
+	BCC .digit1
 	LDA.b (SA1IRAM.SCRATCH+10)
 	AND.w #$00F0
 	LSR
@@ -141,7 +143,6 @@ Draw:
 	LSR
 	LSR
 	ORA.b SA1IRAM.SCRATCH+12
-..draw
 	STA.w SA1RAM.HUD+12, X
 
 .digit1
@@ -303,91 +304,16 @@ draw_hud_extras:
 	PHK
 	PLB
 
-	; Draw hearts
-	SEP #$21
-	LDA.b SA1IRAM.CopyOf_7EF36C
-	SBC.b SA1IRAM.CopyOf_7EF36D
-	CMP.b #$04
-
-	REP #$30
-	LDA.w #$24A0
-	ADC.w #$0000
-	STA.w SA1RAM.HUD+$90
-
-	LDA.b SA1IRAM.CopyOf_7EF36D
-	AND.w #$00FF
-	LSR
-	LSR
-	LSR
-	JSR hex_to_dec_fast
-
-	LDA.b SA1IRAM.SCRATCH+2
-	ORA #$3C90
-	STA.w SA1RAM.HUD+$92
-
-	LDA.b SA1IRAM.SCRATCH+4
-	ORA #$3C90
-	STA.w SA1RAM.HUD+$94
-
-	LDA.b SA1IRAM.CopyOf_7EF36D
-	AND.w #$0007
-	ORA.w #$3490
-	STA.w SA1RAM.HUD+$96
-
-	LDA.w !ram_heartlag_spinner
-	BNE .doheartlag
-
-	LDA.w #$207F
-	BRA .drawheartlag
-
-.doheartlag
-	LDA.b SA1IRAM.CopyOf_1A
-	AND.w #$000C
-	LSR
-	LSR
-	; Desired results:
-	; 00  ->  00
-	; 01  ->  01
-	; 10  ->  11
-	; 11  ->  10
-	; b0 = b1 ^ b0
-	; b1 = b1
-
-	LSR ; put b1 in b0
-	STA.b SA1IRAM.SCRATCH+0
-	ROL ; back to normal
-
-	EOR.b SA1IRAM.SCRATCH+0 ; b0 ^ b1
-	ROR ; get to bits 14 and 15
-	ROR
-	ROR
-
-	ORA.w #$253F
-
-.drawheartlag
-	STA.w SA1RAM.HUD+$98
-
-	; containers
-	LDA.w #$24A2
-	STA.w SA1RAM.HUD+$9A
-
-	LDA.w SA1IRAM.CopyOf_7EF36C
-	AND.w #$00FF
-	LSR
-	LSR
-	LSR
-	JSR hex_to_dec_fast
-
-	LDA.b SA1IRAM.SCRATCH+2
-	ORA #$3C90
-	STA.w SA1RAM.HUD+$9C
-
-	LDA.b SA1IRAM.SCRATCH+4
-	ORA #$3C90
-	STA.w SA1RAM.HUD+$9E
-
 	; clear up counters
 	REP #$20
+
+	LDA.w #$0001 ; start at 1 so that 0 can be a dummy write
+	STA.w SA1IRAM.SCRATCH+8
+
+	LDA.w SA1IRAM.TIMER_FLAG
+	AND.w #$FF7F
+	STA.w SA1IRAM.TIMER_FLAG
+
 	SEP #$10
 
 	LDA.w #$207F
@@ -402,13 +328,12 @@ draw_hud_extras:
 	DEX
 	BPL --
 
-	LDA.w #$0001 ; start at 1 so that 0 can be a dummy write
-	STA.w SA1IRAM.SCRATCH+8
+	LDA.w !ram_heart_display
+	ASL
+	TAX
+	JSR (draw_hearts_options, X)
 
-
-	LDA.w SA1IRAM.TIMER_FLAG
-	AND.w #$FF7F
-	STA.w SA1IRAM.TIMER_FLAG
+	REP #$30
 
 .roomtime
 	LDA.w !ram_counters_real
@@ -654,37 +579,206 @@ done_extras:
 	PLB : PLP
 	RTL
 
-macro add_input_character_a(pos, topbottom)
-++	INY
-	%add_input_character_afirst(<pos>, <topbottom>)
-endmacro
+;==============================================================================
+draw_hearts_options:
+	dw .practicehack
+	dw .vanilla
 
-macro add_input_character_afirst(pos, topbottom)
+.practicehack
+	SEP #$21
+	LDA.b SA1IRAM.CopyOf_7EF36C
+	SBC.b SA1IRAM.CopyOf_7EF36D
+	CMP.b #$04
+
+	REP #$30
+	LDA.w #$24A0
+	ADC.w #$0000
+	STA.w SA1RAM.HUD+$90
+
+	LDA.b SA1IRAM.CopyOf_7EF36D
+	AND.w #$00FF
 	LSR
-	BCS ?inputheld
+	LSR
+	LSR
+	JSR hex_to_dec_fast
 
-?inputnotheld:
-	STX.w (!POS_MEM_INPUT_DISPLAY_<topbottom>)+<pos>
-	BRA ++
+	LDA.b SA1IRAM.SCRATCH+2
+	ORA #$3C90
+	STA.w SA1RAM.HUD+$92
 
-?inputheld:
-	STY.w (!POS_MEM_INPUT_DISPLAY_<topbottom>)+<pos>
-endmacro
+	LDA.b SA1IRAM.SCRATCH+4
+	ORA #$3C90
+	STA.w SA1RAM.HUD+$94
 
-; this one goes backwards, since the bottom nibble is all 0
-macro add_input_character_b(pos, topbottom)
-++	INY ; next character
-	ASL ; shift bit into carry
-	BCS ?inputheld
+	LDA.b SA1IRAM.CopyOf_7EF36D
+	AND.w #$0007
+	ORA.w #$3490
+	STA.w SA1RAM.HUD+$96
 
-?inputnotheld:
-	STX.w !POS_MEM_INPUT_DISPLAY_<topbottom>+<pos>
-	BRA ++
+	JSR GetHeartLagTile
+	STA.w SA1RAM.HUD+$98
 
-?inputheld:
-	STY.w !POS_MEM_INPUT_DISPLAY_<topbottom>+<pos>
-endmacro
+	; containers
+	LDA.w #$24A2
+	STA.w SA1RAM.HUD+$9A
 
+	LDA.w SA1IRAM.CopyOf_7EF36C
+	AND.w #$00FF
+	LSR
+	LSR
+	LSR
+	JSR hex_to_dec_fast
+
+	LDA.b SA1IRAM.SCRATCH+2
+	ORA #$3C90
+	STA.w SA1RAM.HUD+$9C
+
+	LDA.b SA1IRAM.SCRATCH+4
+	ORA #$3C90
+	STA.w SA1RAM.HUD+$9E
+
+	RTS
+
+;------------------------------------------------------------------------------
+
+.vanilla
+	REP #$20
+	; --LIFE--
+	LDA.w #$288B
+	STA.w SA1RAM.HUD+$02C
+	LDA.w #$288F
+	STA.w SA1RAM.HUD+$02E
+	LDA.w #$24AB
+	STA.w SA1RAM.HUD+$030
+	LDA.w #$24AC
+	STA.w SA1RAM.HUD+$032
+	LDA.w #$688F
+	STA.w SA1RAM.HUD+$034
+	LDA.w #$688B
+	STA.w SA1RAM.HUD+$036
+
+	JSR GetHeartLagTile
+	STA.w SA1RAM.HUD+$02A
+
+	LDA.b SA1IRAM.CopyOf_7EF36C
+	LSR
+	LSR
+	LSR
+	AND.w #$1F1F ; shift both right at once
+	SEP #$10
+	TAX ; X has max health
+	XBA
+	TAY ; Y has current health
+
+	LDA.w #SA1RAM.HUD+$068
+	STA.b SA1IRAM.SCRATCH+0
+	STA.b SA1IRAM.SCRATCH+2
+
+..next_filled_heart
+	CPX.b #1 ; do we have at least 1 HP?
+	BMI ..done_hearts
+
+	CPY.b #1
+	BMI ..do_max_health
+
+	LDA.w #$24A0
+	BRA ..add_heart
+
+..do_max_health
+	LDA.w #$24A2
+
+..add_heart
+	STA.b (SA1IRAM.SCRATCH+0)
+
+	DEY
+	DEX
+
+	LDA.b SA1IRAM.SCRATCH+0
+	INC
+	INC
+	CMP.w #SA1RAM.HUD+$07C
+	BEQ ..nextrow
+	CMP.w #SA1RAM.HUD+$0BC
+	BNE ..fine
+
+..nextrow
+	ADC.w #$002B ; +1 carry +2 from inc
+
+..fine
+	STA.b SA1IRAM.SCRATCH+0
+	CPY.b #1 ; save pointer when we have 0 hearts left to add
+	BNE ..skip_save
+
+	STA.b SA1IRAM.SCRATCH+2
+
+..skip_save
+
+	BRA ..next_filled_heart
+
+..done_hearts
+	LDA.b SA1IRAM.CopyOf_7EF36D
+	AND.w #$0007
+	BEQ ..skip_partial
+
+	CMP.w #$0005
+	LDA.w #$24A0
+	BCS ..more_than_half
+
+	INC ; 1-4 means half heart
+
+..more_than_half
+	STA.b (SA1IRAM.SCRATCH+2)
+
+..skip_partial
+	SEP #$20
+	LDA.b SA1IRAM.Moved_020A
+	BEQ ..done
+
+	; heart refill animation
+	LDA.w SA1IRAM.Moved_0209
+	ASL
+	TAX
+	REP #$20
+	LDA.l $0DFA29, X
+	STA.b (SA1IRAM.SCRATCH+2)
+
+..done
+	RTS
+
+
+GetHeartLagTile:
+	LDA.w !ram_heartlag_spinner
+	BNE .doheartlag
+
+	LDA.w #$207F
+	RTS
+
+.doheartlag
+	LDA.b SA1IRAM.CopyOf_1A
+	AND.w #$000C
+	LSR
+	LSR
+	; Desired results:
+	; 00  ->  00
+	; 01  ->  01
+	; 10  ->  11
+	; 11  ->  10
+	; b0 = b1 ^ b0
+	; b1 = b1
+
+	LSR ; put b1 in b0
+	STA.b SA1IRAM.SCRATCH+0
+	ROL ; back to normal
+
+	EOR.b SA1IRAM.SCRATCH+0 ; b0 ^ b1
+	ROR ; get to bits 14 and 15
+	ROR
+	ROR
+
+	ORA.w #$253F
+	RTS
+
+; wrap at 7a
 hud_draw_input_display_options:
 	dw .off
 	dw .cool
@@ -746,13 +840,9 @@ hud_draw_input_display_options:
 	TXA
 	LSR
 	ORA.w #$2400
-	BRA ..addchr
+	STA.w SA1RAM.HUD, Y
 
 ..nopress
-	LDA.w #$207F
-
-..addchr
-	STA.w SA1RAM.HUD, Y
 	INX
 	INX
 	CPX.w #23
@@ -838,20 +928,20 @@ extra_ram_watch_routines:
 	LDA.w #!yellow
 	STA.b SA1IRAM.SCRATCH+10
 	LDY.w #2
-	LDA.w SA1IRAM.CopyOf_2A
+	LDA.b SA1IRAM.CopyOf_2A
 	JSR DrawHex
 
 	LDA.w #!white
 	STA.b SA1IRAM.SCRATCH+10
 	LDY.w #2
-	LDA.w SA1IRAM.CopyOf_2B
+	LDA.b SA1IRAM.CopyOf_2B
 	JMP DrawHex
 
 .spooky
 	LDA.w #!white
 	STA.b SA1IRAM.SCRATCH+10
 	LDY.w #2
-	LDA.w SA1IRAM.CopyOf_02A2
+	LDA.b SA1IRAM.CopyOf_02A2
 	JMP DrawHex
 
 
@@ -859,7 +949,7 @@ extra_ram_watch_routines:
 	LDA.w #!white
 	STA.b SA1IRAM.SCRATCH+10
 	LDY.w #4
-	LDA.w SA1IRAM.CopyOf_0B08
+	LDA.b SA1IRAM.CopyOf_0B08
 	JMP DrawHex
 
 ;==============================================================================

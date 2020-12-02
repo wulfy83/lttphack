@@ -4,6 +4,7 @@ if stringsequal("!VERSION", "DEBUG")
 endif
 
 !VERSIONTEXT += !VERSION
+!DEBUGGING ?= 0
 
 pushtable
 cleartable
@@ -22,7 +23,7 @@ org $00FFD5 : db $23, $35
 org $00FFD7 : db 11 ; 2mb
 
 ; SRAM Size
-org $00FFD8 : db 7 ; 256k
+org $00FFD8 : db select(!DEBUGGING, 7, 8) ; 256k
 
 pushtable
 table ../resources/fileselecttop.tbl

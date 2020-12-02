@@ -4,6 +4,7 @@ cm_main_goto_hud:
 	%cm_submenu("HUD extras", cm_submenu_hud)
 
 cm_submenu_hud:
+	dw cm_hud_heart_display
 	dw cm_hud_input_display
 	dw cm_hud_real
 	dw cm_hud_lag
@@ -12,11 +13,11 @@ cm_submenu_hud:
 	dw cm_hud_segment
 	dw cm_hud_xy
 	dw cm_hud_qw
+	dw cm_hud_lanmola_cycle_count
 	dw cm_hud_ramwatch
 	dw cm_hud_superwatch
-	dw cm_hud_lanmola_cycle_count
 ;	dw cm_hud_lagometer
-	dw cm_hud_enemy_hp
+;	dw cm_hud_enemy_hp
 	dw !menu_end
 	%cm_header("HUD EXTRAS")
 
@@ -51,6 +52,14 @@ cm_hud_lagometer:
 	REP #$20
 	LDA #$207F : STA.w SA1RAM.HUD+$42 : STA.w SA1RAM.HUD+$82 : STA.w SA1RAM.HUD+$C2 : STA $7EC802
 	RTS
+
+cm_hud_heart_display:
+	dw !CM_ACTION_CHOICE
+	dl !ram_heart_display
+	%cm_item("Health display")
+	%cm_item("Numerical")
+	%cm_item("Vanilla")
+	db !list_end
 
 cm_hud_input_display:
 	dw !CM_ACTION_CHOICE

@@ -188,10 +188,9 @@ DMA_BWRAMSRAM:
 	TXA : XBA ; top byte 0
 	STX.w $4312 ; bottom of bank
 
-
 .next
 	LDA.w .address_size+2, X ; get bank
-	BEQ .done
+	BEQ .sa1stuff
 
 	STA.w $2183
 	LDY.w .address_size+0, X
@@ -207,6 +206,22 @@ DMA_BWRAMSRAM:
 	ADC.b #$05
 	TAX
 	BRA .next
+
+.sa1stuff
+	LDA.b #(SA1IRAM.savethis_end-SA1IRAM.savethis_start)-1
+	BIT.b $4310 ; which way to transfer?
+	BPL ..loading
+
+..saving
+	LDX.w #SA1IRAM.savethis_start
+	LDY.w $4312 ; get location last written
+	%MVN($00, $41)
+	BRA .done
+
+..loading
+	LDY.w #SA1IRAM.savethis_start
+	LDX.w $4312 ; get location last written
+	%MVN($41, $00)
 
 .done
 	LDX.w $4328 : PHX

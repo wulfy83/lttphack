@@ -1,17 +1,3 @@
-; Bank 41:
-;    $0000..$5FFF - 7E:0000..7E:5FFF
-;    $6000..$68FF - 7E:C000..7E:C8FF
-;    $6900..$80FF - 7E:E800..7E:FFFF
-;    $8100..$E0FF - 7F:0000..7F:5FFF
-;    $E100..$F2FF - 7F:DD80..7F:EF80
-;    $F300..$FAFF - 7F:F800..7F:FFFF
-; Bank 42:
-;    $0000..$FFFF - bank7F mirror
-;
-; Bank 43:
-;    $0000..$FFFF - vram mirror
-
-
 ;==============================================================================
 ; Memory map:
 ; Bank 40:
@@ -21,12 +7,13 @@
 ;    $9000..$97FF - practice hack WRAM/Functionality
 ;    $9800..$9EFF - SA-1 mirror for $3000..$36FF
 ; Bank 41:
-;    $0000..$FFFF - bank7E mirror
-;
+;    $0000..$5FFF - 7E:0000..7E:5FFF
+;    $6000..$68FF - 7E:C000..7E:C8FF
+;    $6900..$80FF - 7E:E800..7E:FFFF
+;    $8100..$E0FF - 7F:0000..7F:5FFF
+;    $E100..$F2FF - 7F:DD80..7F:EF80
+;    $F300..$FAFF - 7F:EF80..7F:FFFF
 ; Bank 42:
-;    $0000..$FFFF - bank7F mirror
-;
-; Bank 43:
 ;    $0000..$FFFF - vram mirror
 ;==============================================================================
 org $400000
@@ -114,9 +101,17 @@ struct SA1RAM $406000
 	.ss_dma_buffer: skip $80
 	.ss_old_music_bank: skip 2
 
-	
 	warnpc $407FFF
 endstruct
+
+macro MVN(src, dest) ; why asar
+	MVN <dest>, <src>
+endmacro
+
+macro MVP(src, dest)
+	MVP <dest>, <src>
+endmacro
+
 
 ; Magic words
 SA1SRAM = $400000
@@ -214,8 +209,9 @@ endmacro
 %def_perm_sram("ctrl_somaria_pits", !OFF)
 %def_perm_sram("preset_category", $0000)
 %def_perm_sram("hud_font", 0)
-%def_perm_sram("feature_music", !ON)
 %def_perm_sram("input_display", !ON)
+%def_perm_sram("heart_display", !ON)
+%def_perm_sram("feature_music", !ON)
 
 ; Placeholders for future SRAM
 ; this way, future updates will end up in one of these
@@ -255,7 +251,6 @@ endmacro
 %def_sram("PLACEHOLDER_W", 0)
 %def_sram("PLACEHOLDER_X", 0)
 %def_sram("PLACEHOLDER_Y", 0)
-%def_sram("PLACEHOLDER_Z", 0)
 
 ; Non permanent SRAM
 ; these can be moved around

@@ -73,3 +73,23 @@ org $0DFDB4 : STA.l SA1RAM.HUD+$046, X
 ;org $0DFBEE : LDA.b #SA1RAM.HUD+$068>>0
 ;org $0DFBF2 : LDA.b #SA1RAM.HUD+$068>>8
 ;org $0DFBF6 : LDA.b #SA1RAM.HUD+$068>>16
+
+; Heart refill variable is something that doesn't bother me to move
+org $07A1A1 : STA.w SA1IRAM.Moved_0208
+org $07A1CC : STA.w SA1IRAM.Moved_0208
+org $07A202 : STA.w SA1IRAM.Moved_0208
+org $08F454 : LDA.w SA1IRAM.Moved_020A
+org $09F71A : LDA.w SA1IRAM.Moved_020A
+org $0DDCA8 : LDA.w SA1IRAM.Moved_020A
+org $0DDCFF : INC.w SA1IRAM.Moved_020A
+org $0DDD04 : STA.w SA1IRAM.Moved_0208
+org $0DF140 : LDA.w SA1IRAM.Moved_020A
+org $0DF15D : DEC.w SA1IRAM.Moved_0208
+org $0DF184 : LDX.w SA1IRAM.Moved_0209
+org $0DF18B : STA.w SA1IRAM.Moved_0208
+org $0DF19E : LDA.w SA1IRAM.Moved_0209
+org $0DF1A4 : STA.w SA1IRAM.Moved_0209
+org $0DF1AE : STZ.w SA1IRAM.Moved_020A
+
+
+

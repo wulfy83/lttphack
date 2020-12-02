@@ -6,6 +6,15 @@ struct SA1IRAM $003000
 	.HDMA_ASK: skip 1
 	.SHORTCUT_USED: skip 2
 
+	.CONTROLLER_1:
+	.CopyOf_F2: skip 1
+	.CopyOf_F0: skip 1
+
+	.CONTROLLER_1_FILTERED:
+	.CopyOf_F6: skip 1
+	.CopyOf_F4: skip 1
+
+.savethis_start
 	.TIMER_FLAG: skip 2
 
 	.ROOM_TIME_F: skip 2
@@ -25,14 +34,6 @@ struct SA1IRAM $003000
 	.SEG_TIME_F_DISPLAY: skip 2
 	.SEG_TIME_S_DISPLAY: skip 2
 	.SEG_TIME_M_DISPLAY: skip 2
-
-	.CONTROLLER_1:
-	.CopyOf_F2: skip 1
-	.CopyOf_F0: skip 1
-
-	.CONTROLLER_1_FILTERED:
-	.CopyOf_F6: skip 1
-	.CopyOf_F4: skip 1
 
 	.CopyOf_10: skip 1
 	.CopyOf_11: skip 1
@@ -62,35 +63,37 @@ struct SA1IRAM $003000
 	.CopyOf_04A0: skip 1
 	.CopyOf_04B4: skip 1
 
-	.CopyOf_7EC011: skip 1
-	.CopyOf_7EF36C: skip 1
-	.CopyOf_7EF36D: skip 1
-
-	print "SA1 dp: ", pc
-
-	.CopyOf_0208: skip 1
-	.CopyOf_0209: skip 1
-	.CopyOf_020A: skip 1
 	.CopyOf_02A2: skip 1
 	.CopyOf_02FA: skip 1
 
 	.CopyOf_0B08: skip 1
 	.CopyOf_0B09: skip 1
 
-	.CopyOf_0BFA: skip 10
-	.CopyOf_0C04: skip 10
-	.CopyOf_0C0E: skip 10
-	.CopyOf_0C18: skip 10
+	.CopyOf_7EC011: skip 1
+	.CopyOf_7EF36C: skip 1
+	.CopyOf_7EF36D: skip 1
 
+	; not copied, but just moved in rom
+	.Moved_0208: skip 1
+	.Moved_0209: skip 1
+	.Moved_020A: skip 1
 
 	; extra stuff
 	.LanmoCycles: skip 16 ; 16 to be safe
+
+.savethis_end
+	print "SA1 dp: ", pc
 
 	; ancilla watch
 	.CopyOf_03C4: skip 1
 	.CopyOf_03A4: skip 1
 	.CopyOf_0C4A: skip 10
 	.CopyOf_0C5E: skip 10
+
+	.CopyOf_0BFA: skip 10
+	.CopyOf_0C04: skip 10
+	.CopyOf_0C0E: skip 10
+	.CopyOf_0C18: skip 10
 
 	; dg watch
 	.CopyOf_A6: skip 1
@@ -188,8 +191,6 @@ CacheSA1Stuff:
 	LDA.b $F2 : STA.w SA1IRAM.CopyOf_F2
 	LDA.b $F4 : STA.w SA1IRAM.CopyOf_F4
 	LDA.b $F6 : STA.w SA1IRAM.CopyOf_F6
-	LDX.w $0208 : STX.w SA1IRAM.CopyOf_0208
-	LDA.w $020A : STA.w SA1IRAM.CopyOf_020A
 	LDA.w $02A2 : STA.w SA1IRAM.CopyOf_02A2
 	LDA.w $02FA : STA.w SA1IRAM.CopyOf_02FA
 	LDA.w $04A0 : STA.w SA1IRAM.CopyOf_04A0
