@@ -118,6 +118,7 @@ cm_hud_ramwatch:
 	%cm_item("Spooky altit")
 	%cm_item("Arc variable")
 	%cm_item("Icebreaker")
+	%cm_item("Hover")
 	db !list_end
 
 cm_hud_lanmola_cycle_count:
@@ -152,7 +153,7 @@ cm_hud_superwatch:
 	LDA.b #$80
 	STA.w $2100
 	REP #$30
-	LDA.w #$C200>>1 ; tile map location of BG3 
+	LDA.w #$C200>>1 ; tile map location of BG3
 	STA.w $2116
 	LDX.w #24*32
 	LDA.w #$207F

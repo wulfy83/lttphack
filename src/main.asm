@@ -44,6 +44,12 @@ incsrc music.asm
 org $A98000
 incsrc movie.asm
 
+org $A99000
+incsrc hover.asm
+if !FEATURE_RANDO
+	incsrc rando.asm
+endif
+
 ; ---- data ----
 
 org $B08000

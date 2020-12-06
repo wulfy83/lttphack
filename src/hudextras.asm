@@ -181,7 +181,7 @@ macro update_counter_line()
 	;TAX
 	TXA : ASL : TAY
 	REP #$10
-	LDX counter_line, Y 
+	LDX counter_line, Y
 
 endmacro
 
@@ -620,6 +620,7 @@ extra_ram_watch_routines:
 	dw .spooky-1
 	dw .arc-1
 	dw .icebreaker-1
+	dw .hover-1
 
 .icebreaker
 	LDA $6C : AND #$00FF : BEQ ..nodoor
@@ -669,6 +670,32 @@ extra_ram_watch_routines:
 
 .arc
 	LDA $0B08 : TAY
+
+; fourth digit
+	AND #$000F
+	ORA.w #!white
+	STA !HUD_EXTRAS_BUFFER+14, X
+
+; third digit
+	TYA : AND #$00F0 : LSR #4
+	ORA.w #!white
+	STA !HUD_EXTRAS_BUFFER+12, X
+
+; second digit
+	TYA : XBA : AND #$000F
+	ORA.w #!white
+	STA !HUD_EXTRAS_BUFFER+10, X
+
+; first digit
+	TYA : XBA : AND #$00F0 : LSR #4
+	ORA.w #!white
+	STA !HUD_EXTRAS_BUFFER+8, X
+
+	RTS
+
+.hover
+	JSL UpdateHoverCounter
+	LDA !ram_hover_counter : TAY
 
 ; fourth digit
 	AND #$000F

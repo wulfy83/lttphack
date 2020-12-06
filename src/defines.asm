@@ -125,6 +125,11 @@ endmacro
 
 %def_wramA("ctrl_last_input", 2)
 
+%def_wramA("hover_counter", 2)
+%def_wramA("hover_dash_countdown", 2)
+%def_wramA("hover_dashing", 2)
+%def_wramA("hover_dash_held_last_frame", 2)
+
 ; Account for different SRAM layouts
 
 if !FEATURE_SD2SNES
